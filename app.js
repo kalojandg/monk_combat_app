@@ -69,18 +69,23 @@ function setKi(v) {
 el("charName").addEventListener("input", ()=>{ st.name = el("charName").value; save(); });
 el("notes").addEventListener("input", ()=>{ st.notes = el("notes").value; save(); });
 
+// Max HP -> also fill current and clear death saves
 el("hpMaxInput").addEventListener("input", ()=>{
   const v = Math.max(0, Math.floor(Number(el("hpMaxInput").value || 0)));
   st.hpMax = v;
-  st.hpCurrent = clamp(st.hpCurrent, 0, st.hpMax);
+  st.hpCurrent = v;        // <- fill to max
+  resetDeathSaves();       // <- clear saves, set alive if > 0
   save();
 });
+
+// Max Ki -> also fill current
 el("kiMaxInput").addEventListener("input", ()=>{
   const v = Math.max(0, Math.floor(Number(el("kiMaxInput").value || 0)));
   st.kiMax = v;
-  st.kiCurrent = clamp(st.kiCurrent, 0, st.kiMax);
+  st.kiCurrent = v;        // <- fill to max
   save();
 });
+
 el("acInput").addEventListener("input", ()=>{
   st.ac = Math.max(0, Math.floor(Number(el("acInput").value || 0)));
   save();
@@ -180,7 +185,13 @@ el("importFile").addEventListener("change", (e) => {
   reader.readAsText(file); e.target.value = "";
 });
 el("btnReset").addEventListener("click", ()=>{
-  if (confirm("Да нулирам всичко?")) { st = {...defaultState}; save(); }
+  if (!confirm("Да нулирам всичко?")) return;
+  st = {...defaultState};
+  st.hpCurrent = st.hpMax;   // full to max
+  st.kiCurrent = st.kiMax;   // full to max
+  resetDeathSaves();
+  st.status = "alive";
+  save();
 });
 
 // PWA
