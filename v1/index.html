@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Monk Sheet Lite</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#111111">
+  <style>
+    :root { --bg:#0f0f12; --card:#17171c; --accent:#7bd88f; --muted:#9aa0a6; --danger:#ff6b6b; --ok:#6bff95; --warn:#ffd56b; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: var(--bg); color: #f3f3f3; }
+    header { padding:14px 16px; display:flex; gap:10px; align-items:center; justify-content:space-between; background:#121217; position:sticky; top:0; z-index:5; }
+    header h1 { margin:0; font-size:18px; letter-spacing:.3px; }
+    main { padding:16px; display:grid; gap:14px; max-width:860px; margin:0 auto; }
+    .card { background: var(--card); border:1px solid #24242b; border-radius:12px; padding:14px; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .col { flex:1 1 220px; }
+    label { font-size:12px; color: var(--muted); display:block; margin-bottom:6px; }
+    input[type="number"], input[type="text"] { width:100%; padding:10px 12px; border-radius:10px; border:1px solid #2b2b33; background:#101016; color:#fff; }
+    .pill { display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border-radius:999px; border:1px solid #2b2b33; background:#101016; min-width:120px; justify-content:center; }
+    .pill input[type="number"] { width:70px; padding:6px 8px; border-radius:8px; }
+    .stat { font-size:20px; font-weight:700; }
+    .btn { padding:10px 12px; border-radius:10px; border:1px solid #2b2b33; background:#14141a; color:#fff; cursor:pointer; }
+    .btn:active { transform: scale(0.98); }
+    .btn.primary { border-color:#2a3b2a; background:#162016; }
+    .btn.danger { border-color:#3b2a2a; background:#201616; color:#ff9a9a; }
+    .btn.ok { border-color:#2a3b30; background:#152019; }
+    .btn.warn { border-color:#3b372a; background:#201c16; }
+    .grid { display:grid; gap:10px; }
+    .grid.auto { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+    .section-title { font-size:13px; letter-spacing:.3px; color:var(--muted); margin:4px 0 8px; text-transform:uppercase; }
+    .status { font-size:28px; }
+    .flex { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .spacer { flex:1; }
+    .note { font-size:12px; color:var(--muted); }
+    .hidden { display:none; }
+    .footer { text-align:center; color:var(--muted); font-size:12px; padding:20px 10px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🥋 Monk Sheet Lite</h1>
+    <div class="flex">
+      <button id="btnReset" class="btn danger">Reset</button>
+      <button id="btnExport" class="btn">Export</button>
+      <label class="btn" for="importFile">Import</label>
+      <input id="importFile" type="file" accept="application/json" class="hidden"/>
+      <button id="btnInstall" class="btn primary hidden">Install</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <div class="section-title">Основни</div>
+      <div class="grid auto">
+        <div class="col">
+          <label>Име</label>
+          <input id="charName" type="text" placeholder="Пийс Ошит">
+        </div>
+        <div class="col">
+          <label>Бележки</label>
+          <input id="notes" type="text" placeholder="Кратки бележки">
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-title">Жизнени точки & Ки</div>
+      <div class="flex">
+        <div class="pill">
+          <span>HP</span>&nbsp;
+          <span class="stat" id="hpCurrentSpan">0</span>/
+          <input id="hpMaxInput" type="number" min="0" step="1" title="Max HP">
+        </div>
+        <div class="pill">
+          <span>Ki</span>&nbsp;
+          <span class="stat" id="kiCurrentSpan">0</span>/
+          <input id="kiMaxInput" type="number" min="0" step="1" title="Max Ki">
+        </div>
+        <div class="pill">
+          <span>AC</span>&nbsp;
+          <input id="acInput" type="number" min="0" step="1" title="AC">
+        </div>
+        <div class="pill">
+          <span>Prof</span>&nbsp;
+          <input id="profInput" type="number" min="0" step="1" title="Proficiency">
+        </div>
+        <div class="pill status" id="lifeStatus">🙂</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-title">Бързо HP</div>
+      <div class="row">
+        <div class="col">
+          <label>Стойност</label>
+          <input id="hpDelta" type="number" step="1" value="1">
+        </div>
+        <div class="flex">
+          <button id="btnDamage" class="btn danger">Take Damage</button>
+          <button id="btnHeal" class="btn ok">Heal HP</button>
+          <button id="btnHitAtZero" class="btn warn">Hit @ 0 HP</button>
+        </div>
+      </div>
+      <div class="note">Когато си на 0 HP: Damage = 1 провал на Death Save (крит. удар = 2).</div>
+    </section>
+
+    <section class="card">
+      <div class="section-title">Бързо Ki</div>
+      <div class="row">
+        <div class="col">
+          <label>Стойност</label>
+          <input id="kiDelta" type="number" step="1" value="1">
+        </div>
+        <div class="flex">
+          <button id="btnSpendKi" class="btn danger">Spend Ki</button>
+          <button id="btnGainKi" class="btn ok">Gain Ki</button>
+        </div>
+      </div>
+      <div class="note">Ki се ограничава между 0 и Max Ki.</div>
+    </section>
+
+    <section class="card">
+      <div class="section-title">Death Saves</div>
+      <div class="flex">
+        <div class="pill">✔️ <span id="dsSuccess">0</span> / 3</div>
+        <div class="pill">❌ <span id="dsFail">0</span> / 3</div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <div class="flex">
+          <button id="btnDsPlus" class="btn ok">+ Success</button>
+          <button id="btnDsMinus" class="btn warn">- Failure</button>
+          <button id="btnCrit" class="btn primary">Crit (20)</button>
+          <button id="btnCritFail" class="btn danger">Crit Fail (1)</button>
+          <button id="btnStabilize" class="btn">Stabilize</button>
+          <button id="btnHealFromZero" class="btn ok">Heal</button>
+        </div>
+      </div>
+      <div class="note">3 успеха = стабилен (🛌); 3 провала = мъртъв (💀). Crit 20 = ставаш на 1 HP и нулира Death Saves. Crit 1 = +2 провала.</div>
+    </section>
+
+    <section class="card">
+      <div class="section-title">Запазване</div>
+      <div class="flex">
+        <span class="note">Състоянието се пази локално (localStorage).</span>
+        <div class="spacer"></div>
+        <span class="note">PWA офлайн работи след Install.</span>
+      </div>
+    </section>
+
+    <div class="footer">v2.0 • Monk Sheet Lite • 🥋</div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

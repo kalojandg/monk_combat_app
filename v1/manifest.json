@@ -1,6 +1,6 @@
 {
-  "name": "Monk Sheet Lite v2",
-  "short_name": "MonkLite v2",
+  "name": "Monk Sheet Lite",
+  "short_name": "MonkLite",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#0f0f12",
