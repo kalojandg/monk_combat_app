@@ -3,8 +3,11 @@ const el = id => document.getElementById(id);
 const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
 const modFrom = (score)=>Math.floor((Number(score||0)-10)/2);
 
-// XP thresholds for levels 1..20 (PHB)
-const XP_THRESH = [0,300,900,2700,6500,14000,23000,34000,48000,64000,85000,100000,120000,140000,165000,195000,225000,265000,305000,355000];
+// XP thresholds for levels 1..20 (PHB) = мин. XP за всяко ниво
+const XP_THRESH = [
+  0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000,
+  85000, 100000, 120000, 140000, 165000, 195000, 225000, 265000, 305000, 355000
+];
 
 // Martial Arts die by level
 function maDie(level){
@@ -47,6 +50,7 @@ function baseHP(level, conMod){
 const defaultState = {
   name:"Peace Oshiet",
   xp:0,
+  level:1,                // <-- АКТИВНО ниво (прилага се на Long Rest)
   // abilities
   str:10, dex:10, con:10, int_:10, wis:10, cha:10,
   // saves profs
@@ -65,20 +69,32 @@ const defaultState = {
 };
 
 let st = load();
+migrate(); // за стари сейвове без st.level
+
 function load(){
   try { const raw = localStorage.getItem("monkSheet_v2"); return raw? {...defaultState, ...JSON.parse(raw)} : {...defaultState}; }
   catch { return {...defaultState}; }
 }
 function save(){ localStorage.setItem("monkSheet_v2", JSON.stringify(st)); renderAll(); }
+function migrate(){
+  // ако старата версия няма level, го задаваме = 1 (или от XP, ако предпочиташ)
+  if (typeof st.level !== "number" || !isFinite(st.level)) {
+    st.level = levelFromXP(st.xp) || 1;
+    // не лекуваме/променяме други стойности тук
+    localStorage.setItem("monkSheet_v2", JSON.stringify(st));
+  }
+}
 
 // ===== Derived getters =====
 function levelFromXP(xp){
   let lvl = 1;
-  for (let i=20;i>=2;i--){ if (xp>=XP_THRESH[i-2]) { lvl=i; break; } }
+  for (let i = 20; i >= 1; i--) {
+    if (xp >= XP_THRESH[i-1]) { lvl = i; break; }
+  }
   return lvl;
 }
 function derived(){
-  const level = levelFromXP(st.xp);
+  const level = st.level; // ползваме АКТИВНОТО ниво
   const mods = {
     str:modFrom(st.str), dex:modFrom(st.dex), con:modFrom(st.con), int_:modFrom(st.int_), wis:modFrom(st.wis), cha:modFrom(st.cha)
   };
@@ -107,7 +123,9 @@ function derived(){
     wis: savesBase.wis + allBonus,
     cha: savesBase.cha + allBonus,
   };
-  return {level, mods, prof, ma, kiMax, hdMax, maxHP, ac, um, totalSpeed, savesBase, savesTotal};
+  // показваме и pending ниво (от XP), без да го прилагаме
+  const pendingLevel = levelFromXP(st.xp);
+  return {level, pendingLevel, mods, prof, ma, kiMax, hdMax, maxHP, ac, um, totalSpeed, savesBase, savesTotal};
 }
 
 // ===== Skills table =====
@@ -132,7 +150,7 @@ const SKILLS = [
   ["Survival","wis"]
 ];
 
-// mapping + helper за бонуса на скил (за да смятаме и пасивките по същия начин)
+// mapping + helper за бонуса на скил (за пасивките)
 const SKILL_TO_ABILITY = {
   "Acrobatics":"dex","Animal Handling":"wis","Arcana":"int_","Athletics":"str",
   "Deception":"cha","History":"int_","Insight":"wis","Intimidation":"cha",
@@ -203,6 +221,13 @@ function renderAll(){
 
   // Level & basics
   el("levelSpan").textContent = d.level;
+  // ако има pending ниво от XP, можем леко да намекнем (не променяме нищо функционално)
+  if (d.pendingLevel > d.level) {
+    el("levelSpan").title = `Pending: ${d.pendingLevel} (ще се приложи на Long Rest)`;
+  } else {
+    el("levelSpan").title = "";
+  }
+
   el("profSpan").textContent = `+${d.prof}`;
   el("profSpan2").textContent = `+${d.prof}`;
   el("maDieSpan").textContent = d.ma;
@@ -278,6 +303,8 @@ function renderAll(){
 el("charName").addEventListener("input", ()=>{ st.name = el("charName").value; save(); });
 el("xpInput").addEventListener("input", ()=>{
   st.xp = Math.max(0, Math.floor(Number(el("xpInput").value||0)));
+  // Нищо друго не променяме тук — level се прилага само на Long Rest
+  // (Все пак clamp-ваме hdAvail към текущия hdMax по активното ниво)
   const d = derived();
   st.hdAvail = clamp(st.hdAvail, 0, d.hdMax);
   st.kiCurrent = clamp(st.kiCurrent, 0, d.kiMax);
@@ -412,15 +439,35 @@ el("btnShortRest").addEventListener("click", ()=>{
   save();
 });
 
-// Long Rest (RAW): full HP, Ki max, recover half HD (ceil)
+// Long Rest (RAW): full HP, Ki max, recover half HD (ceil), APPLY LEVEL-UP from XP
 el("btnLongRest").addEventListener("click", ()=>{
-  const d = derived();
+  const oldLevel = st.level;
+  const pending = levelFromXP(st.xp);
+  let leveled = false;
+
+  if (pending > oldLevel) {
+    // качваме ниво
+    st.level = pending;
+    leveled = true;
+    // при увеличение на max HD, наличните HD естествено растат с разликата (предп. че не са "изразходвани")
+    st.hdAvail = Math.min(st.level, st.hdAvail + (st.level - oldLevel));
+  }
+
+  const d = derived(); // вече по новото ниво, ако има
+
+  // recover half of total hit dice (ceil), не надвишаваме max
   const recover = Math.ceil(d.hdMax / 2);
   st.hdAvail = Math.min(d.hdMax, st.hdAvail + recover);
+
+  // full heal / ki
   st.kiCurrent = d.kiMax;
   st.hpCurrent = d.maxHP;
   st.dsSuccess=0; st.dsFail=0; st.status="alive";
   save();
+
+  if (leveled) {
+    setTimeout(()=>alert(`Вече сте ${st.level} ниво!`), 10);
+  }
 });
 
 // Export / Import / Reset
@@ -434,7 +481,7 @@ el("btnExport").addEventListener("click", () => {
 el("importFile").addEventListener("change", (e) => {
   const file = e.target.files[0]; if (!file) return;
   const reader = new FileReader();
-  reader.onload = () => { try { st = { ...defaultState, ...JSON.parse(reader.result) }; save(); } catch { alert("Грешен JSON."); } };
+  reader.onload = () => { try { st = { ...defaultState, ...JSON.parse(reader.result) }; migrate(); save(); } catch { alert("Грешен JSON."); } };
   reader.readAsText(file); e.target.value = "";
 });
 el("btnReset").addEventListener("click", ()=>{
