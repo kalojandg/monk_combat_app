@@ -627,6 +627,7 @@ if ("serviceWorker" in navigator) { window.addEventListener("load", ()=>navigato
 tryRestoreBackupHandle();
 window.addEventListener("visibilitychange", ()=>{ if (document.visibilityState === "hidden") doBackupNow(); });
 window.addEventListener("pagehide", ()=>{ doBackupNow(); });
+el("btnConnectBackup")?.addEventListener("click", connectBackup);
 
 // First render
 renderAll();
