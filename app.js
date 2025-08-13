@@ -3,6 +3,42 @@ const el = id => document.getElementById(id);
 const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
 const modFrom = (score)=>Math.floor((Number(score||0)-10)/2);
 
+// ===== Tiny IndexedDB helpers (store the FileSystemFileHandle for backup) =====
+const DB_NAME = "monk_backup_db";
+const DB_STORE = "handles";
+function idbOpen() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(DB_STORE);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+function idbGet(key) {
+  return idbOpen().then(db => new Promise((resolve,reject)=>{
+    const tx = db.transaction(DB_STORE, "readonly");
+    const req = tx.objectStore(DB_STORE).get(key);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  }));
+}
+function idbSet(key, value) {
+  return idbOpen().then(db => new Promise((resolve,reject)=>{
+    const tx = db.transaction(DB_STORE, "readwrite");
+    const req = tx.objectStore(DB_STORE).put(value, key);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  }));
+}
+function idbDel(key) {
+  return idbOpen().then(db => new Promise((resolve,reject)=>{
+    const tx = db.transaction(DB_STORE, "readwrite");
+    const req = tx.objectStore(DB_STORE).delete(key);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  }));
+}
+
 // XP thresholds for levels 1..20 (PHB) = мин. XP за всяко ниво
 const XP_THRESH = [
   0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000,
@@ -50,7 +86,7 @@ function baseHP(level, conMod){
 const defaultState = {
   name:"Peace Oshiet",
   xp:0,
-  level:1,                // <-- АКТИВНО ниво (прилага се на Long Rest)
+  level:1, // АКТИВНО ниво (прилага се на Long Rest)
   // abilities
   str:10, dex:10, con:10, int_:10, wis:10, cha:10,
   // saves profs
@@ -75,12 +111,91 @@ function load(){
   try { const raw = localStorage.getItem("monkSheet_v2"); return raw? {...defaultState, ...JSON.parse(raw)} : {...defaultState}; }
   catch { return {...defaultState}; }
 }
-function save(){ localStorage.setItem("monkSheet_v2", JSON.stringify(st)); renderAll(); }
+
+// ===== Backup state & helpers =====
+const HAS_FSA = !!window.showSaveFilePicker; // Chrome/Edge/Android Chrome
+let backupHandle = null;
+let backupConnected = false;
+let backupTimer = null;
+const BACKUP_KEY = "backupHandle";
+const BACKUP_DEBOUNCE_MS = 600;
+let backupPending = false;
+
+async function tryRestoreBackupHandle() {
+  if (!HAS_FSA) return;
+  try {
+    const handle = await idbGet(BACKUP_KEY);
+    if (!handle) return;
+    const perm = await handle.queryPermission?.({ mode: "readwrite" }) || "granted";
+    const granted = perm === "granted" || (await handle.requestPermission?.({ mode:"readwrite" })) === "granted";
+    if (granted) {
+      backupHandle = handle;
+      backupConnected = true;
+      const badge = el("backupBadge"); if (badge) badge.classList.remove("hidden");
+    }
+  } catch {}
+}
+async function connectBackup() {
+  if (!HAS_FSA) { alert("Automatic backup is not supported in this browser. Use Export/Share instead."); return; }
+  try {
+    const handle = await window.showSaveFilePicker({
+      suggestedName: (st.name || "monk") + "_sheet.json",
+      types: [{ description: "JSON", accept: { "application/json": [".json"] } }]
+    });
+    backupHandle = handle;
+    await idbSet(BACKUP_KEY, handle);
+    backupConnected = true;
+    const badge = el("backupBadge"); if (badge) badge.classList.remove("hidden");
+    await doBackupNow();
+    alert("Backup connected. Autosave enabled.");
+  } catch (e) { /* canceled */ }
+}
+async function writeToHandle(handle, text) {
+  const w = await handle.createWritable();
+  await w.write(text);
+  await w.close();
+}
+async function doBackupNow() {
+  if (!backupConnected || !backupHandle) return;
+  try {
+    await writeToHandle(backupHandle, JSON.stringify(st, null, 2));
+    // по желание: визуален feedback (напр. мигащ бейдж) — може да добавим
+  } catch (e) {
+    console.warn("Backup failed:", e);
+  }
+}
+function scheduleBackup() {
+  if (!backupConnected) return;
+  backupPending = true;
+  clearTimeout(backupTimer);
+  backupTimer = setTimeout(async ()=>{
+    if (!backupPending) return;
+    backupPending = false;
+    await doBackupNow();
+  }, BACKUP_DEBOUNCE_MS);
+}
+async function loadFromBackup() {
+  if (!backupConnected || !backupHandle) { alert("No connected backup file."); return; }
+  try {
+    const file = await backupHandle.getFile();
+    const text = await file.text();
+    const obj = JSON.parse(text);
+    st = { ...defaultState, ...obj };
+    if (typeof st.level !== "number" || !isFinite(st.level)) st.level = 1;
+    save();
+    alert("Loaded from backup.");
+  } catch { alert("Failed to load from backup file."); }
+}
+
+function save(){
+  localStorage.setItem("monkSheet_v2", JSON.stringify(st));
+  renderAll();
+  scheduleBackup();
+}
+
 function migrate(){
-  // ако старата версия няма level, го задаваме = 1 (или от XP, ако предпочиташ)
   if (typeof st.level !== "number" || !isFinite(st.level)) {
-    st.level = levelFromXP(st.xp) || 1;
-    // не лекуваме/променяме други стойности тук
+    st.level = 1;
     localStorage.setItem("monkSheet_v2", JSON.stringify(st));
   }
 }
@@ -123,8 +238,7 @@ function derived(){
     wis: savesBase.wis + allBonus,
     cha: savesBase.cha + allBonus,
   };
-  // показваме и pending ниво (от XP), без да го прилагаме
-  const pendingLevel = levelFromXP(st.xp);
+  const pendingLevel = levelFromXP(st.xp); // само за показване (tool-tip)
   return {level, pendingLevel, mods, prof, ma, kiMax, hdMax, maxHP, ac, um, totalSpeed, savesBase, savesTotal};
 }
 
@@ -168,6 +282,7 @@ ensureSkillProfs();
 
 function renderSkills(mods, prof){
   const body = el("skillsBody");
+  if (!body) return;
   body.innerHTML = "";
   SKILLS.forEach(([name, abil])=>{
     const tr = document.createElement("tr");
@@ -190,6 +305,7 @@ function renderSkills(mods, prof){
 
 function renderSaves(d){
   const body = el("savesBody");
+  if (!body) return;
   body.innerHTML = "";
   const names = [["STR","str"],["DEX","dex"],["CON","con"],["INT","int_"],["WIS","wis"],["CHA","cha"]];
   names.forEach(([label,key])=>{
@@ -210,8 +326,8 @@ document.addEventListener("click",(e)=>{
     document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
     e.target.classList.add("active");
     const tab = e.target.getAttribute("data-tab");
-    el("tab-combat").classList.toggle("hidden", tab!=="combat");
-    el("tab-stats").classList.toggle("hidden", tab!=="stats");
+    el("tab-combat")?.classList.toggle("hidden", tab!=="combat");
+    el("tab-stats")?.classList.toggle("hidden", tab!=="stats");
   }
 });
 
@@ -220,72 +336,68 @@ function renderAll(){
   const d = derived();
 
   // Level & basics
-  el("levelSpan").textContent = d.level;
-  // ако има pending ниво от XP, можем леко да намекнем (не променяме нищо функционално)
-  if (d.pendingLevel > d.level) {
-    el("levelSpan").title = `Pending: ${d.pendingLevel} (ще се приложи на Long Rest)`;
-  } else {
-    el("levelSpan").title = "";
+  const levelSpan = el("levelSpan");
+  if (levelSpan) {
+    levelSpan.textContent = d.level;
+    levelSpan.title = (d.pendingLevel > d.level) ? `Pending: ${d.pendingLevel} (ще се приложи на Long Rest)` : "";
   }
-
-  el("profSpan").textContent = `+${d.prof}`;
-  el("profSpan2").textContent = `+${d.prof}`;
-  el("maDieSpan").textContent = d.ma;
-  el("kiMaxSpan").textContent = d.kiMax;
-  el("kiMaxSpan2").textContent = d.kiMax;
-  el("hdMaxSpan").textContent = d.hdMax;
+  el("profSpan") && (el("profSpan").textContent = `+${d.prof}`);
+  el("profSpan2") && (el("profSpan2").textContent = `+${d.prof}`);
+  el("maDieSpan") && (el("maDieSpan").textContent = d.ma);
+  el("kiMaxSpan") && (el("kiMaxSpan").textContent = d.kiMax);
+  el("kiMaxSpan2") && (el("kiMaxSpan2").textContent = d.kiMax);
+  el("hdMaxSpan") && (el("hdMaxSpan").textContent = d.hdMax);
 
   // Derived HP
-  el("maxHpSpan").textContent = d.maxHP;
-  el("hpMaxSpan").textContent = d.maxHP;
-  el("hpCurrentSpan").textContent = st.hpCurrent;
+  el("maxHpSpan") && (el("maxHpSpan").textContent = d.maxHP);
+  el("hpMaxSpan") && (el("hpMaxSpan").textContent = d.maxHP);
+  el("hpCurrentSpan") && (el("hpCurrentSpan").textContent = st.hpCurrent);
 
   // Ki
-  el("kiCurrentSpan").textContent = st.kiCurrent;
+  el("kiCurrentSpan") && (el("kiCurrentSpan").textContent = st.kiCurrent);
 
   // AC & speed
-  el("acSpan").textContent = d.ac;
-  el("acSpan2").textContent = d.ac;
-  el("umBonusSpan").textContent = d.um;
-  el("totalSpeedSpan").textContent = d.totalSpeed;
-  el("lvl9Note").textContent = (d.level>=9) ? "You can move along vertical surfaces and across liquids (during your move)." : "—";
+  el("acSpan") && (el("acSpan").textContent = d.ac);
+  el("acSpan2") && (el("acSpan2").textContent = d.ac);
+  el("umBonusSpan") && (el("umBonusSpan").textContent = d.um);
+  el("totalSpeedSpan") && (el("totalSpeedSpan").textContent = d.totalSpeed);
+  el("lvl9Note") && (el("lvl9Note").textContent = (d.level>=9) ? "You can move along vertical surfaces and across liquids (during your move)." : "—");
 
   // Mods
-  const mods = d.mods;
-  el("strModSpan").textContent = mods.str>=0? `+${mods.str}`: `${mods.str}`;
-  el("dexModSpan").textContent = mods.dex>=0? `+${mods.dex}`: `${mods.dex}`;
-  el("conModSpan").textContent = mods.con>=0? `+${mods.con}`: `${mods.con}`;
-  el("intModSpan").textContent = mods.int_>=0? `+${mods.int_}`: `${mods.int_}`;
-  el("wisModSpan").textContent = mods.wis>=0? `+${mods.wis}`: `${mods.wis}`;
-  el("chaModSpan").textContent = mods.cha>=0? `+${mods.cha}`: `${mods.cha}`;
+  el("strModSpan") && (el("strModSpan").textContent = d.mods.str>=0? `+${d.mods.str}`: `${d.mods.str}`);
+  el("dexModSpan") && (el("dexModSpan").textContent = d.mods.dex>=0? `+${d.mods.dex}`: `${d.mods.dex}`);
+  el("conModSpan") && (el("conModSpan").textContent = d.mods.con>=0? `+${d.mods.con}`: `${d.mods.con}`);
+  el("intModSpan") && (el("intModSpan").textContent = d.mods.int_>=0? `+${d.mods.int_}`: `${d.mods.int_}`);
+  el("wisModSpan") && (el("wisModSpan").textContent = d.mods.wis>=0? `+${d.mods.wis}`: `${d.mods.wis}`);
+  el("chaModSpan") && (el("chaModSpan").textContent = d.mods.cha>=0? `+${d.mods.cha}`: `${d.mods.cha}`);
 
-  // Passive skills = 10 + същия бонус като активните скилове
-  const percBonus = skillBonusTotal("Perception", d.mods, d.prof);
-  const invBonus  = skillBonusTotal("Investigation", d.mods, d.prof);
-  el("passPercSpan").textContent = 10 + percBonus;
-  el("passInvSpan").textContent  = 10 + invBonus;
+  // Passive skills = 10 + скил бонус
+  const perc = 10 + skillBonusTotal("Perception", d.mods, d.prof);
+  const inv  = 10 + skillBonusTotal("Investigation", d.mods, d.prof);
+  el("passPercSpan") && (el("passPercSpan").textContent = perc);
+  el("passInvSpan") && (el("passInvSpan").textContent = inv);
 
   // Inputs reflect state
-  el("charName").value = st.name || "";
-  el("xpInput").value = st.xp;
-  el("hdAvailInput").value = st.hdAvail;
-  el("conInput").value = st.con;
-  el("hpAdjInput").value = st.hpAdjust;
-  el("toughChk").checked = !!st.tough;
-  el("acMagicInput").value = st.acMagic;
-  el("baseSpeedInput").value = st.baseSpeed;
-  el("strInput").value = st.str;
-  el("dexInput").value = st.dex;
-  el("intInput").value = st.int_;
-  el("wisInput").value = st.wis;
-  el("chaInput").value = st.cha;
-  el("saveDexProf").checked = !!st.saveDexProf;
-  el("saveStrProf").checked = !!st.saveStrProf;
-  el("saveConProf").checked = !!st.saveConProf;
-  el("saveIntProf").checked = !!st.saveIntProf;
-  el("saveWisProf").checked = !!st.saveWisProf;
-  el("saveChaProf").checked = !!st.saveChaProf;
-  el("saveAllBonusInput").value = st.saveAllBonus;
+  el("charName") && (el("charName").value = st.name || "");
+  el("xpInput") && (el("xpInput").value = st.xp);
+  el("hdAvailInput") && (el("hdAvailInput").value = st.hdAvail);
+  el("conInput") && (el("conInput").value = st.con);
+  el("hpAdjInput") && (el("hpAdjInput").value = st.hpAdjust);
+  el("toughChk") && (el("toughChk").checked = !!st.tough);
+  el("acMagicInput") && (el("acMagicInput").value = st.acMagic);
+  el("baseSpeedInput") && (el("baseSpeedInput").value = st.baseSpeed);
+  el("strInput") && (el("strInput").value = st.str);
+  el("dexInput") && (el("dexInput").value = st.dex);
+  el("intInput") && (el("intInput").value = st.int_);
+  el("wisInput") && (el("wisInput").value = st.wis);
+  el("chaInput") && (el("chaInput").value = st.cha);
+  el("saveDexProf") && (el("saveDexProf").checked = !!st.saveDexProf);
+  el("saveStrProf") && (el("saveStrProf").checked = !!st.saveStrProf);
+  el("saveConProf") && (el("saveConProf").checked = !!st.saveConProf);
+  el("saveIntProf") && (el("saveIntProf").checked = !!st.saveIntProf);
+  el("saveWisProf") && (el("saveWisProf").checked = !!st.saveWisProf);
+  el("saveChaProf") && (el("saveChaProf").checked = !!st.saveChaProf);
+  el("saveAllBonusInput") && (el("saveAllBonusInput").value = st.saveAllBonus);
 
   // Tables
   renderSaves(d);
@@ -296,15 +408,18 @@ function renderAll(){
   if (st.status === "stable") emoji = "🛌";
   else if (st.status === "dead") emoji = "💀";
   else if (st.hpCurrent <= 0) emoji = "😵";
-  el("lifeStatus").textContent = emoji;
+  el("lifeStatus") && (el("lifeStatus").textContent = emoji);
+
+  // Backup badge visibility
+  const badge = el("backupBadge");
+  if (badge) badge.classList.toggle("hidden", !backupConnected);
 }
 
 // ===== Events: inputs =====
-el("charName").addEventListener("input", ()=>{ st.name = el("charName").value; save(); });
-el("xpInput").addEventListener("input", ()=>{
+el("charName")?.addEventListener("input", ()=>{ st.name = el("charName").value; save(); });
+el("xpInput")?.addEventListener("input", ()=>{
   st.xp = Math.max(0, Math.floor(Number(el("xpInput").value||0)));
-  // Нищо друго не променяме тук — level се прилага само на Long Rest
-  // (Все пак clamp-ваме hdAvail към текущия hdMax по активното ниво)
+  // level се прилага само на Long Rest
   const d = derived();
   st.hdAvail = clamp(st.hdAvail, 0, d.hdMax);
   st.kiCurrent = clamp(st.kiCurrent, 0, d.kiMax);
@@ -314,31 +429,33 @@ el("xpInput").addEventListener("input", ()=>{
 // abilities
 ["str","dex","con","int_","wis","cha"].forEach(key=>{
   const mapId = {str:"strInput", dex:"dexInput", con:"conInput", int_:"intInput", wis:"wisInput", cha:"chaInput"};
-  el(mapId[key]).addEventListener("input", ()=>{
-    let v = Math.floor(Number(el(mapId[key]).value||0));
+  const inp = el(mapId[key]); if (!inp) return;
+  inp.addEventListener("input", ()=>{
+    let v = Math.floor(Number(inp.value||0));
     st[key] = v;
     save();
   });
 });
 
 // items / adjust
-el("toughChk").addEventListener("change", ()=>{ st.tough = el("toughChk").checked; save(); });
-el("hpAdjInput").addEventListener("input", ()=>{ st.hpAdjust = Math.floor(Number(el("hpAdjInput").value||0)); save(); });
-el("acMagicInput").addEventListener("input", ()=>{ st.acMagic = Math.floor(Number(el("acMagicInput").value||0)); save(); });
-el("baseSpeedInput").addEventListener("input", ()=>{ st.baseSpeed = Math.floor(Number(el("baseSpeedInput").value||0)); save(); });
-el("saveAllBonusInput").addEventListener("input", ()=>{
+el("toughChk")?.addEventListener("change", ()=>{ st.tough = el("toughChk").checked; save(); });
+el("hpAdjInput")?.addEventListener("input", ()=>{ st.hpAdjust = Math.floor(Number(el("hpAdjInput").value||0)); save(); });
+el("acMagicInput")?.addEventListener("input", ()=>{ st.acMagic = Math.floor(Number(el("acMagicInput").value||0)); save(); });
+el("baseSpeedInput")?.addEventListener("input", ()=>{ st.baseSpeed = Math.floor(Number(el("baseSpeedInput").value||0)); save(); });
+el("saveAllBonusInput")?.addEventListener("input", ()=>{
   let v = Math.floor(Number(el("saveAllBonusInput").value||0));
-  v = Math.max(-5, Math.min(10, v)); // clamp sanity
+  v = Math.max(-5, Math.min(10, v));
   st.saveAllBonus = v; save();
 });
 
 // saves prof toggles
 ["Str","Dex","Con","Int","Wis","Cha"].forEach(S=>{
   const id = "save"+S+"Prof";
-  el(id).addEventListener("change", ()=>{ st[id] = el(id).checked; save(); });
+  const chk = el(id); if (!chk) return;
+  chk.addEventListener("change", ()=>{ st[id] = chk.checked; save(); });
 });
 
-el("hdAvailInput").addEventListener("input", ()=>{
+el("hdAvailInput")?.addEventListener("input", ()=>{
   const d = derived();
   st.hdAvail = clamp(Math.floor(Number(el("hdAvailInput").value||0)), 0, d.hdMax);
   save();
@@ -358,7 +475,7 @@ function setKi(v){
   save();
 }
 
-el("btnDamage").addEventListener("click", ()=>{
+el("btnDamage")?.addEventListener("click", ()=>{
   const dVal = Number(el("hpDelta").value||0); if (dVal<=0) return;
   if (st.hpCurrent===0){
     st.dsFail = clamp(st.dsFail+1,0,3);
@@ -369,56 +486,56 @@ el("btnDamage").addEventListener("click", ()=>{
     if (st.hpCurrent===0) st.status="unconscious";
   }
 });
-el("btnHeal").addEventListener("click", ()=>{
+el("btnHeal")?.addEventListener("click", ()=>{
   const h = Number(el("hpDelta").value||0); if (h<=0) return; setHP(st.hpCurrent + h);
 });
-el("btnHitAtZero").addEventListener("click", ()=>{
+el("btnHitAtZero")?.addEventListener("click", ()=>{
   if (st.hpCurrent===0 && st.status!=="dead"){
     st.dsFail = clamp(st.dsFail+1,0,3);
     if (st.dsFail>=3) st.status="dead";
     save();
   }
 });
-el("btnSpendKi").addEventListener("click", ()=>{
+el("btnSpendKi")?.addEventListener("click", ()=>{
   const k = Number(el("kiDelta").value||0); if (k<=0) return; setKi(st.kiCurrent - k);
 });
-el("btnGainKi").addEventListener("click", ()=>{
+el("btnGainKi")?.addEventListener("click", ()=>{
   const k = Number(el("kiDelta").value||0); if (k<=0) return; setKi(st.kiCurrent + k);
 });
 
 // Death saves
-el("btnDsPlus").addEventListener("click", ()=>{
+el("btnDsPlus")?.addEventListener("click", ()=>{
   if (st.status==="dead") return;
   st.dsSuccess = clamp(st.dsSuccess+1,0,3);
   if (st.dsSuccess>=3) st.status="stable";
   save();
 });
-el("btnDsMinus").addEventListener("click", ()=>{
+el("btnDsMinus")?.addEventListener("click", ()=>{
   if (st.status==="dead") return;
   st.dsFail = clamp(st.dsFail+1,0,3);
   if (st.dsFail>=3) st.status="dead";
   save();
 });
-el("btnCrit").addEventListener("click", ()=>{
+el("btnCrit")?.addEventListener("click", ()=>{
   setHP(Math.max(1, st.hpCurrent));
   st.dsSuccess=0; st.dsFail=0; st.status="alive"; save();
 });
-el("btnCritFail").addEventListener("click", ()=>{
+el("btnCritFail")?.addEventListener("click", ()=>{
   if (st.status==="dead") return;
   st.dsFail = clamp(st.dsFail+2,0,3);
   if (st.dsFail>=3) st.status="dead";
   save();
 });
-el("btnStabilize").addEventListener("click", ()=>{
+el("btnStabilize")?.addEventListener("click", ()=>{
   if (st.status!=="dead" && st.hpCurrent===0){ st.status="stable"; st.dsSuccess=3; save(); }
 });
-el("btnHealFromZero").addEventListener("click", ()=>{
+el("btnHealFromZero")?.addEventListener("click", ()=>{
   const h = Number(el("hpDelta").value||1); if (h<=0) return;
   setHP(st.hpCurrent + h); st.dsSuccess=0; st.dsFail=0; st.status="alive"; save();
 });
 
 // Short Rest (RAW): Ki to max; spend HD
-el("btnShortRest").addEventListener("click", ()=>{
+el("btnShortRest")?.addEventListener("click", ()=>{
   const d = derived();
   st.kiCurrent = d.kiMax;
   if (st.hdAvail > 0){
@@ -440,22 +557,21 @@ el("btnShortRest").addEventListener("click", ()=>{
 });
 
 // Long Rest (RAW): full HP, Ki max, recover half HD (ceil), APPLY LEVEL-UP from XP
-el("btnLongRest").addEventListener("click", ()=>{
+el("btnLongRest")?.addEventListener("click", ()=>{
   const oldLevel = st.level;
   const pending = levelFromXP(st.xp);
   let leveled = false;
 
   if (pending > oldLevel) {
-    // качваме ниво
     st.level = pending;
     leveled = true;
-    // при увеличение на max HD, наличните HD естествено растат с разликата (предп. че не са "изразходвани")
+    // при увеличение на max HD, добавяме разликата към наличните (ако има)
     st.hdAvail = Math.min(st.level, st.hdAvail + (st.level - oldLevel));
   }
 
   const d = derived(); // вече по новото ниво, ако има
 
-  // recover half of total hit dice (ceil), не надвишаваме max
+  // recover half of total hit dice (ceil)
   const recover = Math.ceil(d.hdMax / 2);
   st.hdAvail = Math.min(d.hdMax, st.hdAvail + recover);
 
@@ -465,26 +581,24 @@ el("btnLongRest").addEventListener("click", ()=>{
   st.dsSuccess=0; st.dsFail=0; st.status="alive";
   save();
 
-  if (leveled) {
-    setTimeout(()=>alert(`Вече сте ${st.level} ниво!`), 10);
-  }
+  if (leveled) { setTimeout(()=>alert(`Вече сте ${st.level} ниво!`), 10); }
 });
 
 // Export / Import / Reset
-el("btnExport").addEventListener("click", () => {
+el("btnExport")?.addEventListener("click", () => {
   const blob = new Blob([JSON.stringify(st, null, 2)], {type: "application/json"});
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url; a.download = (st.name || "monk") + "_sheet.json";
   document.body.appendChild(a); a.click(); URL.revokeObjectURL(url); a.remove();
 });
-el("importFile").addEventListener("change", (e) => {
+el("importFile")?.addEventListener("change", (e) => {
   const file = e.target.files[0]; if (!file) return;
   const reader = new FileReader();
-  reader.onload = () => { try { st = { ...defaultState, ...JSON.parse(reader.result) }; migrate(); save(); } catch { alert("Грешен JSON."); } };
+  reader.onload = () => { try { st = { ...defaultState, ...JSON.parse(reader.result) }; if (typeof st.level!=="number") st.level=1; save(); } catch { alert("Грешен JSON."); } };
   reader.readAsText(file); e.target.value = "";
 });
-el("btnReset").addEventListener("click", ()=>{
+el("btnReset")?.addEventListener("click", ()=>{
   if (!confirm("Да нулирам всичко?")) return;
   st = {...defaultState};
   const d = derived();
@@ -495,14 +609,24 @@ el("btnReset").addEventListener("click", ()=>{
   save();
 });
 
+// Backup buttons (safe if missing)
+el("btnConnectBackup")?.addEventListener("click", connectBackup);
+el("btnBackupNow")?.addEventListener("click", doBackupNow);
+el("btnLoadBackup")?.addEventListener("click", loadFromBackup);
+
 // PWA install/register
 let deferredPrompt=null;
-window.addEventListener("beforeinstallprompt",(e)=>{ e.preventDefault(); deferredPrompt=e; document.getElementById("btnInstall").classList.remove("hidden"); });
-document.getElementById("btnInstall").addEventListener("click", async ()=>{
+window.addEventListener("beforeinstallprompt",(e)=>{ e.preventDefault(); deferredPrompt=e; el("btnInstall")?.classList.remove("hidden"); });
+el("btnInstall")?.addEventListener("click", async ()=>{
   if (!deferredPrompt) return; deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null;
-  document.getElementById("btnInstall").classList.add("hidden");
+  el("btnInstall")?.classList.add("hidden");
 });
 if ("serviceWorker" in navigator) { window.addEventListener("load", ()=>navigator.serviceWorker.register("service-worker.js")); }
+
+// Try restore backup handle; final-save on hide
+tryRestoreBackupHandle();
+window.addEventListener("visibilitychange", ()=>{ if (document.visibilityState === "hidden") doBackupNow(); });
+window.addEventListener("pagehide", ()=>{ doBackupNow(); });
 
 // First render
 renderAll();
