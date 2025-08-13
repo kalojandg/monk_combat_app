@@ -132,6 +132,19 @@ const SKILLS = [
   ["Survival","wis"]
 ];
 
+// mapping + helper за бонуса на скил (за да смятаме и пасивките по същия начин)
+const SKILL_TO_ABILITY = {
+  "Acrobatics":"dex","Animal Handling":"wis","Arcana":"int_","Athletics":"str",
+  "Deception":"cha","History":"int_","Insight":"wis","Intimidation":"cha",
+  "Investigation":"int_","Medicine":"wis","Nature":"int_","Perception":"wis",
+  "Performance":"cha","Persuasion":"cha","Religion":"int_","Sleight of Hand":"dex",
+  "Stealth":"dex","Survival":"wis"
+};
+function skillBonusTotal(name, mods, prof) {
+  const abil = SKILL_TO_ABILITY[name];
+  return (mods[abil] || 0) + (st.skillProfs[name] ? prof : 0);
+}
+
 function ensureSkillProfs(){ if (!st.skillProfs) st.skillProfs={}; SKILLS.forEach(([name])=>{ if (!(name in st.skillProfs)) st.skillProfs[name]=false; }); }
 ensureSkillProfs();
 
@@ -220,6 +233,12 @@ function renderAll(){
   el("intModSpan").textContent = mods.int_>=0? `+${mods.int_}`: `${mods.int_}`;
   el("wisModSpan").textContent = mods.wis>=0? `+${mods.wis}`: `${mods.wis}`;
   el("chaModSpan").textContent = mods.cha>=0? `+${mods.cha}`: `${mods.cha}`;
+
+  // Passive skills = 10 + същия бонус като активните скилове
+  const percBonus = skillBonusTotal("Perception", d.mods, d.prof);
+  const invBonus  = skillBonusTotal("Investigation", d.mods, d.prof);
+  el("passPercSpan").textContent = 10 + percBonus;
+  el("passInvSpan").textContent  = 10 + invBonus;
 
   // Inputs reflect state
   el("charName").value = st.name || "";
@@ -396,10 +415,8 @@ el("btnShortRest").addEventListener("click", ()=>{
 // Long Rest (RAW): full HP, Ki max, recover half HD (ceil)
 el("btnLongRest").addEventListener("click", ()=>{
   const d = derived();
-  // recover half of total hit dice
   const recover = Math.ceil(d.hdMax / 2);
   st.hdAvail = Math.min(d.hdMax, st.hdAvail + recover);
-  // full heal / ki
   st.kiCurrent = d.kiMax;
   st.hpCurrent = d.maxHP;
   st.dsSuccess=0; st.dsFail=0; st.status="alive";
@@ -423,7 +440,6 @@ el("importFile").addEventListener("change", (e) => {
 el("btnReset").addEventListener("click", ()=>{
   if (!confirm("Да нулирам всичко?")) return;
   st = {...defaultState};
-  // set current to derived max
   const d = derived();
   st.hpCurrent = d.maxHP;
   st.kiCurrent = d.kiMax;
