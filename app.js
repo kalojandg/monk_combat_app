@@ -75,12 +75,10 @@ function derived(){
   const ma = maDie(level);
   const kiMax = level;
   const hdMax = level;
-  const calculatedMaxHP =
-  baseHP(level, mods.con) + (st.tough ? 2 * level : 0) + Number(st.hpAdjust || 0);
-  // ако има homebrew override -> ползваме него, иначе автосметката
-  const maxHP = (st.hpHomebrew !== null && st.hpHomebrew !== "" && !Number.isNaN(Number(st.hpHomebrew)))
-    ? Math.max(1, Math.floor(Number(st.hpHomebrew)))
-    : calculatedMaxHP;
+  const calculatedMaxHP = baseHP(level, mods.con) + (st.tough ? 2 * level : 0) + Number(st.hpAdjust || 0);
+  const hbAdj = Number(st.hpHomebrew || 0);  // добавката/корекцията
+  const maxHP = Math.max(1, Math.floor(calculatedMaxHP + hbAdj));
+
   const ac = 10 + mods.dex + mods.wis + Number(st.acMagic||0);
   const um = umBonus(level);
   const totalSpeed = Number(st.baseSpeed||0) + um;
@@ -279,19 +277,16 @@ el("saveAllBonusInput").addEventListener("input", ()=>{
   const id = "save"+S+"Prof";
   el(id).addEventListener("change", ()=>{ st[id] = el(id).checked; save(); });
 });
-const hbInput = document.getElementById("homebrewHp");
+const hbInput = el("homebrewHp");
 if (hbInput) {
   hbInput.addEventListener("input", () => {
+    // позволяваме и отрицателни стойности; празно -> 0
     const raw = hbInput.value.trim();
-    // празно поле = махаме override и се връщаме към автосметка
-    if (raw === "") {
-      st.hpHomebrew = null;
-    } else {
-      let v = Math.floor(Number(raw));
-      if (Number.isNaN(v)) v = null;
-      st.hpHomebrew = v !== null ? Math.max(1, v) : null;
-    }
-    // ограничаваме текущото HP до новия максимум
+    let v = (raw === "" ? 0 : Math.floor(Number(raw)));
+    if (Number.isNaN(v)) v = 0;
+    st.hpHomebrewAdj = v;
+
+    // ако новият макс е по-малък от текущото HP -> clamp
     const d2 = derived();
     st.hpCurrent = clamp(st.hpCurrent, 0, d2.maxHP);
     save();
