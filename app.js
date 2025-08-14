@@ -284,7 +284,7 @@ if (hbInput) {
     const raw = hbInput.value.trim();
     let v = (raw === "" ? 0 : Math.floor(Number(raw)));
     if (Number.isNaN(v)) v = 0;
-    st.hpHomebrewAdj = v;
+    st.hpHomebrew = v;
 
     // ако новият макс е по-малък от текущото HP -> clamp
     const d2 = derived();
