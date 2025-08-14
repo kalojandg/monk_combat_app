@@ -1,0 +1,11 @@
+/* Примерен CSS */
+.value-pill {
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:56px; padding:8px 10px; border-radius:10px;
+  border:1px solid #2b2b33; background:#0e0f14;
+  font-weight:700;
+}
+input.thin {
+  background:#121320; border:1px solid #2b2b33; border-radius:10px;
+  padding:8px 10px; color:#e6e6ef;
+}
