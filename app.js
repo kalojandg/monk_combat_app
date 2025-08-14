@@ -86,7 +86,7 @@ function baseHP(level, conMod){
 const defaultState = {
   name:"Peace Oshiet",
   xp:0,
-  level:1, // АКТИВНО ниво (прилага се на Long Rest)
+  level:1, // АКТИВНО ниво (се прилага на Long Rest)
   // abilities
   str:10, dex:10, con:10, int_:10, wis:10, cha:10,
   // saves profs
@@ -118,8 +118,11 @@ let backupHandle = null;
 let backupConnected = false;
 let backupTimer = null;
 const BACKUP_KEY = "backupHandle";
-const BACKUP_DEBOUNCE_MS = 600;
+// дебоунс за авто бекъп — по-тих (за да не удря лимити)
+const BACKUP_DEBOUNCE_MS = 3000;
 let backupPending = false;
+let _backupNotifiedOK = false;
+let _backupNotifiedFail = false;
 
 async function tryRestoreBackupHandle() {
   if (!HAS_FSA) return;
@@ -131,12 +134,11 @@ async function tryRestoreBackupHandle() {
     if (granted) {
       backupHandle = handle;
       backupConnected = true;
-      const badge = el("backupBadge"); if (badge) badge.classList.remove("hidden");
     }
   } catch {}
 }
 async function connectBackup() {
-  if (!HAS_FSA) { alert("Automatic backup is not supported in this browser. Use Export/Share instead."); return; }
+  if (!HAS_FSA) { alert("Automatic backup is not supported in this browser. Use Export/Import instead."); return; }
   try {
     const handle = await window.showSaveFilePicker({
       suggestedName: (st.name || "monk") + "_sheet.json",
@@ -145,9 +147,9 @@ async function connectBackup() {
     backupHandle = handle;
     await idbSet(BACKUP_KEY, handle);
     backupConnected = true;
-    const badge = el("backupBadge"); if (badge) badge.classList.remove("hidden");
-    await doBackupNow();
-    alert("Backup connected. Autosave enabled.");
+    await doBackupNow(); // първи запис веднага
+    // еднокатно съобщение, ако желаеш — оставям само конзола
+    console.log("Backup connected. Autosave enabled.");
   } catch (e) { /* canceled */ }
 }
 async function writeToHandle(handle, text) {
@@ -159,9 +161,18 @@ async function doBackupNow() {
   if (!backupConnected || !backupHandle) return;
   try {
     await writeToHandle(backupHandle, JSON.stringify(st, null, 2));
-    // по желание: визуален feedback (напр. мигащ бейдж) — може да добавим
+    if (!_backupNotifiedOK) {
+      _backupNotifiedOK = true;
+      _backupNotifiedFail = false;
+      console.log("Backup OK");
+    }
   } catch (e) {
     console.warn("Backup failed:", e);
+    if (!_backupNotifiedFail) {
+      _backupNotifiedFail = true;
+      _backupNotifiedOK = false;
+      alert("Не успях да запиша в избрания backup файл. Избери отново (PWA Storage) и посочи реална локална/синкната папка с права за запис.");
+    }
   }
 }
 function scheduleBackup() {
@@ -174,23 +185,11 @@ function scheduleBackup() {
     await doBackupNow();
   }, BACKUP_DEBOUNCE_MS);
 }
-async function loadFromBackup() {
-  if (!backupConnected || !backupHandle) { alert("No connected backup file."); return; }
-  try {
-    const file = await backupHandle.getFile();
-    const text = await file.text();
-    const obj = JSON.parse(text);
-    st = { ...defaultState, ...obj };
-    if (typeof st.level !== "number" || !isFinite(st.level)) st.level = 1;
-    save();
-    alert("Loaded from backup.");
-  } catch { alert("Failed to load from backup file."); }
-}
 
 function save(){
   localStorage.setItem("monkSheet_v2", JSON.stringify(st));
   renderAll();
-  scheduleBackup();
+  scheduleBackup(); // авто бекъп след всяка промяна
 }
 
 function migrate(){
@@ -238,7 +237,7 @@ function derived(){
     wis: savesBase.wis + allBonus,
     cha: savesBase.cha + allBonus,
   };
-  const pendingLevel = levelFromXP(st.xp); // само за показване (tool-tip)
+  const pendingLevel = levelFromXP(st.xp); // само за показване (tooltip/инфо)
   return {level, pendingLevel, mods, prof, ma, kiMax, hdMax, maxHP, ac, um, totalSpeed, savesBase, savesTotal};
 }
 
@@ -325,9 +324,8 @@ document.addEventListener("click",(e)=>{
   if (e.target.classList.contains("tab-btn")){
     document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
     e.target.classList.add("active");
-    const tab = e.target.getAttribute("data-tab");
-    el("tab-combat")?.classList.toggle("hidden", tab!=="combat");
-    el("tab-stats")?.classList.toggle("hidden", tab!=="stats");
+    el("tab-combat")?.classList.toggle("hidden", e.target.getAttribute("data-tab")!=="combat");
+    el("tab-stats")?.classList.toggle("hidden", e.target.getAttribute("data-tab")!=="stats");
   }
 });
 
@@ -409,13 +407,11 @@ function renderAll(){
   else if (st.status === "dead") emoji = "💀";
   else if (st.hpCurrent <= 0) emoji = "😵";
   el("lifeStatus") && (el("lifeStatus").textContent = emoji);
-
-  // Backup badge visibility
-  const badge = el("backupBadge");
-  if (badge) badge.classList.toggle("hidden", !backupConnected);
 }
 
 // ===== Events: inputs =====
+el("btnConnectBackup")?.addEventListener("click", connectBackup);
+
 el("charName")?.addEventListener("input", ()=>{ st.name = el("charName").value; save(); });
 el("xpInput")?.addEventListener("input", ()=>{
   st.xp = Math.max(0, Math.floor(Number(el("xpInput").value||0)));
@@ -535,7 +531,7 @@ el("btnHealFromZero")?.addEventListener("click", ()=>{
 });
 
 // Short Rest (RAW): Ki to max; spend HD
-el("btnShortRest")?.addEventListener("click", ()=>{
+el("btnShortRest")?.addEventListener("click", async ()=>{
   const d = derived();
   st.kiCurrent = d.kiMax;
   if (st.hdAvail > 0){
@@ -554,10 +550,11 @@ el("btnShortRest")?.addEventListener("click", ()=>{
     }
   }
   save();
+  await doBackupNow(); // принудителен запис
 });
 
 // Long Rest (RAW): full HP, Ki max, recover half HD (ceil), APPLY LEVEL-UP from XP
-el("btnLongRest")?.addEventListener("click", ()=>{
+el("btnLongRest")?.addEventListener("click", async ()=>{
   const oldLevel = st.level;
   const pending = levelFromXP(st.xp);
   let leveled = false;
@@ -565,7 +562,7 @@ el("btnLongRest")?.addEventListener("click", ()=>{
   if (pending > oldLevel) {
     st.level = pending;
     leveled = true;
-    // при увеличение на max HD, добавяме разликата към наличните (ако има)
+    // при увеличение на max HD, добавяме разликата към наличните
     st.hdAvail = Math.min(st.level, st.hdAvail + (st.level - oldLevel));
   }
 
@@ -582,6 +579,8 @@ el("btnLongRest")?.addEventListener("click", ()=>{
   save();
 
   if (leveled) { setTimeout(()=>alert(`Вече сте ${st.level} ниво!`), 10); }
+
+  await doBackupNow(); // принудителен запис
 });
 
 // Export / Import / Reset
@@ -609,11 +608,6 @@ el("btnReset")?.addEventListener("click", ()=>{
   save();
 });
 
-// Backup buttons (safe if missing)
-el("btnConnectBackup")?.addEventListener("click", connectBackup);
-el("btnBackupNow")?.addEventListener("click", doBackupNow);
-el("btnLoadBackup")?.addEventListener("click", loadFromBackup);
-
 // PWA install/register
 let deferredPrompt=null;
 window.addEventListener("beforeinstallprompt",(e)=>{ e.preventDefault(); deferredPrompt=e; el("btnInstall")?.classList.remove("hidden"); });
@@ -623,11 +617,10 @@ el("btnInstall")?.addEventListener("click", async ()=>{
 });
 if ("serviceWorker" in navigator) { window.addEventListener("load", ()=>navigator.serviceWorker.register("service-worker.js")); }
 
-// Try restore backup handle; final-save on hide
+// Restore backup handle; final-save on hide
 tryRestoreBackupHandle();
 window.addEventListener("visibilitychange", ()=>{ if (document.visibilityState === "hidden") doBackupNow(); });
 window.addEventListener("pagehide", ()=>{ doBackupNow(); });
-el("btnConnectBackup")?.addEventListener("click", connectBackup);
 
 // First render
 renderAll();
