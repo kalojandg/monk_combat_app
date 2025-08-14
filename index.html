@@ -239,8 +239,17 @@
     .controls {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.5rem;
+      gap: 10px;
       align-items: center;
+    }
+
+    /* label + вътрешния input да се държат като един елемент */
+    .controls label {
+      display: inline-flex;
+      /* << ключът */
+      align-items: center;
+      gap: 10px;
+      margin: 0;
     }
 
     /* не позволявай на децата да се разтягат по ширина */
