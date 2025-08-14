@@ -271,6 +271,14 @@
       flex: 0 0 auto;
     }
 
+    .top-right-controls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      gap: 0.5rem;
+    }
+
     /* малкото инпутче (HP Δ / Ki Δ) да е стегнато */
     input.small {
       width: 90px;
@@ -320,6 +328,14 @@
       <div class="title">Monk Sheet Lite — v3</div>
       <div class="spacer"></div>
       <div id="lifeStatus" class="status-emoji">🙂</div>
+      <div class="controls mt8">
+        <button id="btnShortRest">Short rest</button>
+        <button id="btnLongRest" class="primary">Long rest</button>
+        <button id="btnExport">Export</button>
+        <label class="tab-btn" for="importFile" style="cursor:pointer">Import</label>
+        <input id="importFile" type="file" accept="application/json" style="display:none" />
+        <button id="btnReset" class="danger">Reset</button>
+      </div>
     </div>
 
     <div class="tabs">
@@ -359,15 +375,6 @@
         <button id="btnCrit" class="success">Crit Success</button>
         <button id="btnCritFail" class="danger">Crit Fail (+2)</button>
         <button id="btnStabilize">Stabilize</button>
-      </div>
-
-      <div class="controls mt8">
-        <button id="btnShortRest">Short rest</button>
-        <button id="btnLongRest" class="primary">Long rest</button>
-        <button id="btnExport">Export</button>
-        <label class="tab-btn" for="importFile" style="cursor:pointer">Import</label>
-        <input id="importFile" type="file" accept="application/json" style="display:none" />
-        <button id="btnReset" class="danger">Reset</button>
       </div>
     </div>
 
