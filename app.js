@@ -46,6 +46,7 @@ const defaultState = {
   saveAllBonus:0,
   skillProfs:{},
   hpCurrent:10,
+  hpHomebrew: null,
   kiCurrent:1,
   dsSuccess:0, dsFail:0, status:"alive",
   hdAvail:1,
@@ -74,7 +75,12 @@ function derived(){
   const ma = maDie(level);
   const kiMax = level;
   const hdMax = level;
-  const maxHP = baseHP(level, mods.con) + (st.tough? 2*level : 0) + Number(st.hpAdjust||0);
+  const calculatedMaxHP =
+  baseHP(level, mods.con) + (st.tough ? 2 * level : 0) + Number(st.hpAdjust || 0);
+  // ако има homebrew override -> ползваме него, иначе автосметката
+  const maxHP = (st.hpHomebrew !== null && st.hpHomebrew !== "" && !Number.isNaN(Number(st.hpHomebrew)))
+    ? Math.max(1, Math.floor(Number(st.hpHomebrew)))
+    : calculatedMaxHP;
   const ac = 10 + mods.dex + mods.wis + Number(st.acMagic||0);
   const um = umBonus(level);
   const totalSpeed = Number(st.baseSpeed||0) + um;
@@ -189,6 +195,8 @@ function renderAll(){
   el("profSpan2").textContent = `+${d.prof}`;
   el("maDieSpan").textContent = d.ma;
   el("maxHpSpan").textContent = d.maxHP;
+  const hbEl = el("homebrewHp");
+  if (hbEl) hbEl.value = (st.hpHomebrew === null || st.hpHomebrew === "") ? "" : st.hpHomebrew;
   el("hdMaxSpan").textContent = d.hdMax;
   el("hdAvailSpan").textContent = st.hdAvail;
   el("kiMaxSpan").textContent = d.kiMax;
@@ -271,6 +279,25 @@ el("saveAllBonusInput").addEventListener("input", ()=>{
   const id = "save"+S+"Prof";
   el(id).addEventListener("change", ()=>{ st[id] = el(id).checked; save(); });
 });
+const hbInput = document.getElementById("homebrewHp");
+if (hbInput) {
+  hbInput.addEventListener("input", () => {
+    const raw = hbInput.value.trim();
+    // празно поле = махаме override и се връщаме към автосметка
+    if (raw === "") {
+      st.hpHomebrew = null;
+    } else {
+      let v = Math.floor(Number(raw));
+      if (Number.isNaN(v)) v = null;
+      st.hpHomebrew = v !== null ? Math.max(1, v) : null;
+    }
+    // ограничаваме текущото HP до новия максимум
+    const d2 = derived();
+    st.hpCurrent = clamp(st.hpCurrent, 0, d2.maxHP);
+    save();
+  });
+}
+
 
 // ===== Combat actions =====
 function setHP(v){
