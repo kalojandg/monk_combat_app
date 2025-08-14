@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="bg">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -9,64 +10,281 @@
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <meta name="theme-color" content="#0b0c12" />
   <style>
-    :root{
-      --bg:#0b0c12; --panel:#0f111a; --panel2:#0b0e15;
-      --muted:#9aa3b2; --text:#e6e6ef;
-      --border:#262b3a;
-      --pill:#0e0f14; --pill2:#14182a;
-      --accent:#3a7afe;
+    :root {
+      --bg: #0b0c12;
+      --panel: #0f111a;
+      --panel2: #0b0e15;
+      --muted: #9aa3b2;
+      --text: #e6e6ef;
+      --border: #262b3a;
+      --pill: #0c0e16;
+      /* по-бледо за spans */
+      --pill2: #14182a;
+      /* по-плътно за inputs/бутоните */
+      --accent: #3a7afe;
     }
-    *{box-sizing:border-box}
-    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:system-ui,Segoe UI,Roboto,Arial}
-    a{color:var(--accent);text-decoration:none}
-    .wrap{max-width:1060px;margin:0 auto;padding:16px}
-    .header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-    .title{font-weight:700;font-size:18px}
-    .status-emoji{font-size:20px;margin-left:auto}
+
+    * {
+      box-sizing: border-box
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, Segoe UI, Roboto, Arial
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none
+    }
+
+    .wrap {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 16px
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px
+    }
+
+    .title {
+      font-weight: 700;
+      font-size: 18px
+    }
+
+    .status-emoji {
+      font-size: 20px;
+      margin-left: auto
+    }
 
     /* tabs */
-    .tabs{display:flex;gap:6px;margin:8px 0 12px 0}
-    .tab-btn{padding:8px 12px;border:1px solid var(--border);background:var(--panel);border-radius:10px;color:var(--text);cursor:pointer}
-    .tab-btn.active{background:var(--pill2);}
-    .tab{border:1px solid var(--border);background:var(--panel);border-radius:12px;padding:12px}
-    .hidden{display:none!important}
+    .tabs {
+      display: flex;
+      gap: 6px;
+      margin: 8px 0 12px 0
+    }
 
-    /* generic blocks */
-    .row-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-bottom:12px}
-    .field{display:flex;flex-direction:column;gap:6px}
-    .field label{font-size:12px;color:var(--muted)}
-    input[type=number], input[type=text]{background:#121320;border:1px solid var(--border);color:var(--text);border-radius:10px;padding:8px 10px}
-    .value-pill{display:inline-flex;align-items:center;justify-content:center;min-width:56px;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:var(--pill);font-weight:700}
-    .small-note{font-size:12px;color:var(--muted)}
-    .section-title{font-weight:700;margin:2px 0 6px 2px;color:#cfd7ff}
+    .tab-btn {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      border-radius: 10px;
+      color: var(--text);
+      cursor: pointer
+    }
 
-    /* abilities block */
-    .abilities-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
-    .abil{border:1px solid var(--border);border-radius:12px;background:var(--panel2);padding:10px}
-    .abil .top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-    .abil .spacer{flex:1 1 auto}
-    .abil .bottom{display:flex;align-items:center;gap:8px}
-    .abil .save, .abil .mod {min-width:54px;text-align:center}
+    .tab-btn.active {
+      background: var(--pill2)
+    }
 
-    /* table */
-    table{width:100%;border-collapse:collapse;margin-top:8px}
-    th,td{border-bottom:1px solid var(--border);padding:8px}
-    th{color:#cfd7ff;text-align:left}
-    td.right{text-align:right}
+    .tab {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      border-radius: 12px;
+      padding: 14px
+    }
 
-    /* combat quick */
-    .pillbar{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:12px}
-    .pill{padding:10px 12px;border-radius:999px;border:1px solid var(--border);background:var(--panel2);display:flex;align-items:center;gap:10px;justify-content:center;font-weight:700}
-    .pill .big{font-size:20px}
-    .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-    button{background:#1a1f33;border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:10px;cursor:pointer}
-    button.primary{background:#2d3a6b}
-    button.danger{background:#5a2630}
-    button.success{background:#245a3a}
-    input.small{width:90px}
-    .mt8{margin-top:8px}
+    .hidden {
+      display: none !important
+    }
+
+    /* layout blocks */
+    .row-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 12px;
+      margin-bottom: 12px
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px
+    }
+
+    .field label {
+      font-size: 12px;
+      color: var(--muted)
+    }
+
+    /* inputs vs spans */
+    input[type=number],
+    input[type=text] {
+      background: #151a2c;
+      /* малко по-плътно от span */
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+
+    .value-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 56px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid #1e2230;
+      /* малко по-нежна рамка */
+      background: var(--pill);
+      /* по-бледо от input */
+      font-weight: 700;
+      color: #d9def2;
+    }
+
+    /* abilities */
+    .abilities-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px
+    }
+
+    .abil {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--panel2);
+      padding: 10px
+    }
+
+    .abil .top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px
+    }
+
+    .abil .spacer {
+      flex: 1 1 auto
+    }
+
+    .abil .bottom {
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .abil .save,
+    .abil .mod {
+      min-width: 54px;
+      text-align: center
+    }
+
+    .small-note {
+      font-size: 12px;
+      color: var(--muted)
+    }
+
+    .section-title {
+      font-weight: 700;
+      margin: 2px 0 6px 2px;
+      color: #cfd7ff
+    }
+
+    /* skills table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--border);
+      padding: 8px
+    }
+
+    th {
+      color: #cfd7ff;
+      text-align: left
+    }
+
+    td.right {
+      text-align: right
+    }
+
+    /* COMBAT: по-широко, подравнено, по-спокойни бутони */
+    .pillbar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .pill {
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #101527;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      justify-content: center;
+      font-weight: 700
+    }
+
+    .pill .big {
+      font-size: 20px
+    }
+
+    /* подравняване на контролите в мрежа вместо „скачане“ */
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 10px;
+      align-items: center;
+    }
+
+    .controls>* {
+      min-width: 0
+    }
+
+    /* да не раздуват колони */
+
+    button {
+      background: #1a223a;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 9px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    button.primary {
+      background: #22315b
+    }
+
+    button.danger {
+      background: #4a2730
+    }
+
+    button.success {
+      background: #224a34
+    }
+
+    button:hover {
+      filter: brightness(1.08)
+    }
+
+    input.small {
+      width: 100%
+    }
+
+    /* да пасва по колоната */
+    .mt8 {
+      margin-top: 8px
+    }
   </style>
 </head>
+
 <body>
   <div class="wrap">
     <div class="header">
@@ -84,8 +302,10 @@
     <!-- Combat tab -->
     <div id="tab-combat" class="tab">
       <div class="pillbar">
-        <div class="pill">HP&nbsp;<span class="big" id="hpCurrentSpan">10</span>/<span class="big" id="hpMaxSpan">10</span></div>
-        <div class="pill">Ki&nbsp;<span class="big" id="kiCurrentSpan">1</span>/<span class="big" id="kiMaxSpan2">1</span></div>
+        <div class="pill">HP&nbsp;<span class="big" id="hpCurrentSpan">10</span>/<span class="big"
+            id="hpMaxSpan">10</span></div>
+        <div class="pill">Ki&nbsp;<span class="big" id="kiCurrentSpan">1</span>/<span class="big"
+            id="kiMaxSpan2">1</span></div>
         <div class="pill">AC&nbsp;<span class="big" id="acSpan">10</span></div>
         <div class="pill">Prof&nbsp;<span class="big" id="profSpan">+2</span></div>
       </div>
@@ -153,7 +373,8 @@
 
       <!-- Row 4 -->
       <div class="row-grid">
-        <div class="field"><label>Unarmored Movement (+ft)</label><span class="value-pill" id="umBonusSpan">0</span></div>
+        <div class="field"><label>Unarmored Movement (+ft)</label><span class="value-pill" id="umBonusSpan">0</span>
+        </div>
         <div class="field"><label>Passive Perception</label><span class="value-pill" id="passPercSpan">10</span></div>
         <div class="field"><label>Passive Investigation</label><span class="value-pill" id="passInvSpan">10</span></div>
         <div class="field"><label>Passive Insight</label><span class="value-pill" id="passInsSpan">10</span></div>
@@ -161,7 +382,8 @@
 
       <!-- All saves bonus -->
       <div class="row-grid">
-        <div class="field" style="max-width:240px"><label>All Saves Bonus</label><input id="saveAllBonusInput" type="number" step="1" value="0"></div>
+        <div class="field" style="max-width:240px"><label>All Saves Bonus</label><input id="saveAllBonusInput"
+            type="number" step="1" value="0"></div>
       </div>
 
       <!-- Abilities -->
@@ -169,7 +391,8 @@
       <div class="abilities-grid">
         <!-- STR -->
         <div class="abil">
-          <div class="top"><strong>STR</strong><span class="spacer"></span><label class="small-note"><input type="checkbox" id="saveStrProf"> Prof</label></div>
+          <div class="top"><strong>STR</strong><span class="spacer"></span><label class="small-note"><input
+                type="checkbox" id="saveStrProf"> Prof</label></div>
           <div class="bottom">
             <input id="strInput" type="number" step="1" class="small">
             <span class="value-pill mod" id="strModSpan">+0</span>
@@ -178,7 +401,8 @@
         </div>
         <!-- DEX -->
         <div class="abil">
-          <div class="top"><strong>DEX</strong><span class="spacer"></span><label class="small-note"><input type="checkbox" id="saveDexProf"> Prof</label></div>
+          <div class="top"><strong>DEX</strong><span class="spacer"></span><label class="small-note"><input
+                type="checkbox" id="saveDexProf"> Prof</label></div>
           <div class="bottom">
             <input id="dexInput" type="number" step="1" class="small">
             <span class="value-pill mod" id="dexModSpan">+0</span>
@@ -187,7 +411,9 @@
         </div>
         <!-- CON -->
         <div class="abil">
-          <div class="top"><strong>CON</strong><span class="spacer"></span><label class="small-note"><input type="checkbox" id="saveConProf"> Prof</label><label class="small-note" style="margin-left:10px"><input type="checkbox" id="toughChk"> Tough</label></div>
+          <div class="top"><strong>CON</strong><span class="spacer"></span><label class="small-note"><input
+                type="checkbox" id="saveConProf"> Prof</label><label class="small-note" style="margin-left:10px"><input
+                type="checkbox" id="toughChk"> Tough</label></div>
           <div class="bottom">
             <input id="conInput" type="number" step="1" class="small">
             <span class="value-pill mod" id="conModSpan">+0</span>
@@ -196,7 +422,8 @@
         </div>
         <!-- INT -->
         <div class="abil">
-          <div class="top"><strong>INT</strong><span class="spacer"></span><label class="small-note"><input type="checkbox" id="saveIntProf"> Prof</label></div>
+          <div class="top"><strong>INT</strong><span class="spacer"></span><label class="small-note"><input
+                type="checkbox" id="saveIntProf"> Prof</label></div>
           <div class="bottom">
             <input id="intInput" type="number" step="1" class="small">
             <span class="value-pill mod" id="intModSpan">+0</span>
@@ -205,7 +432,8 @@
         </div>
         <!-- WIS -->
         <div class="abil">
-          <div class="top"><strong>WIS</strong><span class="spacer"></span><label class="small-note"><input type="checkbox" id="saveWisProf"> Prof</label></div>
+          <div class="top"><strong>WIS</strong><span class="spacer"></span><label class="small-note"><input
+                type="checkbox" id="saveWisProf"> Prof</label></div>
           <div class="bottom">
             <input id="wisInput" type="number" step="1" class="small">
             <span class="value-pill mod" id="wisModSpan">+0</span>
@@ -214,7 +442,8 @@
         </div>
         <!-- CHA -->
         <div class="abil">
-          <div class="top"><strong>CHA</strong><span class="spacer"></span><label class="small-note"><input type="checkbox" id="saveChaProf"> Prof</label></div>
+          <div class="top"><strong>CHA</strong><span class="spacer"></span><label class="small-note"><input
+                type="checkbox" id="saveChaProf"> Prof</label></div>
           <div class="bottom">
             <input id="chaInput" type="number" step="1" class="small">
             <span class="value-pill mod" id="chaModSpan">+0</span>
@@ -226,16 +455,23 @@
       <div class="section-title">Skills</div>
       <table>
         <thead>
-          <tr><th>Skill</th><th>Ability</th><th>Prof</th><th class="right">Bonus</th></tr>
+          <tr>
+            <th>Skill</th>
+            <th>Ability</th>
+            <th>Prof</th>
+            <th class="right">Bonus</th>
+          </tr>
         </thead>
         <tbody id="skillsBody"></tbody>
       </table>
 
       <div class="section-title">Бележки</div>
-      <textarea id="notes" rows="4" style="width:100%;background:#101323;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px"></textarea>
+      <textarea id="notes" rows="4"
+        style="width:100%;background:#101323;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px"></textarea>
     </div>
   </div>
 
   <script src="app.js"></script>
 </body>
+
 </html>
