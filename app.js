@@ -61,9 +61,14 @@ function load(){
 function save(){ localStorage.setItem("monkSheet_v3", JSON.stringify(st)); renderAll(); }
 
 // ===== Derived =====
-function levelFromXP(xp){
+function levelFromXP(xp) {
   let lvl = 1;
-  for (let i=20;i>=2;i--){ if (xp>=XP_THRESH[i-2]) { lvl=i; break; } }
+  for (let i = 20; i >= 2; i--) {
+    if (xp >= XP_THRESH[i - 2]) {
+      lvl = i;
+      break;
+    }
+  }
   return lvl;
 }
 function derived(){
