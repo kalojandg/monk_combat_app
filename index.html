@@ -252,6 +252,20 @@
       margin: 0;
     }
 
+    /* еднаква височина за поле и бутони, за да са на равни начала */
+    .controls input.small {
+      height: 40px;
+      padding: 0 10px;
+    }
+
+    .controls>button {
+      height: 40px;
+      padding: 0 18px;
+      /* хоризонтален падинг, без да променя височината */
+      align-self: center;
+      /* safety, ако някъде се „вдигне“ височина */
+    }
+
     /* не позволявай на децата да се разтягат по ширина */
     .controls>* {
       flex: 0 0 auto;
