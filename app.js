@@ -4,7 +4,7 @@ const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
 const modFrom = (score)=>Math.floor((Number(score||0)-10)/2);
 
 // XP thresholds 1..20
-const XP_THRESH = [0,300,900,2700,6500,14000,23000,34000,48000,64000,85000,100000,120000,140000,165000,195000,225000,265000,305000,355000];
+const XP_THRESH = [300,900,2700,6500,14000,23000,34000,48000,64000,85000,100000,120000,140000,165000,195000,225000,265000,305000,355000];
 
 function maDie(level){
   if (level>=17) return "d10";
