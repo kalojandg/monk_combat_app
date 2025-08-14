@@ -271,8 +271,6 @@
       flex: 0 0 auto;
     }
 
-    .ghost{ visibility:hidden; display:inline-block; width:38px; }
-
     /* малкото инпутче (HP Δ / Ki Δ) да е стегнато */
     input.small {
       width: 90px;
@@ -343,10 +341,10 @@
 
       <div class="controls">
         <label>HP Δ <input id="hpDelta" type="number" class="small"></label>
-        <label class="ghost"><button id="btnDamage" class="danger">Take damage</button></label>
-        <label class="ghost"><button id="btnHeal" class="success">Heal</button></label>
-        <label class="ghost"><button id="btnHitAtZero">Hit at 0 ⇒ DS fail</button></label>
-        <label class="ghost"><button id="btnHealFromZero" class="success">Heal from 0</button></label><label class="ghost"></label>
+        <button id="btnDamage" class="danger">Take damage</button>
+        <button id="btnHeal" class="success">Heal</button>
+        <button id="btnHitAtZero">Hit at 0 ⇒ DS fail</button>
+        <button id="btnHealFromZero" class="success">Heal from 0</button>
       </div>
 
       <div class="controls mt8">
