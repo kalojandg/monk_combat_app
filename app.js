@@ -41,6 +41,7 @@ const defaultState = {
   name:"Пийс Ошит",
   notes:"",
   xp:0,
+  levelApplied: 1,
   str:10, dex:10, con:10, int_:10, wis:10, cha:10,
   saveStrProf:false, saveDexProf:true, saveConProf:false, saveIntProf:false, saveWisProf:true, saveChaProf:false,
   saveAllBonus:0,
@@ -72,16 +73,17 @@ function levelFromXP(xp) {
   return lvl;
 }
 function derived(){
-  const level = levelFromXP(st.xp);
+  const level = st.levelApplied;                 // <-- вместо levelFromXP(st.xp)
   const mods = {
-    str:modFrom(st.str), dex:modFrom(st.dex), con:modFrom(st.con), int_:modFrom(st.int_), wis:modFrom(st.wis), cha:modFrom(st.cha)
+    str:modFrom(st.str), dex:modFrom(st.dex), con:modFrom(st.con),
+    int_:modFrom(st.int_), wis:modFrom(st.wis), cha:modFrom(st.cha)
   };
   const prof = profBonus(level);
   const ma = maDie(level);
   const kiMax = level;
   const hdMax = level;
   const calculatedMaxHP = baseHP(level, mods.con) + (st.tough ? 2 * level : 0) + Number(st.hpAdjust || 0);
-  const hbAdj = Number(st.hpHomebrew || 0);  // добавката/корекцията
+  const hbAdj = Number(st.hpHomebrew || 0);
   const maxHP = Math.max(1, Math.floor(calculatedMaxHP + hbAdj));
 
   const ac = 10 + mods.dex + mods.wis + Number(st.acMagic||0);
@@ -104,8 +106,7 @@ function derived(){
     wis: savesBase.wis + allBonus,
     cha: savesBase.cha + allBonus,
   };
-  return {level, mods, prof, ma, kiMax, hdMax, maxHP, ac, um, totalSpeed, savesBase, savesTotal};
-}
+  return {level, mods, prof, ma, kiMax, hdMax, maxHP, ac, um, totalSpeed, savesBase, savesTotal};}
 
 // ===== Skills =====
 const SKILLS = [
@@ -252,10 +253,7 @@ el("charName").addEventListener("input", ()=>{ st.name = el("charName").value; s
 el("notes").addEventListener("input", ()=>{ st.notes = el("notes").value; save(); });
 el("xpInput").addEventListener("input", ()=>{
   st.xp = Math.max(0, Math.floor(Number(el("xpInput").value||0)));
-  const d = derived();
-  st.hdAvail = clamp(st.hdAvail, 0, d.hdMax);
-  st.kiCurrent = clamp(st.kiCurrent, 0, d.kiMax);
-  save();
+  save();  // без derived(), без клампове тук
 });
 ["str","dex","con","int_","wis","cha"].forEach(key=>{
   const mapId = {str:"strInput", dex:"dexInput", con:"conInput", int_:"intInput", wis:"wisInput", cha:"chaInput"};
@@ -395,12 +393,32 @@ el("btnShortRest").addEventListener("click", ()=>{
 
 // Long Rest: full HP, Ki max, recover half HD (ceil) + level-up applies here only
 el("btnLongRest").addEventListener("click", ()=>{
+  const oldLevel = st.levelApplied;
+  const newLevel = levelFromXP(st.xp);
+  const leveledUp = newLevel > oldLevel;
+
+  // приложи новото ниво
+  st.levelApplied = newLevel;
+
+  // пресметни по новото ниво
   const d = derived();
-  const recover = Math.ceil(d.hdMax / 2);
-  st.hdAvail = Math.min(d.hdMax, st.hdAvail + recover);
+
+  // HD: ако има level-up -> пълним на макс; иначе възстановяваме половината (ceil)
+  if (leveledUp) {
+    st.hdAvail = d.hdMax;
+  } else {
+    const recover = Math.ceil(d.hdMax / 2);
+    st.hdAvail = Math.min(d.hdMax, st.hdAvail + recover);
+  }
+
+  // Ki/HP и статут
   st.kiCurrent = d.kiMax;
   st.hpCurrent = d.maxHP;
-  st.dsSuccess=0; st.dsFail=0; st.status="alive";
+  st.dsSuccess = 0; st.dsFail = 0; st.status = "alive";
+
+  // (по желание) нотификация:
+  // if (leveledUp) alert(`Вече сте ниво ${newLevel}.`);
+
   save();
 });
 
