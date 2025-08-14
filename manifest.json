@@ -1,10 +1,10 @@
 {
-  "name": "Monk Sheet Lite v2",
-  "short_name": "MonkLite v2",
-  "start_url": ".",
+  "name": "Monk Sheet Lite v3",
+  "short_name": "MonkSheet",
+  "start_url": "./",
   "display": "standalone",
-  "background_color": "#0f0f12",
-  "theme_color": "#111111",
+  "background_color": "#0b0c12",
+  "theme_color": "#0b0c12",
   "icons": [
     {
       "src": "icons/icon-192.png",
