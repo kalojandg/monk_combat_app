@@ -315,6 +315,22 @@
       width: 100%
     }
 
+    .dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-left: 6px;
+      background: #666;
+      vertical-align: middle;
+      opacity: .7
+    }
+
+    .dot.ok {
+      background: #2ecc71;
+      opacity: 1
+    }
+
     /* да пасва по колоната */
     .mt8 {
       margin-top: 8px
@@ -335,6 +351,9 @@
         <label class="tab-btn" for="importFile" style="cursor:pointer">Import</label>
         <input id="importFile" type="file" accept="application/json" style="display:none" />
         <button id="btnReset" class="danger">Reset</button>
+        <button id="btnCloudLink" class="pill">Cloud</button>
+        <button id="btnCloudPull" class="pill ghost">Pull</button>
+        <span id="cloudDot" class="dot" title="Not linked"></span>
       </div>
     </div>
 
