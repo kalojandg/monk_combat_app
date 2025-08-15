@@ -20,21 +20,33 @@ function cloudUiRefresh() {
 
 async function cloudLink() {
   if (!("showSaveFilePicker" in window)) {
-    alert("Cloud sync иска Chrome/Edge (File System Access API).");
+    alert("Cloud sync изисква Chrome/Edge (File System Access API).");
     return;
   }
   try {
-    cloudHandle = await window.showSaveFilePicker({
+    const handle = await window.showSaveFilePicker({
       suggestedName: (st.name || "monk") + "_sheet.json",
       types: [{ description: "JSON", accept: { "application/json": [".json"] } }]
     });
-    await cloudWrite(true);         // запиши веднага текущото състояние
+    // вземи разрешение
+    let perm = handle.queryPermission ? await handle.queryPermission({mode:'readwrite'}) : 'granted';
+    if (perm === 'prompt' && handle.requestPermission) {
+      perm = await handle.requestPermission({mode:'readwrite'});
+    }
+    if (perm !== 'granted') {
+      alert("Няма разрешение за писане към файла.");
+      return;
+    }
+    cloudHandle = handle;
+    await idbSet('cloudHandle', handle);
+    await cloudWrite(true); // запиши веднага
     cloudUiRefresh();
-  } catch (e) { /* cancel */ }
+  } catch(e) { /* cancel */ }
 }
 
-async function cloudUnlink() {
+async function cloudUnlink(){
   cloudHandle = null;
+  await idbDel('cloudHandle');
   cloudUiRefresh();
 }
 
@@ -53,20 +65,38 @@ async function cloudPull() {
   }
 }
 
-async function cloudWrite(force = false) {
+async function cloudWrite(force=false) {
   if (!cloudHandle) return;
   if (!force && !cloudDirty) return;
   try {
+    // гарантирай разрешение
+    let perm = cloudHandle.queryPermission ? await cloudHandle.queryPermission({mode:'readwrite'}) : 'granted';
+    if (perm === 'prompt' && cloudHandle.requestPermission) {
+      perm = await cloudHandle.requestPermission({mode:'readwrite'});
+    }
+    if (perm !== 'granted') {
+      // откачи линка — иначе ще създадем нов файл при следващ Cloud
+      cloudHandle = null;
+      await idbDel('cloudHandle');
+      cloudUiRefresh();
+      console.warn('Cloud write skipped: no permission');
+      return;
+    }
+
     const writable = await cloudHandle.createWritable();
-    await writable.write(new Blob([JSON.stringify(st, null, 2)], { type: "application/json" }));
+    await writable.write(new Blob([JSON.stringify(st, null, 2)], {type:"application/json"}));
     await writable.close();
     cloudDirty = false;
   } catch (e) {
-    console.error(e);
-    // ако правата паднат – откачи линка
-    // (може да поиска пак разрешение с requestPermission, но пазим просто)
+    console.error('cloudWrite err', e);
+    // handle-ът може да е станал невалиден (Android документи/провайдър)
+    cloudHandle = null;
+    await idbDel('cloudHandle');
+    cloudUiRefresh();
+    // по желание: alert('Cloud file is not available. Please relink.');
   }
 }
+
 
 function cloudSchedule() {
   if (!cloudHandle) return;
@@ -594,20 +624,27 @@ async function cloudUnlink() {
 
 async function cloudRestore() {
   try {
-    const h = await idbGet('cloudHandle');
-    if (!h) return;
-    // Проверка за разрешение
-    let perm = await h.queryPermission?.({ mode: 'readwrite' });
-    if (perm === 'prompt') perm = await h.requestPermission?.({ mode: 'readwrite' });
+    const h  = await idbGet('cloudHandle');
+    if (!h) { cloudHandle = null; cloudUiRefresh(); return; }
+
+    // проверка/искане на разрешение
+    let perm = h.queryPermission ? await h.queryPermission({ mode: 'readwrite' }) : 'granted';
+    if (perm === 'prompt' && h.requestPermission) {
+      perm = await h.requestPermission({ mode: 'readwrite' });
+    }
     if (perm === 'granted') {
       cloudHandle = h;
-      cloudUiRefresh();
     } else {
-      // ще иска пак линк при клик на Cloud
+      cloudHandle = null; // няма права -> няма линк
     }
-  } catch (e) { /* ignore */ }
+    cloudUiRefresh();
+  } catch (e) {
+    console.warn('cloudRestore err', e);
+    cloudHandle = null; cloudUiRefresh();
+  }
 }
-cloudRestore();
+
+await cloudRestore();
 
 // First render
 renderAll();
