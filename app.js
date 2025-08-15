@@ -366,6 +366,17 @@ if (btnRes){
     save();
   });
 }
+function showDeathScreen() {
+  const deathEl = document.querySelector('.you-died');
+  deathEl.classList.remove('hide');
+  deathEl.classList.add('show');
+}
+
+function hideDeathScreen() {
+  const deathEl = document.querySelector('.you-died');
+  deathEl.classList.remove('show');
+  deathEl.classList.add('hide');
+}
 el("btnSpendKi") && el("btnSpendKi").addEventListener("click", ()=>{
   const k = Number(el("kiDelta").value||0); if (k<=0) return; setKi(st.kiCurrent - k);
 });
