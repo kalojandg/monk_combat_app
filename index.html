@@ -9,6 +9,7 @@
   <link rel="icon" href="icons/icon-192.png" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <meta name="theme-color" content="#0b0c12" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #0b0c12;
@@ -390,55 +391,87 @@
     }
 
     /* fail 3 */
-
+    /* Оверлей – статичен */
     .you-died {
-      font-family: 'Cinzel', serif;
-      font-size: 4em;
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, .7);
-      color: #a00;
-      text-shadow: 0 0 10px #f33, 0 0 20px #800;
-      animation: pulse 2s infinite;
       display: flex;
       align-items: center;
       justify-content: center;
+      background: rgba(0, 0, 0, .72);
       z-index: 9999;
+      /* по желание, ако браузърът може: */
+      backdrop-filter: blur(2px);
     }
 
     .you-died.hidden {
       display: none;
     }
 
+    /* Картата вътре – може да остане както беше, само леко прозрачна */
     .you-died-card {
-      background: rgba(10, 10, 14, .9);
-      border: 1px solid rgba(255, 255, 255, .1);
+      background: rgba(10, 10, 14, .85);
+      border: 1px solid rgba(255, 255, 255, .08);
       padding: 1.25rem 1.5rem;
       border-radius: .75rem;
       text-align: center;
       min-width: 280px;
     }
 
+    /* НАДПИСЪТ — тук е магията */
     .you-died-title {
-      font-size: 2rem;
-      letter-spacing: .2rem;
-      color: #ff5252;
-      margin-bottom: .75rem;
-      text-shadow: 0 0 12px rgba(255, 80, 80, .4);
-      animation: flicker 1.6s ease-in-out infinite;
+      font-family: 'Cinzel', serif;
+      font-weight: 700;
+      font-size: clamp(2.2rem, 6vw, 5rem);
+      letter-spacing: .18em;
+      margin-bottom: .9rem;
+      /* цвет/блясък */
+      color: #ff3b3b;
+      -webkit-text-stroke: 1px #3b0000;
+      /* лек „контур“ */
+      text-shadow:
+        0 0 10px rgba(255, 70, 70, .55),
+        0 0 22px rgba(180, 0, 0, .35),
+        0 0 38px rgba(140, 0, 0, .25);
+      /* анимации */
+      animation: dsPulse 2.2s ease-in-out infinite, dsFlicker 1.6s ease-in-out infinite;
+      will-change: transform, opacity;
+      transform-origin: center;
     }
 
-    @keyframes pulse {
+    /* лек пулс (скейл + лек fade) */
+    @keyframes dsPulse {
 
       0%,
       100% {
-        opacity: 0.9;
         transform: scale(1);
+        opacity: .95;
       }
 
       50% {
-        opacity: 1;
         transform: scale(1.05);
+        opacity: 1;
+      }
+    }
+
+    /* неравномерен „фликер“ като Souls */
+    @keyframes dsFlicker {
+
+      0%,
+      19%,
+      21%,
+      23%,
+      25%,
+      54%,
+      56%,
+      100% {
+        filter: none;
+      }
+
+      20%,
+      24%,
+      55% {
+        filter: brightness(1.15) saturate(1.05);
       }
     }
   </style>
