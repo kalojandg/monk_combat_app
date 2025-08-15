@@ -255,6 +255,8 @@ function renderAll(){
   el("saveChaTotalSpan") && (el("saveChaTotalSpan").textContent = (d.savesTotal.cha>=0?"+":"")+d.savesTotal.cha);
 
   renderSkills(d.mods, d.prof);
+  renderDeathSaves();
+
 }
 
 // ===== Events: inputs =====
@@ -317,6 +319,7 @@ if (hbInput) {
 // ===== Combat actions =====
 function setHP(v){
   const d = derived();
+  if (st.status === "dead") return;  // мъртъв не се лекува с обикновено heal
   st.hpCurrent = clamp(v, 0, d.maxHP);
   if (st.hpCurrent > 0){ st.status="alive"; st.dsSuccess=0; st.dsFail=0; }
   else if (st.hpCurrent===0 && st.status!=="dead"){ st.status = (st.dsSuccess>=3)?"stable":"unconscious"; }
@@ -335,12 +338,15 @@ el("btnDamage") && el("btnDamage").addEventListener("click", ()=>{
     if (st.dsFail>=3) st.status="dead";
     save();
   } else {
+    if (st.status === "dead") return;  // мъртъв не се лекува с обикновено heal
     setHP(st.hpCurrent - dVal);
     if (st.hpCurrent===0) st.status="unconscious";
   }
 });
 el("btnHeal") && el("btnHeal").addEventListener("click", ()=>{
-  const h = Number(el("hpDelta").value||0); if (h<=0) return; setHP(st.hpCurrent + h);
+  const h = Number(el("hpDelta").value||0); if (h<=0) return;
+  if (st.status === "dead") return;  // мъртъв не се лекува с обикновено heal
+  setHP(st.hpCurrent + h);
 });
 el("btnHitAtZero") && el("btnHitAtZero").addEventListener("click", ()=>{
   if (st.hpCurrent===0 && st.status!=="dead"){
@@ -349,6 +355,17 @@ el("btnHitAtZero") && el("btnHitAtZero").addEventListener("click", ()=>{
     save();
   }
 });
+const btnRes = el("btnResurrect");
+if (btnRes){
+  btnRes.addEventListener("click", ()=>{
+    if (st.status !== "dead") return;
+    // „възкресяваме“ – 1 HP, нулираме сейфовете
+    st.hpCurrent = 1;
+    st.dsSuccess = 0; st.dsFail = 0;
+    st.status = "alive";
+    save();
+  });
+}
 el("btnSpendKi") && el("btnSpendKi").addEventListener("click", ()=>{
   const k = Number(el("kiDelta").value||0); if (k<=0) return; setKi(st.kiCurrent - k);
 });
@@ -565,6 +582,26 @@ async function cloudRestore(){
     cloudHandle = null;
     cloudUiRefresh();
   }
+}
+
+function renderDeathSaves(){
+  const s = st.dsSuccess, f = st.dsFail;
+  const sIds = ["dsS1","dsS2","dsS3"], fIds = ["dsF1","dsF2","dsF3"];
+  sIds.forEach((id, i)=>{
+    const n = el(id); if (!n) return;
+    n.classList.toggle("active", s > i);
+  });
+  fIds.forEach((id, i)=>{
+    const n = el(id); if (!n) return;
+    const active = f > i;
+    n.classList.toggle("active", active);
+    n.classList.toggle("lvl2", f >= 2 && i <= 1);   // подчертай първите две, когато са ≥2
+    n.classList.toggle("lvl3", f >= 3 && i <= 2);   // всичките при 3 (смърт)
+  });
+
+  // overlay
+  const ov = el("youDiedOverlay");
+  if (ov) ov.classList.toggle("hidden", st.status !== "dead");
 }
 
 // Bind UI
