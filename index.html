@@ -390,33 +390,48 @@
       box-shadow: 0 0 8px rgba(255, 0, 0, .35);
     }
 
-    /* Текстовите полета (textarea) */
-    textarea {
-      background-color: #1e1e2f;
-      /* тъмно, вместо ярко бяло */
-      color: #f5f5f5;
-      /* светъл текст */
-      font-size: 1.1rem;
-      /* по-голям шрифт */
-      line-height: 1.5;
-      /* да не е сбито */
-      border: 1px solid #333;
-      /* леко очертание */
-      border-radius: 6px;
-      /* заоблени ъгли */
-      padding: 8px;
-      resize: vertical;
-      /* може да се разширява само вертикално */
-      font-family: "Segoe UI", "Trebuchet MS", sans-serif;
+    .one-liner-box {
+      display: flex;
+      align-items: stretch;
+      /* бутонът и полето да са еднакво високи */
+      gap: 0;
+      /* махаме вътрешния gap – ще го решим с border-radius */
     }
 
-    /* При фокус – лека светла рамка */
-    textarea:focus {
-      outline: none;
-      border-color: #6c63ff;
-      /* лилав нюанс, можеш да смениш */
-      box-shadow: 0 0 6px rgba(108, 99, 255, 0.5);
+    /* Текстовото поле винаги вляво */
+    .one-liner-box textarea {
+      flex: 1;
+      background-color: #1e1e2f;
+      color: #f5f5f5;
+      font-size: 1.1rem;
+      border: 1px solid #333;
+      border-right: none;
+      /* за да не се удвоява линията с бутона */
+      border-radius: 6px 0 0 6px;
+      /* само левите ъгли */
+      padding: 10px;
+      resize: vertical;
     }
+
+    /* Бутонът винаги вдясно */
+    .one-liner-box button {
+      background-color: #2a2a3d;
+      color: #fff;
+      border: 1px solid #333;
+      border-left: none;
+      border-radius: 0 6px 6px 0;
+      /* само десните ъгли */
+      padding: 0 15px;
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+
+    /* Ефект при hover */
+    .one-liner-box button:hover {
+      background-color: #3c3c5a;
+      box-shadow: 0 0 8px rgba(108, 99, 255, 0.6);
+    }
+
 
     /* fail 3 */
     /* Оверлей – статичен */
@@ -741,7 +756,7 @@
         <!-- Crit Miss -->
         <div class="field">
           <label>Critical Miss</label>
-          <div class="row-grid" style="grid-template-columns: 1fr auto;">
+          <div class="one-liner-box">
 
             <textarea id="olCritMiss" rows="10" readonly></textarea>
             <button id="btnCritMiss">Get</button>
@@ -751,7 +766,7 @@
         <!-- Miss attack -->
         <div class="field">
           <label>Miss attack</label>
-          <div class="row-grid" style="grid-template-columns: 1fr auto;">
+          <div class="one-liner-box">
 
             <textarea id="olMissAttack" rows="10" readonly></textarea>
             <button id="btnMissAttack">Get</button>
@@ -761,7 +776,7 @@
         <!-- Crit Attack -->
         <div class="field">
           <label>Critical Attack</label>
-          <div class="row-grid" style="grid-template-columns: 1fr auto;">
+          <div class="one-liner-box">
             <textarea id="olCritAttack" rows="10" readonly></textarea>
             <button id="btnCritAttack">Get</button>
           </div>
@@ -770,7 +785,7 @@
         <!-- Suffer Critical Hit -->
         <div class="field">
           <label>Suffer Critical Hit</label>
-          <div class="row-grid" style="grid-template-columns: 1fr auto;">
+          <div class="one-liner-box">
             <textarea id="olSufferCrit" rows="10" readonly></textarea>
             <button id="btnSufferCrit">Get</button>
           </div>
@@ -779,7 +794,7 @@
         <!-- Combat Tease -->
         <div class="field">
           <label>Combat Tease</label>
-          <div class="row-grid" style="grid-template-columns: 1fr auto;">
+          <div class="one-liner-box">
             <textarea id="olTease" rows="10" readonly></textarea>
             <button id="btnTease">Get</button>
           </div>
@@ -788,7 +803,7 @@
         <!-- Magic -->
         <div class="field">
           <label>Magic</label>
-          <div class="row-grid" style="grid-template-columns: 1fr auto;">
+          <div class="one-liner-box">
             <textarea id="olMagic" rows="10" readonly></textarea>
             <button id="btnMagic">Get</button>
           </div>
@@ -797,7 +812,7 @@
         <!-- Q&A -->
         <div class="field">
           <label>Q&A</label>
-          <div class="row-grid" style="grid-template-columns: 1fr auto;">
+          <div class="one-liner-box">
             <textarea id="olQA" rows="10" readonly></textarea>
             <button id="btnQA">Get</button>
           </div>
@@ -806,7 +821,7 @@
         <!-- Social -->
         <div class="field">
           <label>Social</label>
-          <div class="row-grid" style="grid-template-columns: 1fr auto;">
+          <div class="one-liner-box">
             <textarea id="olSocial" rows="10" readonly></textarea>
             <button id="btnSocial">Get</button>
           </div>
@@ -815,7 +830,7 @@
         <!-- Coctail magic -->
         <div class="field">
           <label>Coctail magic</label>
-          <div class="row-grid" style="grid-template-columns: 1fr auto;">
+          <div class="one-liner-box">
             <textarea id="olCoctailMagic" rows="10" readonly></textarea>
             <button id="btnCoctailMagic">Get</button>
           </div>
