@@ -264,7 +264,7 @@ function renderAll() {
 
   renderSkills(d.mods, d.prof);
   renderDeathSaves();
-
+  attachShenanigans();
 }
 
 // ===== Events: inputs =====
@@ -547,6 +547,7 @@ async function cloudWriteNow() {
     await writable.close();
   } catch (e) { /* тихо */ }
 }
+
 const cloudSchedule = debounce(() => { cloudWriteNow(); }, 1000);
 
 async function cloudPick() {
@@ -592,6 +593,41 @@ async function cloudRestore() {
   }
 }
 
+// --- Shenanigans (lazy load JSON) ---
+let __sh_names = null;
+
+async function loadShenanigans() {
+  if (__sh_names) return __sh_names;
+  try {
+    const res = await fetch('shenanigans.json', { cache: 'no-store' });
+    const data = await res.json();
+    // Поддържа три формата: плосък масив или обект с ключ
+    if (Array.isArray(data)) __sh_names = data;
+    else if (Array.isArray(data.names)) __sh_names = data.names;
+    else if (Array.isArray(data.fakeNames)) __sh_names = data.fakeNames;
+    else __sh_names = [];
+  } catch {
+    __sh_names = [];
+  }
+  return __sh_names;
+}
+
+function pickRandom(arr) {
+  return arr && arr.length ? arr[Math.floor(Math.random()*arr.length)] : '';
+}
+
+function attachShenanigans(){
+  const btn = document.getElementById('btnGetName');
+  if (!btn) return; // ако табът липсва в този билд
+  btn.addEventListener('click', async ()=>{
+    const list = await loadShenanigans();
+    const name = pickRandom(list).trim();
+    const out = document.getElementById('fakeNameOutput');
+    if (out) out.value = name || '(no names found)';
+  });
+}
+
+// ===== Death saves =====
 function renderDeathSaves() {
   const s = st.dsSuccess, f = st.dsFail;
   const sIds = ["dsS1", "dsS2", "dsS3"], fIds = ["dsF1", "dsF2", "dsF3"];
