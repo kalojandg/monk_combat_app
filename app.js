@@ -181,14 +181,19 @@ function renderSkills(mods, prof) {
 
 // ===== Tabs =====
 document.addEventListener("click", (e) => {
-  if (e.target.classList.contains("tab-btn")) {
-    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-    e.target.classList.add("active");
-    const tab = e.target.getAttribute("data-tab");
-    el("tab-combat").classList.toggle("hidden", tab !== "combat");
-    el("tab-stats").classList.toggle("hidden", tab !== "stats");
-    el("tab-shenanigans").classList.toggle("hidden", tab !== "shenanigans");
-  }
+  const tabBtn = e.target.closest("[data-tab]");
+  if (!tabBtn) return;
+  const tab = tabBtn.getAttribute("data-tab");
+
+  // toggle active
+  document.querySelectorAll("[data-tab]").forEach(b =>
+    b.classList.toggle("active", b === tabBtn)
+  );
+
+  // hide/show tabs
+  document.querySelectorAll(".tab").forEach(p => p.classList.add("hidden"));
+  const pane = document.querySelector(`#tab-${tab}`) || document.querySelector(`#${tab}`);
+  if (pane) pane.classList.remove("hidden");
 });
 
 // ===== Rendering =====
