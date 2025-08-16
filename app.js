@@ -640,11 +640,15 @@ function pickRandom(arr) {
 function attachOneLiners() {
   // мап: бутон → { секция от JSON, изходно поле }
   const wiring = [
-    { btn: 'btnCritMiss',   out: 'olCritMiss',   key: 'crit_miss'     },
-    { btn: 'btnCritAttack', out: 'olCritAttack', key: 'crit_attack'   },
-    { btn: 'btnSufferCrit', out: 'olSufferCrit', key: 'suffer_crit'   },
-    { btn: 'btnTease',      out: 'olTease',      key: 'combat_tease'  },
-    { btn: 'btnMagic',      out: 'olMagic',      key: 'magic'         }
+    { btn: 'btnCritMiss',          out: 'olCritMiss',          key: 'crit_miss'      },
+    { btn: 'btnMissAttack',        out: 'olMissAttack',        key: 'miss_attack'    },
+    { btn: 'btnCritAttack',        out: 'olCritAttack',        key: 'crit_attack'    },
+    { btn: 'btnSufferCrit',        out: 'olSufferCrit',        key: 'suffer_crit'    },
+    { btn: 'btnTease',             out: 'olTease',             key: 'combat_tease'   },
+    { btn: 'btnMagic',             out: 'olMagic',             key: 'magic'          },
+    { btn: 'btnQA',                out: 'olQA',                key: 'Q&A'            },
+    { btn: 'btnSocial',            out: 'olSocial',            key: 'social'         },
+    { btn: 'btnCoctailMagic',      out: 'olCoctailMagic',      key: 'magic_cocktails'}
   ];
 
   wiring.forEach(({ btn, out, key }) => {
