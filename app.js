@@ -187,6 +187,7 @@ document.addEventListener("click", (e) => {
     const tab = e.target.getAttribute("data-tab");
     el("tab-combat").classList.toggle("hidden", tab !== "combat");
     el("tab-stats").classList.toggle("hidden", tab !== "stats");
+    el("tab-shenanigans").classList.toggle("hidden", tab !== "shenanigans");
   }
 });
 
