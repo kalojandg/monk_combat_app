@@ -500,6 +500,7 @@
       <button class="tab-btn active" data-tab="combat">Combat</button>
       <button class="tab-btn" data-tab="stats">Stats</button>
       <button class="tab-btn" data-tab="shenanigans">Shenanigans</button>
+      <button class="tab-btn" data-tab="liners">One-Liners</button>
       <button id="btnInstall" class="tab-btn hidden" title="Install PWA">Install</button>
     </div>
 
@@ -688,7 +689,7 @@
       <textarea id="notes" rows="4"
         style="width:100%;background:#101323;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px"></textarea>
     </div>
-    
+
     <!-- Shenanigans tab -->
     <div id="tab-shenanigans" class="tab hidden">
       <div class="section-title">Shenanigans</div>
@@ -702,6 +703,60 @@
           <small>Names are loaded from <code>shenanigans.json</code>.</small>
         </div>
       </div>
+    </div>
+
+    <!-- One-Liners tab -->
+    <div id="tab-liners" class="tab hidden">
+      <div class="section-title">One-Liners</div>
+
+      <div class="row-grid">
+        <!-- Crit Miss -->
+        <div class="field">
+          <label>Critical Miss</label>
+          <div class="row-grid" style="grid-template-columns: 1fr auto;">
+            <input id="olCritMiss" type="text" readonly>
+            <button id="btnCritMiss">Get</button>
+          </div>
+        </div>
+
+        <!-- Crit Attack -->
+        <div class="field">
+          <label>Critical Attack</label>
+          <div class="row-grid" style="grid-template-columns: 1fr auto;">
+            <input id="olCritAttack" type="text" readonly>
+            <button id="btnCritAttack">Get</button>
+          </div>
+        </div>
+
+        <!-- Suffer Critical Hit -->
+        <div class="field">
+          <label>Suffer Critical Hit</label>
+          <div class="row-grid" style="grid-template-columns: 1fr auto;">
+            <input id="olSufferCrit" type="text" readonly>
+            <button id="btnSufferCrit">Get</button>
+          </div>
+        </div>
+
+        <!-- Combat Tease -->
+        <div class="field">
+          <label>Combat Tease</label>
+          <div class="row-grid" style="grid-template-columns: 1fr auto;">
+            <input id="olTease" type="text" readonly>
+            <button id="btnTease">Get</button>
+          </div>
+        </div>
+
+        <!-- Magic -->
+        <div class="field">
+          <label>Magic</label>
+          <div class="row-grid" style="grid-template-columns: 1fr auto;">
+            <input id="olMagic" type="text" readonly>
+            <button id="btnMagic">Get</button>
+          </div>
+        </div>
+      </div>
+
+      <small>Чете от <code>one-liners.json</code>.</small>
     </div>
   </div>
 
