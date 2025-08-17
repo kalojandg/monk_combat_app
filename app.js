@@ -703,7 +703,10 @@ function renderAliasTable() {
   const list = loadAliases();
   const root = document.getElementById('aliasLog');
   if (!root) return;
-  if (!list.length) { root.innerHTML = '<small>Няма запазени представяния още.</small>'; return; }
+  if (!list.length) { 
+    root.innerHTML = '<small>Няма запазени представяния още.</small>'; 
+    return; 
+  }
   const rows = list.map((rec, i) => {
     const d = new Date(rec.ts || Date.now());
     const when = d.toLocaleString();
@@ -712,13 +715,40 @@ function renderAliasTable() {
       <td>${escapeHtml(rec.name || '')}</td>
       <td>${escapeHtml(rec.to || '')}</td>
       <td style="white-space:nowrap">${when}</td>
+      <td style="text-align:center">
+        <button class="alias-del" data-idx="${i}">🗑️</button>
+      </td>
     </tr>`;
   }).join('');
   root.innerHTML = `<table class="alias-table">
-    <thead><tr><th>#</th><th>Име</th><th>На кого</th><th>Кога</th></tr></thead>
+    <thead>
+      <tr>
+        <th>#</th><th>Име</th><th>На кого</th><th>Кога</th><th></th>
+      </tr>
+    </thead>
     <tbody>${rows}</tbody>
   </table>`;
+
+  // вързваме event за триене
+  root.querySelectorAll(".alias-del").forEach(btn => {
+    btn.addEventListener("click", e => {
+      const idx = parseInt(e.currentTarget.dataset.idx, 10);
+      const list = loadAliases();
+      list.splice(idx, 1);
+      saveAliases(list);
+      renderAliasTable();
+    });
+  });
 }
+
+
+function deleteAlias(index) {
+  const list = loadAliases();
+  list.splice(index, 1); // махаме 1 елемент на дадения индекс
+  saveAliases(list);     // записваме пак
+  renderAliasTable();    // ре-рендерваме таблицата
+}
+
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
