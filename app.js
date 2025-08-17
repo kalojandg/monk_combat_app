@@ -451,18 +451,51 @@ el("btnLongRest") && el("btnLongRest").addEventListener("click", () => {
   save();
 });
 
+// ---- Bundle sheet + aliases (backward-compatible) ----
+function getBundle() {
+  return {
+    schema: "monkSheetBundle/v1",
+    state: st,
+    aliases: loadAliases() // остава си и в localStorage; това е само за експорт/клауд
+  };
+}
+function applyBundle(obj) {
+  if (!obj) return;
+  // нов формат
+  if (obj.schema && obj.state) {
+    st = { ...defaultState, ...obj.state };
+    if (Array.isArray(obj.aliases)) {
+      saveAliases(obj.aliases);   // overwrite само ако има aliases в bundle
+    }
+    save();
+    return;
+  }
+  // стар формат: директен state JSON
+  st = { ...defaultState, ...obj };
+  save();
+}
+
 // Export / Import / Reset
 el("btnExport") && el("btnExport").addEventListener("click", () => {
-  const blob = new Blob([JSON.stringify(st, null, 2)], { type: "application/json" });
+  const bundle = getBundle();
+  const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url; a.download = (st.name || "monk") + "_sheet.json";
   document.body.appendChild(a); a.click(); URL.revokeObjectURL(url); a.remove();
 });
+
 el("importFile") && el("importFile").addEventListener("change", (e) => {
   const file = e.target.files[0]; if (!file) return;
   const reader = new FileReader();
-  reader.onload = () => { try { st = { ...defaultState, ...JSON.parse(reader.result) }; save(); } catch { alert("Грешен JSON."); } };
+  reader.onload = () => {
+    try {
+      const obj = JSON.parse(reader.result);
+      applyBundle(obj);  // ще приеме и стар state JSON
+    } catch {
+      alert("Грешен JSON.");
+    }
+  };
   reader.readAsText(file); e.target.value = "";
 });
 el("btnReset") && el("btnReset").addEventListener("click", () => {
@@ -549,7 +582,8 @@ async function cloudWriteNow() {
     }
     const file = await cloudHandle.getFile();
     const writable = await cloudHandle.createWritable();
-    await writable.write(new Blob([JSON.stringify(st, null, 2)], { type: "application/json" }));
+    const bundle = getBundle();
+    await writable.write(new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" }));
     await writable.close();
   } catch (e) { /* тихо */ }
 }
@@ -580,7 +614,7 @@ async function cloudPull() {
     const file = await cloudHandle.getFile();
     const text = await file.text();
     const json = JSON.parse(text);
-    st = { ...defaultState, ...json };
+    applyBundle(json);  // ако е стар файл (само state), пак ще сработи
     save();
   } catch (e) { alert("Cloud pull error."); }
 }
