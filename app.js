@@ -145,9 +145,10 @@ function ensureSkillProfs() {
   if (!st.skillProfs) {
     st.skillProfs = {};
   }
-  
-  SKILLS.forEach(([n]) => {if (!(n in st.skillProfs)) st.skillProfs[n] = false; }); }
-  
+
+  SKILLS.forEach(([n]) => { if (!(n in st.skillProfs)) st.skillProfs[n] = false; });
+}
+
 ensureSkillProfs();
 
 function skillBonusTotal(name, mods, prof) {
@@ -638,15 +639,15 @@ function pickRandom(arr) {
 function attachOneLiners() {
   // мап: бутон → { секция от JSON, изходно поле }
   const wiring = [
-    { btn: 'btnCritMiss',          out: 'olCritMiss',          key: 'crit_miss'      },
-    { btn: 'btnMissAttack',        out: 'olMissAttack',        key: 'miss_attack'    },
-    { btn: 'btnCritAttack',        out: 'olCritAttack',        key: 'crit_attack'    },
-    { btn: 'btnSufferCrit',        out: 'olSufferCrit',        key: 'suffer_crit'    },
-    { btn: 'btnTease',             out: 'olTease',             key: 'combat_tease'   },
-    { btn: 'btnMagic',             out: 'olMagic',             key: 'magic'          },
-    { btn: 'btnQA',                out: 'olQA',                key: 'Q&A'            },
-    { btn: 'btnSocial',            out: 'olSocial',            key: 'social'         },
-    { btn: 'btnCoctailMagic',      out: 'olCoctailMagic',      key: 'magic_cocktails'}
+    { btn: 'btnCritMiss', out: 'olCritMiss', key: 'crit_miss' },
+    { btn: 'btnMissAttack', out: 'olMissAttack', key: 'miss_attack' },
+    { btn: 'btnCritAttack', out: 'olCritAttack', key: 'crit_attack' },
+    { btn: 'btnSufferCrit', out: 'olSufferCrit', key: 'suffer_crit' },
+    { btn: 'btnTease', out: 'olTease', key: 'combat_tease' },
+    { btn: 'btnMagic', out: 'olMagic', key: 'magic' },
+    { btn: 'btnQA', out: 'olQA', key: 'Q&A' },
+    { btn: 'btnSocial', out: 'olSocial', key: 'social' },
+    { btn: 'btnCoctailMagic', out: 'olCoctailMagic', key: 'magic_cocktails' }
   ];
 
   wiring.forEach(({ btn, out, key }) => {
@@ -668,10 +669,50 @@ function attachOneLiners() {
   });
 }
 
-function attachShenanigans(){
+// --- Excuses (lazy load JSON) ---
+let __exc_cache = null;
+const EXC_URL = 'excuses.json';
+
+async function loadExcuses() {
+  if (__exc_cache) return __exc_cache;
+  const res = await fetch(EXC_URL, { cache: 'no-store' });
+  if (!res.ok) throw new Error('Cannot load excuses.json');
+  __exc_cache = await res.json();
+  return __exc_cache;
+}
+
+function attachExcuses() {
+  const wiring = [
+    { btn: 'btnExLifeWisdom',  out: 'exLifeWisdom',  key: 'life_wisdom'  },
+    { btn: 'btnExGameCheating',out: 'exGameCheating',key: 'game_cheating'},
+    { btn: 'btnExExcuses',     out: 'exExcuses',     key: 'excuses'      },
+    { btn: 'btnExStorytime',   out: 'exStorytime',   key: 'storytime'    },
+    { btn: 'btnExSlipaway',    out: 'exSlipaway',    key: 'slipaway'     }
+  ];
+
+  wiring.forEach(({ btn, out, key }) => {
+    const b = document.getElementById(btn);
+    if (!b) return; // табът може да липсва
+    b.addEventListener('click', async () => {
+      try {
+        const data = await loadExcuses();
+        const list = Array.isArray(data[key]) ? data[key] : [];
+        const line = list.length ? list[Math.floor(Math.random() * list.length)] : '(empty)';
+        const outEl = document.getElementById(out);
+        if (outEl) outEl.value = (line || '').trim();
+      } catch (e) {
+        console.error(e);
+        const outEl = document.getElementById(out);
+        if (outEl) outEl.value = '(failed to load excuses.json)';
+      }
+    });
+  });
+}
+
+function attachShenanigans() {
   const btn = document.getElementById('btnGetName');
   if (!btn) return;
-  btn.addEventListener('click', async ()=>{
+  btn.addEventListener('click', async () => {
     const list = await loadShenanigans();
     const name = pickRandom(list).trim();
     const out = document.getElementById('fakeNameOutput');
@@ -696,22 +737,22 @@ function loadAliases() {
 }
 function saveAliases(arr) {
   try { localStorage.setItem(ALIAS_LS_KEY, JSON.stringify(arr)); }
-  catch {}
+  catch { }
 }
 
 function renderAliasTable() {
   const list = loadAliases();
   const root = document.getElementById('aliasLog');
   if (!root) return;
-  if (!list.length) { 
-    root.innerHTML = '<small>Няма запазени представяния още.</small>'; 
-    return; 
+  if (!list.length) {
+    root.innerHTML = '<small>Няма запазени представяния още.</small>';
+    return;
   }
   const rows = list.map((rec, i) => {
     const d = new Date(rec.ts || Date.now());
     const when = d.toLocaleString();
     return `<tr>
-      <td>${i+1}</td>
+      <td>${i + 1}</td>
       <td>${escapeHtml(rec.name || '')}</td>
       <td>${escapeHtml(rec.to || '')}</td>
       <td style="white-space:nowrap">${when}</td>
@@ -750,7 +791,7 @@ function deleteAlias(index) {
 }
 
 function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  return String(s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
 }
 
 // hook Save button enable/disable
@@ -856,5 +897,6 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
   renderAll();            // първи рендер
   attachShenanigans();    // ← ВЕДНЪЖ
   attachOneLiners();      // ← ВЕДНЪЖ
+  attachExcuses();        // ← ВЕДНЪЖ
   attachAliasLog();       // ← ВЕДНЪЖ      // първи рендер
 })();
