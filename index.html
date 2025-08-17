@@ -433,6 +433,127 @@
       box-shadow: 0 0 8px rgba(108, 99, 255, 0.6);
     }
 
+    /* Dark input appearance for Shenanigans */
+    #tab-shenanigans input[readonly] {
+      background: #1e1e2f;
+      color: #f5f5f5;
+      border: 1px solid #333;
+      border-right: none;
+      border-radius: 8px 0 0 8px;
+      padding: 10px;
+      flex: 1;
+    }
+
+    /* Buttons in the row */
+    #tab-shenanigans .one-liner-box {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+    }
+
+    #tab-shenanigans .one-liner-box button {
+      background: #2a2a3d;
+      color: #fff;
+      border: 1px solid #333;
+      border-left: none;
+      padding: 0 14px;
+    }
+
+    #btnGetName {
+      border-radius: 0;
+    }
+
+    #btnSaveAlias {
+      border-radius: 0 8px 8px 0;
+      /* десните ъгли на последния */
+    }
+
+    /* Alias table */
+    .alias-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 0.95rem;
+    }
+
+    .alias-table th,
+    .alias-table td {
+      border: 1px solid #333;
+      padding: 8px 10px;
+    }
+
+    .alias-table th {
+      background: #1b1b2a;
+      color: #e6e6ff;
+      text-align: left;
+    }
+
+    .alias-table tr:nth-child(even) td {
+      background: #161626;
+    }
+
+    .alias-table tr:nth-child(odd) td {
+      background: #121222;
+    }
+
+    /* Modal */
+    .alias-modal.hidden {
+      display: none;
+    }
+
+    .alias-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(0, 0, 0, 0.55);
+      display: grid;
+      place-items: center;
+    }
+
+    .alias-modal__card {
+      width: min(700px, 92vw);
+      background: #0f0f1a;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 16px;
+      color: #f5f5f5;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+    }
+
+    .alias-modal__title {
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .alias-modal__card textarea {
+      width: 100%;
+      background: #18182a;
+      color: #f5f5f5;
+      border: 1px solid #444;
+      border-radius: 6px;
+      padding: 8px;
+      line-height: 1.4;
+    }
+
+    .alias-modal__actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 10px;
+    }
+
+    .alias-modal__actions button {
+      background: #2a2a3d;
+      color: #fff;
+      border: 1px solid #444;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .alias-modal__actions button:hover {
+      background: #3b3b57;
+    }
 
     /* fail 3 */
     /* Оверлей – статичен */
@@ -737,17 +858,30 @@
     <!-- Shenanigans tab -->
     <div id="tab-shenanigans" class="tab hidden">
       <div class="section-title">Shenanigans</div>
-      <div class="row-grid">
-        <div class="field">
-          <label>Fake Name</label>
-          <div class="row-grid" style="grid-template-columns: 1fr auto;">
-            <input id="fakeNameOutput" type="text" readonly placeholder="(click Get Name)">
-            <button id="btnGetName">Get Name</button>
+
+      <!-- редът с поле + бутони -->
+      <div class="one-liner-box" style="margin-bottom: 12px;">
+        <input id="fakeNameOutput" type="text" readonly placeholder="(click Get Name)">
+        <button id="btnGetName">Get Name</button>
+        <button id="btnSaveAlias" disabled>Save</button> <!-- нов -->
+      </div>
+
+      <!-- таблица с алиаси -->
+      <div id="aliasLog"></div>
+
+      <!-- модален диалог -->
+      <div id="aliasModal" class="alias-modal hidden">
+        <div class="alias-modal__card">
+          <div class="alias-modal__title">На кого си се представил така?</div>
+          <textarea id="aliasToInput" rows="5" placeholder="Име/описание на човека, ситуация, бележки..."></textarea>
+          <div class="alias-modal__actions">
+            <button id="aliasCancel">Отказ</button>
+            <button id="aliasConfirm">Запази</button>
           </div>
-          <small>Names are loaded from <code>shenanigans.json</code>.</small>
         </div>
       </div>
     </div>
+
 
     <!-- One-Liners tab -->
     <div id="tab-liners" class="tab hidden">

@@ -272,6 +272,7 @@ function renderAll() {
   renderDeathSaves();
   attachShenanigans();
   attachOneLiners();
+  attachAliasLog();
 }
 
 // ===== Events: inputs =====
@@ -683,6 +684,109 @@ function attachShenanigans(){
     const out = document.getElementById('fakeNameOutput');
     if (out) out.value = name || '(no names found)';
   });
+}
+
+// ---------- Shenanigans aliases log ----------
+const ALIAS_LS_KEY = 'aliases_v1';  // localStorage
+
+let _lastRandomName = null;
+
+// helpers
+function loadAliases() {
+  try { return JSON.parse(localStorage.getItem(ALIAS_LS_KEY)) || []; }
+  catch { return []; }
+}
+function saveAliases(arr) {
+  try { localStorage.setItem(ALIAS_LS_KEY, JSON.stringify(arr)); }
+  catch {}
+}
+
+function renderAliasTable() {
+  const list = loadAliases();
+  const root = document.getElementById('aliasLog');
+  if (!root) return;
+  if (!list.length) { root.innerHTML = '<small>Няма запазени представяния още.</small>'; return; }
+  const rows = list.map((rec, i) => {
+    const d = new Date(rec.ts || Date.now());
+    const when = d.toLocaleString();
+    return `<tr>
+      <td>${i+1}</td>
+      <td>${escapeHtml(rec.name || '')}</td>
+      <td>${escapeHtml(rec.to || '')}</td>
+      <td style="white-space:nowrap">${when}</td>
+    </tr>`;
+  }).join('');
+  root.innerHTML = `<table class="alias-table">
+    <thead><tr><th>#</th><th>Име</th><th>На кого</th><th>Кога</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+// hook Save button enable/disable
+function setSaveEnabled(on) {
+  const b = document.getElementById('btnSaveAlias');
+  if (b) b.disabled = !on;
+}
+
+// modal controls
+function openAliasModal() {
+  const m = document.getElementById('aliasModal');
+  const t = document.getElementById('aliasToInput');
+  if (!m || !t) return;
+  t.value = '';
+  m.classList.remove('hidden');
+  t.focus();
+}
+function closeAliasModal() {
+  const m = document.getElementById('aliasModal');
+  if (m) m.classList.add('hidden');
+}
+
+// attach
+function attachAliasLog() {
+  const getBtn = document.getElementById('btnGetName');
+  const saveBtn = document.getElementById('btnSaveAlias');
+  const out = document.getElementById('fakeNameOutput');
+
+  if (getBtn) {
+    // wrap оригиналната логика за random (ако вече имаш такава – остави я и само добави тези 2 реда след като генерираш името)
+    getBtn.addEventListener('click', () => {
+      // тук приемаме, че вече си сложил генерираното име в out.value
+      _lastRandomName = (out && out.value || '').trim();
+      setSaveEnabled(!!_lastRandomName);
+    });
+  }
+
+  if (saveBtn) {
+    saveBtn.addEventListener('click', () => {
+      if (!_lastRandomName) return;
+      openAliasModal();
+    });
+  }
+
+  // modal buttons
+  const cancelBtn = document.getElementById('aliasCancel');
+  const okBtn = document.getElementById('aliasConfirm');
+  const textArea = document.getElementById('aliasToInput');
+
+  cancelBtn && cancelBtn.addEventListener('click', closeAliasModal);
+  okBtn && okBtn.addEventListener('click', () => {
+    const toWhom = (textArea && textArea.value || '').trim();
+    const rec = { name: _lastRandomName, to: toWhom, ts: Date.now() };
+    const arr = loadAliases();
+    arr.unshift(rec);      // новите най-отгоре
+    saveAliases(arr);
+    renderAliasTable();
+    closeAliasModal();
+    setSaveEnabled(false);
+  });
+
+  // init
+  renderAliasTable();
+  setSaveEnabled(false);
 }
 
 // ===== Death saves =====
