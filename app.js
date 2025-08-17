@@ -270,9 +270,6 @@ function renderAll() {
 
   renderSkills(d.mods, d.prof);
   renderDeathSaves();
-  attachShenanigans();
-  attachOneLiners();
-  attachAliasLog();
 }
 
 // ===== Events: inputs =====
@@ -671,18 +668,19 @@ function attachOneLiners() {
   });
 }
 
-function pickRandom(arr) {
-  return arr && arr.length ? arr[Math.floor(Math.random()*arr.length)] : '';
-}
-
 function attachShenanigans(){
   const btn = document.getElementById('btnGetName');
-  if (!btn) return; // ако табът липсва в този билд
+  if (!btn) return;
   btn.addEventListener('click', async ()=>{
     const list = await loadShenanigans();
     const name = pickRandom(list).trim();
     const out = document.getElementById('fakeNameOutput');
-    if (out) out.value = name || '(no names found)';
+    if (out) {
+      out.value = name || '(no names found)';
+      // >>> Тук добавяме тези два реда:
+      _lastRandomName = (out.value || '').trim();
+      setSaveEnabled(!!_lastRandomName);
+    }
   });
 }
 
@@ -750,15 +748,6 @@ function attachAliasLog() {
   const getBtn = document.getElementById('btnGetName');
   const saveBtn = document.getElementById('btnSaveAlias');
   const out = document.getElementById('fakeNameOutput');
-
-  if (getBtn) {
-    // wrap оригиналната логика за random (ако вече имаш такава – остави я и само добави тези 2 реда след като генерираш името)
-    getBtn.addEventListener('click', () => {
-      // тук приемаме, че вече си сложил генерираното име в out.value
-      _lastRandomName = (out && out.value || '').trim();
-      setSaveEnabled(!!_lastRandomName);
-    });
-  }
 
   if (saveBtn) {
     saveBtn.addEventListener('click', () => {
@@ -833,6 +822,9 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
 
 // ==== Boot ====
 (async () => {
-  await cloudRestore();   // опит за автоматично възстановяване
+  await cloudRestore();
   renderAll();            // първи рендер
+  attachShenanigans();    // ← ВЕДНЪЖ
+  attachOneLiners();      // ← ВЕДНЪЖ
+  attachAliasLog();       // ← ВЕДНЪЖ      // първи рендер
 })();
