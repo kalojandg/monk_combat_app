@@ -437,7 +437,8 @@
       display: block;
       /* да е на отделен ред */
       font-size: 1.5rem !important;
-      display: block; /* за да не наследява inline размер */
+      display: block;
+      /* за да не наследява inline размер */
       /* малко по-едър шрифт */
       font-weight: 600;
       /* леко удебелен */
@@ -691,6 +692,7 @@
     <div class="tabs">
       <button class="tab-btn active" data-tab="combat">Combat</button>
       <button class="tab-btn" data-tab="stats">Stats</button>
+      <button class="tab-btn" data-tab="inventory">Inventory</button>
       <button class="tab-btn" data-tab="shenanigans">Shenanigans</button>
       <button class="tab-btn" data-tab="liners">One-Liners</button>
       <button class="tab-btn" data-tab="excuses">Excuses</button>
@@ -883,6 +885,45 @@
         style="width:100%;background:#101323;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px"></textarea>
     </div>
 
+    <!-- Inventory tab -->
+    <div id="tab-inventory" class="tab hidden">
+      <div class="section-title">Inventory</div>
+
+      <div class="controls" style="justify-content:center;margin-bottom:10px">
+        <button id="btnInvAdd" class="primary">+ Add item</button>
+      </div>
+
+      <div id="invTableRoot"></div>
+
+      <!-- Modal за Add/Edit (ползваме стила на alias-modal) -->
+      <div id="invModal" class="alias-modal hidden">
+        <div class="alias-modal__card">
+          <div class="alias-modal__title" id="invModalTitle">Add item</div>
+
+          <div class="row-grid" style="margin-top:8px">
+            <div class="field">
+              <label>Име</label>
+              <input id="invName" type="text" placeholder="Dart / Rope / Potion..." />
+            </div>
+            <div class="field">
+              <label>Количество</label>
+              <input id="invQty" type="number" step="1" min="0" value="1" />
+            </div>
+          </div>
+
+          <div class="field" style="margin-top:8px">
+            <label>Бележка</label>
+            <textarea id="invNote" rows="4"
+              style="width:100%;background:#101323;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px"></textarea>
+          </div>
+
+          <div class="alias-modal__actions">
+            <button id="invCancel">Отказ</button>
+            <button id="invSave" class="primary">Запази</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <!-- Shenanigans tab -->
     <div id="tab-shenanigans" class="tab hidden">
       <div class="section-title">Shenanigans</div>
