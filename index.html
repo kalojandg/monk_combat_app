@@ -67,60 +67,52 @@
     }
 
     /* tabs */
-    .tabs {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin: 12px 0;
-    }
+/* TAB STRIP */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0;
+}
 
-    .tabs button {
-      background: #1a2235;
-      /* малко по-светло от фона */
-      border: 1px solid #2f3b56;
-      /* фино очертание */
-      border-radius: 8px;
-      padding: 6px 14px;
-      margin-top: 1rem;
-      margin-bottom: 1rem;
-      font-size: 0.9rem;
-      font-weight: 500;
-      color: #d0d6e0;
-      cursor: pointer;
-      transition: background 0.2s, border-color 0.2s;
-    }
+.tabs button {
+  background: #1a2235;
+  border: 1px solid #2f3b56;
+  border-radius: 10px;
+  padding: 6px 14px;
+  font-size: .95rem;
+  font-weight: 500;
+  color: #d0d6e0;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, box-shadow .15s;
+}
 
-    .tabs button:hover {
-      background: #2a3450;
-      border-color: #4a5b85;
-    }
+/* hover: малко по-ярко и с фино сияние */
+.tabs button:hover { 
+  background: #283550;
+  border-color: #4a5b85;
+  box-shadow: 0 0 0 2px rgba(90,120,200,.15) inset;
+}
 
-    .tabs button.active {
-      background: #324164;
-      border-color: #5b76b0;
-      color: #fff;
-      font-weight: 600;
-    }
+/* active: по-ясен контраст и „подчертаване“ с бордер-шейд */
+.tabs button.active {
+  background: #304069;
+  border-color: #6d89c8;
+  color: #fff;
+  box-shadow: 0 0 0 1px rgba(160,190,255,.25) inset;
+}
 
-    .tab-btn {
-      padding: 8px 12px;
-      border: 1px solid var(--border);
-      background: var(--panel);
-      border-radius: 10px;
-      color: var(--text);
-      cursor: pointer
-    }
+/* focus за клавиатура/таблет: видим, но не натрапчив */
+.tabs button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px #6d89c8, 0 0 0 4px rgba(80,120,200,.25);
+}
 
-    @media (min-width: 768px) {
-      .tabs {
-        flex-wrap: nowrap;
-        /* на широк екран всичко в един ред */
-      }
+/* мобилно: по 2 в ред, ако станат много */
+@media (max-width: 480px) {
+  .tabs button { flex: 1 1 46%; text-align:center; }
+}
 
-      .tabs button {
-        flex: 0 0 auto;
-        /* бутоните си вземат колкото ширина им трябва */
-      }
     }
 
 
