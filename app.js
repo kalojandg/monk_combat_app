@@ -1060,9 +1060,11 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
 (function tabsInitToggleable() {
   const btns = Array.from(document.querySelectorAll('.tabs [data-tab]'));
   const panels = Array.from(document.querySelectorAll('.tab'));
+  let activeName = null; // текущо активният таб (без localStorage)
 
-  // помощна: показва точно един таб или нито един (name=null)
   function setActive(name) {
+    activeName = name;
+
     // панели
     panels.forEach(p => p.classList.add('hidden'));
     if (name) {
@@ -1072,37 +1074,25 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
 
     // бутони
     btns.forEach(b => {
-      const isActive = name && b.dataset.tab === name;
-      b.classList.toggle('active', !!isActive);
+      const isActive = !!name && b.dataset.tab === name;
+      b.classList.toggle('active', isActive);
       b.setAttribute('aria-expanded', isActive ? 'true' : 'false');
     });
-
-    // помним избора (или празно за „затворено“)
-    if (name) localStorage.setItem('activeTab', name);
-    else localStorage.removeItem('activeTab');
   }
 
-  // click: ако вече е активен → затваряме; иначе отваряме
+  // клик: ако е активен → затваря; иначе отваря
   btns.forEach(b => {
+    b.setAttribute('type', 'button'); // за всеки случай, ако някога влезе във <form>
     b.setAttribute('role', 'tab');
     b.setAttribute('aria-controls', `tab-${b.dataset.tab}`);
     b.addEventListener('click', () => {
-      const current = localStorage.getItem('activeTab') || null;
-      const target = b.dataset.tab;
-      if (current === target) {
-        setActive(null);           // затваря
-      } else {
-        setActive(target);         // отваря новия
-      }
+      const name = b.dataset.tab;
+      setActive(activeName === name ? null : name);
     });
   });
 
-  // ИНИТ: по дефолт няма селектиран таб
-  // (ако искаш да помни последния, разкоментирай следващите два реда)
-  // const remembered = localStorage.getItem('activeTab');
-  // setActive(remembered || null);
-
-  setActive(null); // всички затворени при старт
+  // старт: без селектиран таб
+  setActive(null);
 })();
 
 
