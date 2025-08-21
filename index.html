@@ -108,6 +108,12 @@
       box-shadow: 0 0 0 2px #6d89c8, 0 0 0 4px rgba(80, 120, 200, .25);
     }
 
+    .tabs button.active::after {
+      content: "▾";
+      margin-left: .4rem;
+      opacity: .8;
+    }
+
     /* мобилно: по 2 в ред, ако станат много */
     @media (max-width: 480px) {
       .tabs button {
