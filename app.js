@@ -485,38 +485,38 @@ function invOpenModal(editIndex = null, item = null) {
   const m = document.getElementById('invModal');
   const title = document.getElementById('invModalTitle');
   const name = document.getElementById('invName');
-  const qty  = document.getElementById('invQty');
+  const qty = document.getElementById('invQty');
   const note = document.getElementById('invNote');
 
   title.textContent = (__invEditIndex === null) ? 'Add item' : 'Edit item';
   name.value = item?.name || '';
-  qty.value  = (item?.qty ?? 1);
+  qty.value = (item?.qty ?? 1);
   note.value = item?.note || '';
 
   m.classList.remove('hidden');
   name.focus();
 }
 
-function invCloseModal(){
+function invCloseModal() {
   const m = document.getElementById('invModal');
   if (m) m.classList.add('hidden');
   __invEditIndex = null;
 }
 
-function renderInventoryTable(){
+function renderInventoryTable() {
   const root = document.getElementById('invTableRoot');
   if (!root) return;
 
   const list = Array.isArray(st.inventory) ? st.inventory : [];
-  if (!list.length){
+  if (!list.length) {
     root.innerHTML = '<small>Няма добавени предмети още.</small>';
     return;
   }
 
-  const rows = list.map((it, i)=>{
-    const safe = s => String(s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  const rows = list.map((it, i) => {
+    const safe = s => String(s || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
     return `<tr>
-      <td>${i+1}</td>
+      <td>${i + 1}</td>
       <td>${safe(it.name)}</td>
       <td class="right">${Number(it.qty) || 0}</td>
       <td>${safe(it.note)}</td>
@@ -536,45 +536,45 @@ function renderInventoryTable(){
   </table>`;
 
   // wire edit/delete
-  root.querySelectorAll('[data-edit]').forEach(btn=>{
-    btn.addEventListener('click', e=>{
-      const idx = parseInt(e.currentTarget.getAttribute('data-edit'),10);
+  root.querySelectorAll('[data-edit]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const idx = parseInt(e.currentTarget.getAttribute('data-edit'), 10);
       const it = st.inventory[idx];
       invOpenModal(idx, it);
     });
   });
-  root.querySelectorAll('[data-del]').forEach(btn=>{
-    btn.addEventListener('click', e=>{
-      const idx = parseInt(e.currentTarget.getAttribute('data-del'),10);
+  root.querySelectorAll('[data-del]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const idx = parseInt(e.currentTarget.getAttribute('data-del'), 10);
       const sure = confirm('Изтриване на този предмет?');
       if (!sure) return;
-      st.inventory.splice(idx,1);
+      st.inventory.splice(idx, 1);
       save(); // render + cloud
     });
   });
 }
 
-function attachInventory(){
+function attachInventory() {
   const addBtn = document.getElementById('btnInvAdd');
   const saveBtn = document.getElementById('invSave');
   const cancelBtn = document.getElementById('invCancel');
 
-  addBtn && addBtn.addEventListener('click', ()=> invOpenModal());
+  addBtn && addBtn.addEventListener('click', () => invOpenModal());
 
   cancelBtn && cancelBtn.addEventListener('click', invCloseModal);
 
-  saveBtn && saveBtn.addEventListener('click', ()=>{
+  saveBtn && saveBtn.addEventListener('click', () => {
     const name = (document.getElementById('invName').value || '').trim();
-    const qty  = Math.max(0, Math.floor(Number(document.getElementById('invQty').value || 0)));
+    const qty = Math.max(0, Math.floor(Number(document.getElementById('invQty').value || 0)));
     const note = (document.getElementById('invNote').value || '').trim();
 
-    if (!name){
+    if (!name) {
       alert('Името е задължително.');
       return;
     }
     const rec = { name, qty, note };
 
-    if (__invEditIndex === null){
+    if (__invEditIndex === null) {
       // add
       st.inventory.push(rec);
     } else {
@@ -828,11 +828,11 @@ async function loadExcuses() {
 
 function attachExcuses() {
   const wiring = [
-    { btn: 'btnExLifeWisdom',  out: 'exLifeWisdom',  key: 'life_wisdom'  },
-    { btn: 'btnExGameCheating',out: 'exGameCheating',key: 'game_cheating'},
-    { btn: 'btnExExcuses',     out: 'exExcuses',     key: 'excuses'      },
-    { btn: 'btnExStorytime',   out: 'exStorytime',   key: 'storytime'    },
-    { btn: 'btnExSlipaway',    out: 'exSlipaway',    key: 'slipaway'     }
+    { btn: 'btnExLifeWisdom', out: 'exLifeWisdom', key: 'life_wisdom' },
+    { btn: 'btnExGameCheating', out: 'exGameCheating', key: 'game_cheating' },
+    { btn: 'btnExExcuses', out: 'exExcuses', key: 'excuses' },
+    { btn: 'btnExStorytime', out: 'exStorytime', key: 'storytime' },
+    { btn: 'btnExSlipaway', out: 'exSlipaway', key: 'slipaway' }
   ];
 
   wiring.forEach(({ btn, out, key }) => {
@@ -1035,6 +1035,27 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
   if (!deferredPrompt) return; deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null;
   el("btnInstall").classList.add("hidden");
 });
+
+(function tabsInit() {
+  const btns = Array.from(document.querySelectorAll('.tabs [data-tab]'));
+  const panels = Array.from(document.querySelectorAll('.tab'));
+
+  function showTab(name) {
+    panels.forEach(p => p.classList.add('hidden'));
+    const active = document.getElementById(`tab-${name}`);
+    if (active) active.classList.remove('hidden');
+
+    btns.forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+    localStorage.setItem('activeTab', name);
+  }
+
+  // wire
+  btns.forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+
+  // първоначален таб (помни последния; fallback към първия бутон)
+  const initial = localStorage.getItem('activeTab') || (btns[0] && btns[0].dataset.tab);
+  if (initial) showTab(initial);
+})();
 
 // ==== Boot ====
 (async () => {

@@ -116,12 +116,16 @@
       }
     }
 
-
-
-
-    .hidden {
-      display: none !important
+    .tab {
+      display: block;
     }
+
+    /* явен default */
+    .tab.hidden {
+      display: none !important;
+    }
+
+    /* по-специфично от .hidden само */
 
     /* layout blocks */
     .row-grid {
