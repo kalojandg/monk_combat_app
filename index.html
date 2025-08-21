@@ -70,24 +70,38 @@
     .tabs {
       display: flex;
       flex-wrap: wrap;
-      /* позволява чупене на ред */
-      gap: 0.5rem;
-      /* разстояние между бутоните */
-      max-width: 100%;
-      overflow-x: hidden;
-      margin-bottom: 0.5rem;
-      /* спира страничния скрол */
+      gap: 6px;
+      margin: 12px 0;
     }
 
     .tabs button {
-      flex: 1 1 45%;
-      /* на малък екран -> 2 бутона на ред (~50%) */
-      padding: 0.5rem 1rem;
-      border-radius: 12px;
-      background: #1e293b;
-      color: white;
-      border: none;
+      background: #1a2235;
+      /* малко по-светло от фона */
+      border: 1px solid #2f3b56;
+      /* фино очертание */
+      border-radius: 8px;
+      padding: 6px 14px;
+      margin-top: 1rem;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #d0d6e0;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
     }
+
+    .tabs button:hover {
+      background: #2a3450;
+      border-color: #4a5b85;
+    }
+
+    .tabs button.active {
+      background: #324164;
+      border-color: #5b76b0;
+      color: #fff;
+      font-weight: 600;
+    }
+
 
     @media (min-width: 768px) {
       .tabs {
@@ -698,18 +712,7 @@
       </div>
     </div>
 
-    <div class="tabs">
-      <button data-tab="combat">Combat</button>
-      <button data-tab="stats">Stats</button>
-      <button data-tab="inventory">Inventory</button>
-      <button data-tab="shenanigans">Shenanigans</button>
-      <button data-tab="liners">One-Liners</button>
-      <button data-tab="excuses">Excuses</button>
-      <button id="btnInstall" class="hidden" title="Install PWA">Install</button>
-    </div>
-
-    <!-- Combat tab -->
-    <div id="tab-combat" class="tab">
+    <div>
       <div class="pillbar">
         <div class="pill">HP&nbsp;<span class="big" id="hpCurrentSpan">10</span>/<span class="big"
             id="hpMaxSpan">10</span></div>
@@ -740,6 +743,15 @@
         <button id="btnCritFail" class="danger">Crit Fail (+2)</button>
         <button id="btnStabilize">Stabilize</button>
       </div>
+    </div>
+    <div class="tabs">
+      <!-- <button data-tab="combat">Combat</button> -->
+      <button data-tab="stats">Stats</button>
+      <button data-tab="inventory">Inventory</button>
+      <button data-tab="shenanigans">Shenanigans</button>
+      <button data-tab="liners">One-Liners</button>
+      <button data-tab="excuses">Excuses</button>
+      <button id="btnInstall" class="hidden" title="Install PWA">Install</button>
     </div>
 
     <div id="deathSavesUI" class="ds-wrap">
