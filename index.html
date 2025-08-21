@@ -69,29 +69,37 @@
     /* tabs */
     .tabs {
       display: flex;
-      gap: 6px;
-      margin: 8px 0 12px 0
+      flex-wrap: wrap;
+      /* позволява чупене на ред */
+      gap: 0.5rem;
+      /* разстояние между бутоните */
+      max-width: 100%;
+      overflow-x: hidden;
+      /* спира страничния скрол */
     }
 
-    .tab-btn {
-      padding: 8px 12px;
-      border: 1px solid var(--border);
-      background: var(--panel);
-      border-radius: 10px;
-      color: var(--text);
-      cursor: pointer
-    }
-
-    .tab-btn.active {
-      background: var(--pill2)
-    }
-
-    .tab {
-      border: 1px solid var(--border);
-      background: var(--panel);
+    .tabs button {
+      flex: 1 1 45%;
+      /* на малък екран -> 2 бутона на ред (~50%) */
+      padding: 0.5rem 1rem;
       border-radius: 12px;
-      padding: 14px
+      background: #1e293b;
+      color: white;
+      border: none;
     }
+
+    @media (min-width: 768px) {
+      .tabs {
+        flex-wrap: nowrap;
+        /* на широк екран всичко в един ред */
+      }
+
+      .tabs button {
+        flex: 0 0 auto;
+        /* бутоните си вземат колкото ширина им трябва */
+      }
+    }
+
 
     .hidden {
       display: none !important
@@ -690,13 +698,13 @@
     </div>
 
     <div class="tabs">
-      <button class="tab-btn active" data-tab="combat">Combat</button>
-      <button class="tab-btn" data-tab="stats">Stats</button>
-      <button class="tab-btn" data-tab="inventory">Inventory</button>
-      <button class="tab-btn" data-tab="shenanigans">Shenanigans</button>
-      <button class="tab-btn" data-tab="liners">One-Liners</button>
-      <button class="tab-btn" data-tab="excuses">Excuses</button>
-      <button id="btnInstall" class="tab-btn hidden" title="Install PWA">Install</button>
+      <button data-tab="combat">Combat</button>
+      <button data-tab="stats">Stats</button>
+      <button data-tab="inventory">Inventory</button>
+      <button data-tab="shenanigans">Shenanigans</button>
+      <button data-tab="liners">One-Liners</button>
+      <button data-tab="excuses">Excuses</button>
+      <button id="btnInstall" class="hidden" title="Install PWA">Install</button>
     </div>
 
     <!-- Combat tab -->
