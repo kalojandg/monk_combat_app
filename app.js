@@ -454,37 +454,51 @@ el("btnLongRest") && el("btnLongRest").addEventListener("click", () => {
 });
 
 // ---- Bundle sheet + aliases (backward-compatible) ----
+function sanitizeStateForExport(src) {
+  // дълбоко копие на st, без временни/външни ключове
+  const s = JSON.parse(JSON.stringify(src || {}));
+  delete s.aliases;     // ако по някаква причина е попаднал вътре
+  // ...ако имаш други временни ключове – махни ги тук
+  return s;
+}
+
 function getBundle() {
   return {
     schema: "monkSheetBundle/v1",
-    state: st,
-    aliases: loadAliases() // остава си и в localStorage; това е само за експорт/клауд
+    state: sanitizeStateForExport(st), // inventory си остава вътре – ОК е
+    aliases: loadAliases()             // само тук, извън state
   };
 }
+
 function applyBundle(obj) {
   if (!obj) return;
 
-  // Нов формат с bundle
+  // Новият bundle формат
   if (obj.schema === "monkSheetBundle/v1") {
-    // вкарва state (вътре е и inventory)
-    if (obj.state) {
-      loadState(obj.state);
-    }
-    // ако имаме aliases
-    if (obj.aliases) {
-      loadAliases(obj.aliases);
-    }
+    const incomingState = obj.state || {};
+    const incomingAliases = Array.isArray(obj.aliases) ? obj.aliases : [];
+
+    // ако по грешка има aliases И във state, и отвън – слей уникално
+    const innerAliases = Array.isArray(incomingState.aliases) ? incomingState.aliases : [];
+    const mergedAliases = [...incomingAliases, ...innerAliases];
+
+    // махни aliases от state (да не влизат вътре)
+    const cleaned = { ...incomingState };
+    delete cleaned.aliases;
+
+    st = { ...defaultState, ...cleaned };
+    if (mergedAliases.length) saveAliases(mergedAliases);
+    save();
     return;
   }
 
-  // Стар плосък формат (само state)
-  if (obj.hpCurrent !== undefined || obj.kiCurrent !== undefined) {
-    loadState(obj);
-    return;
-  }
-
-  alert("Непознат JSON формат – не е bundle, нито стар state.");
+  // Стар плосък state JSON
+  st = { ...defaultState, ...obj };
+  // ако случайно е имало obj.aliases тук – запази ги отделно
+  if (Array.isArray(obj.aliases)) saveAliases(obj.aliases);
+  save();
 }
+
 
 
 // ---------- Inventory ----------
@@ -701,13 +715,17 @@ async function cloudWriteNow() {
       const req = await cloudHandle.requestPermission({ mode: "readwrite" });
       if (req !== "granted") return;
     }
-    const file = await cloudHandle.getFile();
     const writable = await cloudHandle.createWritable();
-    const bundle = getBundle();
-    await writable.write(new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" }));
+    await writable.truncate(0); // <-- ключово!
+    await writable.write(new Blob([JSON.stringify(getBundle(), null, 2)], {
+      type: "application/json"
+    }));
     await writable.close();
-  } catch (e) { /* тихо */ }
+  } catch (e) {
+    console.error("cloudWriteNow error:", e);
+  }
 }
+
 
 const cloudSchedule = debounce(() => { cloudWriteNow(); }, 1000);
 
