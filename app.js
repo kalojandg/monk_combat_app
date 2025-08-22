@@ -463,19 +463,29 @@ function getBundle() {
 }
 function applyBundle(obj) {
   if (!obj) return;
-  // нов формат
-  if (obj.schema && obj.state) {
-    st = { ...defaultState, ...obj.state };
-    if (Array.isArray(obj.aliases)) {
-      saveAliases(obj.aliases);   // overwrite само ако има aliases в bundle
+
+  // Нов формат с bundle
+  if (obj.schema === "monkSheetBundle/v1") {
+    // вкарва state (вътре е и inventory)
+    if (obj.state) {
+      loadState(obj.state);
     }
-    save();
+    // ако имаме aliases
+    if (obj.aliases) {
+      loadAliases(obj.aliases);
+    }
     return;
   }
-  // стар формат: директен state JSON
-  st = { ...defaultState, ...obj };
-  save();
+
+  // Стар плосък формат (само state)
+  if (obj.hpCurrent !== undefined || obj.kiCurrent !== undefined) {
+    loadState(obj);
+    return;
+  }
+
+  alert("Непознат JSON формат – не е bundle, нито стар state.");
 }
+
 
 // ---------- Inventory ----------
 let __invEditIndex = null; // null => Add, число => Edit
