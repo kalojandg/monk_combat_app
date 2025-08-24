@@ -1326,7 +1326,7 @@ function attachAliasLog() {
 }
 
 // ===== Session Notes — FOLDER MODE =====
-const NOTES_DIR_KEY = "notesDirHandle_v2"; // ключ в IndexedDB
+const NOTES_DIR_KEY = "notesDirHandle"; // ключ в IndexedDB
 let notesDirHandle = null;     // избраната папка
 let notesFileHandle = null;    // текущ файл за днешната сесия
 let __notesFileCreatedThisRun = false;
