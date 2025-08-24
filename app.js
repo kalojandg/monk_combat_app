@@ -800,13 +800,6 @@ function attachNotesTab() {
   }, 1200));
 }
 
-// hook при смяна на таб
-document.querySelectorAll(".tabs [data-tab]").forEach(b => {
-  b.addEventListener("click", () => {
-    if (b.dataset.tab === "notes") attachNotesTab();
-  });
-});
-
 async function notesInitNewFile() {
   if (!notesHandle) return;
   try {
@@ -860,7 +853,7 @@ async function onNotesTabShown() {
   if (__notesBound) return;          // не ребиндваме
   __notesBound = true;
 
-  const ta = document.getElementById('sessionNotes');
+  const ta = document.getElementById('notesInput');
   if (!ta) return;
 
   // първи път: ако няма handle → попитай
@@ -926,15 +919,6 @@ async function idbDel(key) {
   return new Promise((res, rej) => {
     const tx = db.transaction(DB_STORE, "readwrite");
     tx.objectStore(DB_STORE).delete(key);
-    tx.oncomplete = () => res();
-    tx.onerror = () => rej(tx.error);
-  });
-}
-async function notesIdbSet(val) {
-  const db = await idbOpen();
-  return new Promise((res, rej) => {
-    const tx = db.transaction(NOTES_STORE, "readwrite");
-    tx.objectStore(NOTES_STORE).put(val, NOTES_KEY);
     tx.oncomplete = () => res();
     tx.onerror = () => rej(tx.error);
   });
@@ -1454,7 +1438,7 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
 // ==== Boot ====
 (async () => {
   await cloudRestore();
-  notesRestore();
+  await notesRestore();
   renderAll();            // първи рендер
   attachShenanigans();    // ← ВЕДНЪЖ
   attachOneLiners();      // ← ВЕДНЪЖ
