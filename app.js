@@ -50,6 +50,12 @@ const defaultState = {
   saveAllBonus: 0,
   skillProfs: {},
 
+  languages: [],   // масив от { name }
+  tools: [],       // масив от { name }
+  personality: "",
+  bond: "",
+  flaw: "",
+
   inventory: [],
   hpCurrent: 10,
   hpHomebrew: null,      // добавка към формулната Max HP (може отрицателна)
@@ -283,9 +289,19 @@ function renderAll() {
   el("saveWisTotalSpan") && (el("saveWisTotalSpan").textContent = (d.savesTotal.wis >= 0 ? "+" : "") + d.savesTotal.wis);
   el("saveChaTotalSpan") && (el("saveChaTotalSpan").textContent = (d.savesTotal.cha >= 0 ? "+" : "") + d.savesTotal.cha);
 
+  // PC Characteristics textareas
+  el("pcPersonality") && (el("pcPersonality").value = st.personality || "");
+  el("pcBond") && (el("pcBond").value = st.bond || "");
+  el("pcFlaw") && (el("pcFlaw").value = st.flaw || "");
+
+  // tables
+  renderLangTable();
+  renderToolTable();
+
   renderSkills(d.mods, d.prof);
   renderDeathSaves();
   renderInventoryTable();
+
 }
 
 // ===== Events: inputs =====
@@ -630,6 +646,94 @@ function attachInventory() {
     }
     invCloseModal();
     save(); // trigger render + cloud write
+  });
+}
+
+function attachPCChar() {
+  const addLang = document.getElementById('btnLangAdd');
+  const addTool = document.getElementById('btnToolAdd');
+
+  addLang && addLang.addEventListener('click', () => openPcModal('lang'));
+  addTool && addTool.addEventListener('click', () => openPcModal('tool'));
+
+  const tPers = document.getElementById('pcPersonality');
+  const tBond = document.getElementById('pcBond');
+  const tFlaw = document.getElementById('pcFlaw');
+
+  tPers && tPers.addEventListener('input', () => { st.personality = tPers.value; save(); });
+  tBond && tBond.addEventListener('input', () => { st.bond = tBond.value; save(); });
+  tFlaw && tFlaw.addEventListener('input', () => { st.flaw = tFlaw.value; save(); });
+}
+
+function renderLangTable() {
+  const root = document.getElementById('langTableRoot');
+  if (!root) return;
+  const list = Array.isArray(st.languages) ? st.languages : [];
+  if (!list.length) { root.innerHTML = '<small>Няма добавени езици още.</small>'; return; }
+
+  const rows = list.map((it, i) => {
+    const safe = s => String(s || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+    return `<tr>
+      <td>${i + 1}</td>
+      <td>${safe(it.name)}</td>
+      <td style="white-space:nowrap;text-align:center">
+        <button class="icon-btn" data-lang-edit="${i}" title="Edit">✏️</button>
+        <button class="icon-btn" data-lang-del="${i}" title="Delete">🗑️</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  root.innerHTML = `
+  <table class="alias-table">
+    <thead><tr><th>#</th><th>Language</th><th></th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+
+  root.querySelectorAll('[data-lang-edit]').forEach(btn => {
+    btn.addEventListener('click', e => openPcModal('lang', parseInt(e.currentTarget.dataset.langEdit, 10)));
+  });
+  root.querySelectorAll('[data-lang-del]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const idx = parseInt(e.currentTarget.dataset.langDel, 10);
+      const ok = confirm('Изтриване на този език?'); if (!ok) return;
+      st.languages.splice(idx, 1); save();
+    });
+  });
+}
+
+function renderToolTable() {
+  const root = document.getElementById('toolTableRoot');
+  if (!root) return;
+  const list = Array.isArray(st.tools) ? st.tools : [];
+  if (!list.length) { root.innerHTML = '<small>Няма добавени инструменти още.</small>'; return; }
+
+  const rows = list.map((it, i) => {
+    const safe = s => String(s || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+    return `<tr>
+      <td>${i + 1}</td>
+      <td>${safe(it.name)}</td>
+      <td style="white-space:nowrap;text-align:center">
+        <button class="icon-btn" data-tool-edit="${i}" title="Edit">✏️</button>
+        <button class="icon-btn" data-tool-del="${i}" title="Delete">🗑️</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  root.innerHTML = `
+  <table class="alias-table">
+    <thead><tr><th>#</th><th>Tool</th><th></th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+
+  root.querySelectorAll('[data-tool-edit]').forEach(btn => {
+    btn.addEventListener('click', e => openPcModal('tool', parseInt(e.currentTarget.dataset.toolEdit, 10)));
+  });
+  root.querySelectorAll('[data-tool-del]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const idx = parseInt(e.currentTarget.dataset.toolDel, 10);
+      const ok = confirm('Изтриване на този инструмент?'); if (!ok) return;
+      st.tools.splice(idx, 1); save();
+    });
   });
 }
 
@@ -1010,6 +1114,59 @@ function closeAliasModal() {
   if (m) m.classList.add('hidden');
 }
 
+let __pcModalType = null;     // 'lang' | 'tool'
+let __pcModalIndex = null;    // null => add, number => edit
+
+function openPcModal(type, index = null) {
+  __pcModalType = type;
+  __pcModalIndex = (typeof index === 'number') ? index : null;
+
+  const m = document.getElementById('pcModal');
+  const title = document.getElementById('pcModalTitle');
+  const label = document.getElementById('pcModalLabel');
+  const name = document.getElementById('pcModalName');
+
+  const isLang = type === 'lang';
+  title.textContent = (__pcModalIndex === null) ? (isLang ? 'Add language' : 'Add tool')
+    : (isLang ? 'Edit language' : 'Edit tool');
+  label.textContent = isLang ? 'Language' : 'Tool';
+
+  const list = isLang ? st.languages : st.tools;
+  name.value = (__pcModalIndex !== null && list[__pcModalIndex]) ? (list[__pcModalIndex].name || '') : '';
+
+  m.classList.remove('hidden');
+  name.focus();
+}
+
+function closePcModal() {
+  const m = document.getElementById('pcModal');
+  if (m) m.classList.add('hidden');
+  __pcModalType = null; __pcModalIndex = null;
+}
+
+(function attachPcModal() {
+  const cancel = document.getElementById('pcModalCancel');
+  const saveBtn = document.getElementById('pcModalSave');
+  const name = document.getElementById('pcModalName');
+
+  cancel && cancel.addEventListener('click', closePcModal);
+  saveBtn && saveBtn.addEventListener('click', () => {
+    if (!__pcModalType) return;
+    const val = (name.value || '').trim();
+    if (!val) { alert('Името е задължително.'); return; }
+
+    if (__pcModalType === 'lang') {
+      if (__pcModalIndex === null) st.languages.push({ name: val });
+      else st.languages[__pcModalIndex] = { name: val };
+    } else {
+      if (__pcModalIndex === null) st.tools.push({ name: val });
+      else st.tools[__pcModalIndex] = { name: val };
+    }
+    closePcModal();
+    save(); // ще извика renderAll()
+  });
+})();
+
 // attach
 function attachAliasLog() {
   const getBtn = document.getElementById('btnGetName');
@@ -1156,4 +1313,5 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
   attachExcuses();        // ← ВЕДНЪЖ
   attachAliasLog();       // ← ВЕДНЪЖ      // първи рендер
   attachInventory();
+  attachPCChar();
 })();
