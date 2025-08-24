@@ -1558,6 +1558,7 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
 // ==== Boot ====
 (async () => {
   __notesFileCreatedThisRun = false;
+  notesFileHandle = null;
   await cloudRestore();
   await notesRestoreDir();     // възстановява папката, ако е избрана преди
   await notesEnsureNewFile();  // създава/избира днешния файл веднъж на стартиране
