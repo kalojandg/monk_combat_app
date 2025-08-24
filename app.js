@@ -1558,9 +1558,9 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
 // ==== Boot ====
 (async () => {
   await cloudRestore();
+  try { await idbDel("notesFileHandle"); } catch {}
   await notesRestoreDir();     // възстановява папката, ако е избрана преди
   await notesEnsureNewFile();  // създава/избира днешния файл веднъж на стартиране
-  try { await idbDel("notesFileHandle"); } catch {}
   renderAll();            // първи рендер
   attachShenanigans();    // ← ВЕДНЪЖ
   attachOneLiners();      // ← ВЕДНЪЖ
