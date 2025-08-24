@@ -5,6 +5,9 @@ const modFrom = (score) => Math.floor((Number(score || 0) - 10) / 2);
 
 // XP thresholds 1..20 (RAW без 0-праг)
 const XP_THRESH = [300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000, 85000, 100000, 120000, 140000, 165000, 195000, 225000, 265000, 305000, 355000];
+const NOTES_DB_NAME = "monkNotesDB";
+const NOTES_STORE = "handles";
+const NOTES_KEY = "notesFileHandle";
 
 // Martial Arts die по ниво
 function maDie(level) {
@@ -63,7 +66,12 @@ const defaultState = {
   dsSuccess: 0, dsFail: 0, status: "alive",
   hdAvail: 1,
 
-  acMagic: 0, baseSpeed: 30, tough: false, hpAdjust: 0
+  sessionNotes: "",
+
+  acMagic: 0,
+  baseSpeed: 30,
+  tough: false,
+  hpAdjust: 0
 };
 
 
@@ -771,6 +779,107 @@ el("btnReset") && el("btnReset").addEventListener("click", () => {
   save();
 });
 
+const NOTES_DB_KEY = "notesFileHandle";
+let notesHandle = null;
+
+// hook при показване на таба Notes
+function attachNotesTab() {
+  const notesEl = document.getElementById("sessionNotes");
+  if (!notesEl) return;
+
+  // ако няма handle, питай веднага
+  if (!notesHandle) {
+    notesPickDir().catch(() => {
+      console.warn("Notes directory not selected.");
+    });
+  }
+
+  // auto-save debounce
+  notesEl.addEventListener("input", debounce(() => {
+    saveNotes();
+  }, 1200));
+}
+
+// hook при смяна на таб
+document.querySelectorAll(".tabs [data-tab]").forEach(b => {
+  b.addEventListener("click", () => {
+    if (b.dataset.tab === "notes") attachNotesTab();
+  });
+});
+
+async function notesInitNewFile() {
+  if (!notesHandle) return;
+  try {
+    const d = new Date();
+    const pad = n => String(n).padStart(2,"0");
+    let base = `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_SessionNotes.json`;
+    let name = base;
+    let i = 2;
+    const dir = await notesHandle.getFile();
+    // За съжаление File System Access API не позволява лесно да провериш имена в директорията.
+    // По-просто: винаги overwrite-ваш нов файл със stamp (или timestamp в ms).
+    const file = await notesHandle.createWritable();
+    const obj = { schema:"sessionNotes/v1", created:d.toISOString(), title:"Session Notes", content:"" };
+    await file.write(new Blob([JSON.stringify(obj,null,2)], {type:"application/json"}));
+    await file.close();
+  } catch(e){ console.error("notesInitNewFile", e); }
+}
+
+async function notesWriteNow() {
+  if (!notesHandle) return;
+  try {
+    const perm = await notesHandle.queryPermission({ mode:"readwrite" });
+    if (perm !== "granted") {
+      const req = await notesHandle.requestPermission({ mode:"readwrite" });
+      if (req !== "granted") return;
+    }
+    const writable = await notesHandle.createWritable();
+    const obj = { schema:"sessionNotes/v1", created:new Date().toISOString(), title:"Session Notes", content: st.sessionNotes };
+    await writable.write(new Blob([JSON.stringify(obj,null,2)], {type:"application/json"}));
+    await writable.close();
+  } catch(e){ console.error("notesWriteNow", e); }
+}
+const notesSchedule = debounce(() => notesWriteNow(), 1200);
+
+async function notesPickDir() {
+  try {
+    const handle = await window.showSaveFilePicker({
+      suggestedName: "SessionNotes.json",
+      types:[{ description:"JSON", accept:{ "application/json":[".json"] } }]
+    });
+    notesHandle = handle;
+    await idbSet(NOTES_DB_KEY, handle);
+    await notesInitNewFile();
+  } catch(e){ console.error("notesPickDir", e); }
+}
+
+// ---- Session Notes wiring ----
+let __notesBound = false;
+
+async function onNotesTabShown() {
+  if (__notesBound) return;          // не ребиндваме
+  __notesBound = true;
+
+  const ta = document.getElementById('sessionNotes');
+  if (!ta) return;
+
+  // първи път: ако няма handle → попитай
+  if (!notesHandle) {
+    try { await notesPickDir(); } catch (_) {}
+  }
+
+  // зареди runtime стойност (ако пазиш в st.sessionNotes)
+  ta.value = st.sessionNotes || '';
+
+  // авто-сейв с debounce към JSON файла
+  const debSave = debounce(async () => {
+    st.sessionNotes = ta.value;
+    await notesWriteNow();
+  }, 1200);
+
+  ta.addEventListener('input', debSave);
+}
+
 // ===== Cloud Sync (File System Access API) =====
 const DB_NAME = "monkSheetCloudDB";
 const DB_STORE = "handles";
@@ -821,6 +930,25 @@ async function idbDel(key) {
     tx.onerror = () => rej(tx.error);
   });
 }
+async function notesIdbSet(val) {
+  const db = await idbOpen();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(NOTES_STORE, "readwrite");
+    tx.objectStore(NOTES_STORE).put(val, NOTES_KEY);
+    tx.oncomplete = () => res();
+    tx.onerror = () => rej(tx.error);
+  });
+}
+
+async function notesIdbGet() {
+  const db = await idbOpen();
+  return new Promise((res, rej) => {
+    const tx = db.transaction(NOTES_STORE, "readonly");
+    const req = tx.objectStore(NOTES_STORE).get(NOTES_KEY);
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => rej(req.error);
+  });
+}
 
 function cloudUiRefresh() {
   const dot = el("cloudDot");
@@ -853,6 +981,16 @@ async function cloudWriteNow() {
   }
 }
 
+async function notesRestore() {
+  try {
+    const h = await notesIdbGet();
+    if (!h) { notesHandle = null; return; }
+    const perm = await h.queryPermission({ mode: "readwrite" });
+    notesHandle = h;
+  } catch (e) {
+    notesHandle = null;
+  }
+}
 
 const cloudSchedule = debounce(() => { cloudWriteNow(); }, 1000);
 
@@ -1223,6 +1361,24 @@ function renderDeathSaves() {
   if (ov) ov.classList.toggle("hidden", st.status !== "dead");
 }
 
+el("notesInput") && el("notesInput").addEventListener("input", () => {
+  st.sessionNotes = el("notesInput").value;
+  notesSchedule();
+});
+
+el("importNotesFile") && el("importNotesFile").addEventListener("change", (e)=>{
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const obj = JSON.parse(reader.result);
+      el("notesPreview").value = obj.content || "(empty)";
+    } catch { el("notesPreview").value = "(bad JSON)"; }
+  };
+  reader.readAsText(file);
+  e.target.value = "";
+});
+
 // Bind UI
 el("btnCloudLink") && el("btnCloudLink").addEventListener("click", async () => {
   // ако има handle – релинк/смяна
@@ -1268,45 +1424,37 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
 (function tabsInitToggleable() {
   const btns = Array.from(document.querySelectorAll('.tabs [data-tab]'));
   const panels = Array.from(document.querySelectorAll('.tab'));
-  let activeName = null; // текущо активният таб (без localStorage)
+  let activeName = null;
 
   function setActive(name) {
     activeName = name;
 
-    // панели
     panels.forEach(p => p.classList.add('hidden'));
     if (name) {
       const panel = document.getElementById(`tab-${name}`);
       if (panel) panel.classList.remove('hidden');
     }
 
-    // бутони
-    btns.forEach(b => {
-      const isActive = !!name && b.dataset.tab === name;
-      b.classList.toggle('active', isActive);
-      b.setAttribute('aria-expanded', isActive ? 'true' : 'false');
-    });
+    btns.forEach(b => b.classList.toggle('active', !!name && b.dataset.tab === name));
+
+    // >>> Добави това:
+    if (name === 'sessionNotes') onNotesTabShown();
   }
 
-  // клик: ако е активен → затваря; иначе отваря
   btns.forEach(b => {
-    b.setAttribute('type', 'button'); // за всеки случай, ако някога влезе във <form>
-    b.setAttribute('role', 'tab');
-    b.setAttribute('aria-controls', `tab-${b.dataset.tab}`);
-    b.addEventListener('click', () => {
-      const name = b.dataset.tab;
-      setActive(activeName === name ? null : name);
-    });
+    b.setAttribute('type','button');
+    b.addEventListener('click', () => setActive(activeName === b.dataset.tab ? null : b.dataset.tab));
   });
 
-  // старт: без селектиран таб
-  setActive(null);
+  setActive(null); // старт без отворен таб
 })();
+
 
 
 // ==== Boot ====
 (async () => {
   await cloudRestore();
+  notesRestore();
   renderAll();            // първи рендер
   attachShenanigans();    // ← ВЕДНЪЖ
   attachOneLiners();      // ← ВЕДНЪЖ

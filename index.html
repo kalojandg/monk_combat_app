@@ -636,6 +636,20 @@
       /* стак на телефон */
     }
 
+    .notes-box {
+      background: #111827;
+      /* тъмносиво като one-liner-box */
+      color: #eee;
+      /* светъл текст */
+      border: 1px solid #374151;
+      border-radius: 6px;
+      padding: 8px;
+      width: 100%;
+      min-height: 200px;
+      resize: vertical;
+      font-family: inherit;
+    }
+
     /* fail 3 */
     /* Оверлей – статичен */
     .you-died {
@@ -786,6 +800,7 @@
       <button data-tab="shenanigans">Shenanigans</button>
       <button data-tab="liners">One-Liners</button>
       <button data-tab="excuses">Excuses</button>
+      <button data-tab="sessionNotes">Session Notes</button>
       <button id="btnInstall" class="hidden" title="Install PWA">Install</button>
     </div>
 
@@ -1214,7 +1229,17 @@
 
       <small>Чете от <code>excuses.json</code>.</small>
     </div>
+
+    <div id="tab-sessionNotes" class="tab hidden">
+      <h2>Session Notes</h2>
+      <textarea id="notesInput" rows="12" class="notes-box""></textarea>
+
+      <h3>📂 Преглед на стари записки</h3>
+      <input type="file" id="importNotesFile" accept="application/json,.json">
+      <textarea id="notesPreview" rows="12" class="notes-box" readonly></textarea>
+    </div>
   </div>
+
 
   <script src="app.js"></script>
 </body>
