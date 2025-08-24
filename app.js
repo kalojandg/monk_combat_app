@@ -2,6 +2,12 @@
 const el = id => document.getElementById(id);
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 const modFrom = (score) => Math.floor((Number(score || 0) - 10) / 2);
+async function ensureDirRW(dirHandle) {
+  const p = await dirHandle.queryPermission({ mode: 'readwrite' });
+  if (p === 'granted') return true;
+  const r = await dirHandle.requestPermission({ mode: 'readwrite' });
+  return r === 'granted';
+}
 
 // XP thresholds 1..20 (RAW без 0-праг)
 const XP_THRESH = [300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000, 85000, 100000, 120000, 140000, 165000, 195000, 225000, 265000, 305000, 355000];
@@ -1341,7 +1347,6 @@ function updateNotesStatus() {
   else s.textContent = 'Notes: NOT linked (local only)';
 }
 
-
 async function idbSetHandle(key, val){ return idbSet(key, val); }
 async function idbGetHandle(key){ return idbGet(key); }
 
@@ -1357,23 +1362,23 @@ function notesBaseName() {
 }
 
 async function notesEnsureNewFile() {
-  if (!notesDirHandle || __notesFileCreatedThisRun) return;
+  if (!notesDirHandle || __notesFileCreatedThisRun || notesFileHandle) return;
 
-  const base = notesBaseName(); // YYYYMMDD_SessionNotes
+  // нужно е в user-gesture синхронен поток
+  const ok = await ensureDirRW(notesDirHandle);
+  if (!ok) { updateNotesStatus(); return; }
+
+  const base = notesBaseName();
   let name = `${base}.json`, i = 2;
   while (await fileExistsInDir(notesDirHandle, name)) {
     name = `${base} (${i++}).json`;
   }
-
   notesFileHandle = await notesDirHandle.getFileHandle(name, { create: true });
   __notesFileCreatedThisRun = true;
 
-  // нова сесия → (по желание) нулирай и запиши празно
-  // st.sessionNotes = ""; save();
-  await notesWriteNow();
+  await notesWriteNow();        // първоначален запис (може и празен)
   updateNotesStatus();
 }
-
 
 async function notesWriteNow() {
   if (notesDirHandle && !notesFileHandle) {
@@ -1425,6 +1430,11 @@ async function notesRestoreDir() {
       updateNotesStatus(); 
       return; 
     }
+    if (!notesFileHandle) {
+      st.sessionNotes = ""; 
+      const ta = document.getElementById('notesInput');
+      if (ta) ta.value = "";
+    }
     notesDirHandle = h;
     notesFileHandle = null;
     updateNotesStatus();
@@ -1446,13 +1456,31 @@ function wireNotesUI() {
   if (ta && !ta.__wired) {
     ta.__wired = true;
     ta.value = st.sessionNotes || "";
+
+    let firstInputHandled = false;
+
+    // 1) при първия user gesture – веднага опитай да създадеш днешния файл
+    const onFirstGesture = async () => {
+      if (!firstInputHandled) {
+        firstInputHandled = true;
+        if (notesDirHandle && !notesFileHandle) {
+          try { await notesEnsureNewFile(); } catch {}
+        }
+      }
+    };
+
+    ta.addEventListener('keydown', onFirstGesture, { once: true });
+    ta.addEventListener('pointerdown', onFirstGesture, { once: true });
+
+    // 2) след това — нормален дебаунс за записите
     ta.addEventListener('input', () => {
       st.sessionNotes = ta.value;
-      save();             // локален бекъп
-      notesDebouncedSave();
+      save();                    // локален бекъп
+      notesDebouncedSave();      // ще пише, ако вече има file handle
     });
   }
 }
+
 
 function onNotesTabShown() {
   wireNotesUI();
