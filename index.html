@@ -1232,12 +1232,19 @@
 
     <div id="tab-sessionNotes" class="tab hidden">
       <h2>Session Notes</h2>
-      <textarea id="notesInput" rows="12" class="notes-box""></textarea>
-
+    
+      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem;">
+        <button id="btnNotesLink" type="button">Link notes folder…</button>
+        <small id="notesStatus">Notes: not linked</small>
+      </div>
+    
+      <textarea id="notesInput" rows="12" class="notes-box"></textarea>
+    
       <h3>📂 Преглед на стари записки</h3>
       <input type="file" id="importNotesFile" accept="application/json,.json">
       <textarea id="notesPreview" rows="12" class="notes-box" readonly></textarea>
     </div>
+    
   </div>
 
 

@@ -1324,6 +1324,135 @@ function attachAliasLog() {
   setSaveEnabled(false);
 }
 
+// ===== Session Notes — FOLDER MODE =====
+const NOTES_DIR_KEY = "notesDirHandle_v2"; // ключ в IndexedDB
+let notesDirHandle = null;     // избраната папка
+let notesFileHandle = null;    // текущ файл за днешната сесия
+let __notesFileCreatedThisRun = false;
+
+function updateNotesStatus() {
+  const s = document.getElementById('notesStatus');
+  if (!s) return;
+  if (notesFileHandle) s.textContent = 'Notes: linked (file active)';
+  else if (notesDirHandle) s.textContent = 'Notes: linked (folder)';
+  else s.textContent = 'Notes: not linked';
+}
+
+async function idbSetHandle(key, val){ return idbSet(key, val); }
+async function idbGetHandle(key){ return idbGet(key); }
+
+async function fileExistsInDir(dirHandle, name) {
+  try { await dirHandle.getFileHandle(name); return true; }
+  catch { return false; }
+}
+
+function notesBaseName() {
+  const d = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_SessionNotes`;
+}
+
+async function notesEnsureNewFile() {
+  if (!notesDirHandle || __notesFileCreatedThisRun) return;
+  const base = notesBaseName();
+
+  let name = `${base}.json`;
+  let i = 2;
+  while (await fileExistsInDir(notesDirHandle, name)) {
+    name = `${base} (${i++}).json`;
+  }
+
+  notesFileHandle = await notesDirHandle.getFileHandle(name, { create: true });
+  __notesFileCreatedThisRun = true;
+
+  // първоначален запис (празно съдържание)
+  await notesWriteNow(true);
+  updateNotesStatus();
+}
+
+async function notesWriteNow(initial = false) {
+  if (!notesFileHandle) return;
+
+  try {
+    const perm = await notesFileHandle.queryPermission?.({ mode: "readwrite" }) ?? "granted";
+    if (perm !== "granted") {
+      const req = await notesFileHandle.requestPermission?.({ mode: "readwrite" });
+      if (req !== "granted") return;
+    }
+
+    const writable = await notesFileHandle.createWritable();
+    const obj = {
+      schema: "sessionNotes/v1",
+      updated: new Date().toISOString(),
+      content: st.sessionNotes || ""
+    };
+    if (!initial) await writable.truncate(0);
+    await writable.write(new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" }));
+    await writable.close();
+  } catch (e) {
+    console.error("notesWriteNow error:", e);
+  }
+}
+
+const notesDebouncedSave = debounce(() => notesWriteNow(), 1000);
+
+async function notesPickDir() {
+  try {
+    if (!('showDirectoryPicker' in window)) {
+      alert("Your browser doesn't support choosing a folder. Use Chrome/Edge desktop.");
+      return;
+    }
+    const dir = await window.showDirectoryPicker({ mode: 'readwrite' });
+    notesDirHandle = dir;
+    notesFileHandle = null;
+    __notesFileCreatedThisRun = false;
+    await idbSetHandle(NOTES_DIR_KEY, dir);
+    updateNotesStatus();
+    await notesEnsureNewFile(); // веднъж за този boot
+  } catch (e) {
+    /* cancel or error */ 
+    console.warn(e);
+  }
+}
+
+async function notesRestoreDir() {
+  try {
+    const h = await idbGetHandle(NOTES_DIR_KEY);
+    if (!h) { notesDirHandle = null; notesFileHandle = null; updateNotesStatus(); return; }
+    notesDirHandle = h;
+    notesFileHandle = null;
+    updateNotesStatus();
+  } catch (e) {
+    notesDirHandle = null; notesFileHandle = null; updateNotesStatus();
+  }
+}
+
+// UI wiring (textarea + бутон Link folder)
+function wireNotesUI() {
+  const ta  = document.getElementById('notesInput');
+  const btn = document.getElementById('btnNotesLink');
+
+  if (btn && !btn.__wired) {
+    btn.__wired = true;
+    btn.addEventListener('click', notesPickDir);
+  }
+
+  if (ta && !ta.__wired) {
+    ta.__wired = true;
+    ta.value = st.sessionNotes || "";
+    ta.addEventListener('input', () => {
+      st.sessionNotes = ta.value;
+      save();             // локален бекъп
+      notesDebouncedSave();
+    });
+  }
+}
+
+function onNotesTabShown() {
+  wireNotesUI();
+  updateNotesStatus();
+}
+
 // ===== Death saves =====
 function renderDeathSaves() {
   const s = st.dsSuccess, f = st.dsFail;
@@ -1438,7 +1567,9 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
 // ==== Boot ====
 (async () => {
   await cloudRestore();
-  await notesRestore();
+  await notesRestoreDir();     // възстановява папката, ако е избрана преди
+  await notesEnsureNewFile();  // създава/избира днешния файл веднъж на стартиране
+
   renderAll();            // първи рендер
   attachShenanigans();    // ← ВЕДНЪЖ
   attachOneLiners();      // ← ВЕДНЪЖ
