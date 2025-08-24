@@ -43,6 +43,8 @@ const defaultState = {
   name: "Пийс Ошит",
   notes: "",
   xp: 0,
+  meleeMagic: 0,
+  rangedMagic: 0,
   str: 10, dex: 10, con: 10, int_: 10, wis: 10, cha: 10,
   saveStrProf: false, saveDexProf: true, saveConProf: false, saveIntProf: false, saveWisProf: true, saveChaProf: false,
   saveAllBonus: 0,
@@ -118,7 +120,10 @@ function derived() {
     cha: savesBase.cha + allBonus,
   };
 
-  return { level, mods, prof, ma, kiMax, hdMax, maxHP, ac, um, totalSpeed, savesBase, savesTotal };
+  const meleeAtk = mods.dex + prof + Number(st.meleeMagic || 0);
+  const rangedAtk = mods.dex + prof + Number(st.rangedMagic || 0);
+
+  return { level, mods, prof, ma, kiMax, hdMax, maxHP, ac, um, totalSpeed, savesBase, savesTotal, meleeAtk, rangedAtk };
 }
 
 // ===== Skills =====
@@ -216,6 +221,14 @@ function renderAll() {
   el("kiMaxSpan2") && (el("kiMaxSpan2").textContent = d.kiMax);
   el("acSpan") && (el("acSpan").textContent = d.ac);
   el("profSpan") && (el("profSpan").textContent = `+${d.prof}`);
+
+  // Combat – attack pills
+  el("meleeAtkSpan") && (el("meleeAtkSpan").textContent = (d.meleeAtk >= 0 ? "+" : "") + d.meleeAtk);
+  el("rangedAtkSpan") && (el("rangedAtkSpan").textContent = (d.rangedAtk >= 0 ? "+" : "") + d.rangedAtk);
+
+  // Stats – inputs for magic atk bonuses
+  el("meleeMagicInput") && (el("meleeMagicInput").value = st.meleeMagic ?? 0);
+  el("rangedMagicInput") && (el("rangedMagicInput").value = st.rangedMagic ?? 0);
 
   // Basics (Stats)
   el("charName") && (el("charName").value = st.name || "");
@@ -450,6 +463,16 @@ el("btnLongRest") && el("btnLongRest").addEventListener("click", () => {
   st.kiCurrent = d.kiMax;
   st.hpCurrent = d.maxHP;
   st.dsSuccess = 0; st.dsFail = 0; st.status = "alive";
+  save();
+});
+
+// ---- Attack Bonuses ----
+el("meleeMagicInput") && el("meleeMagicInput").addEventListener("input", () => {
+  st.meleeMagic = Math.floor(Number(el("meleeMagicInput").value || 0));
+  save(); // ще преизчисли и ще обнови спановете
+});
+el("rangedMagicInput") && el("rangedMagicInput").addEventListener("input", () => {
+  st.rangedMagic = Math.floor(Number(el("rangedMagicInput").value || 0));
   save();
 });
 

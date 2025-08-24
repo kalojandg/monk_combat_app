@@ -735,6 +735,10 @@
         <div class="pill">Prof&nbsp;<span class="big" id="profSpan">+2</span></div>
       </div>
 
+      <div class="pillbar">
+        <div class="pill">Melee Atk&nbsp;<span class="big" id="meleeAtkSpan">+0</span></div>
+        <div class="pill">Ranged Atk&nbsp;<span class="big" id="rangedAtkSpan">+0</span></div>
+      </div>
       <div class="controls">
         <label>HP Δ <input id="hpDelta" type="number" class="small"></label>
         <button id="btnDamage" class="danger">Take damage</button>
@@ -821,6 +825,18 @@
       </div>
 
       <!-- Row 4 -->
+      <div class="row-grid">
+        <div class="field">
+          <label>Melee Magic item Atk Bonus</label>
+          <input id="meleeMagicInput" type="number" step="1" value="0">
+        </div>
+        <div class="field">
+          <label>Ranged Magic item Atk Bonus</label>
+          <input id="rangedMagicInput" type="number" step="1" value="0">
+        </div>
+      </div>
+
+      <!-- Row 5 -->
       <div class="row-grid">
         <div class="field"><label>Unarmored Movement (+ft)</label><span class="value-pill" id="umBonusSpan">0</span>
         </div>
