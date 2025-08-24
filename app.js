@@ -840,12 +840,14 @@ async function notesPickDir() {
     notesDirHandle = dir;
     notesFileHandle = null;
     __notesFileCreatedThisRun = false;
-    await idbSet(NOTES_DIR_KEY, dir);
-    await notesEnsureNewFile();        // създава файл веднага след избор на папка
+    await idbSet("notesDirHandle_v2", dir);
+    // по желание: чисти legacy ключове
+    try { await idbDel("notesDirHandle"); } catch {}
+    try { await idbDel("notesFileHandle"); } catch {}
     updateNotesStatus();
-  } catch { /* cancel */ }
+    await notesEnsureNewFile();
+  } catch {}
 }
-
 
 // ---- Session Notes wiring ----
 let __notesBound = false;
@@ -1326,7 +1328,7 @@ function attachAliasLog() {
 }
 
 // ===== Session Notes — FOLDER MODE =====
-const NOTES_DIR_KEY = "notesDirHandle"; // ключ в IndexedDB
+const NOTES_DIR_KEY = "notesDirHandle_v2"; // ключ в IndexedDB
 let notesDirHandle = null;     // избраната папка
 let notesFileHandle = null;    // текущ файл за днешната сесия
 let __notesFileCreatedThisRun = false;
@@ -1334,10 +1336,11 @@ let __notesFileCreatedThisRun = false;
 function updateNotesStatus() {
   const s = document.getElementById('notesStatus');
   if (!s) return;
-  if (notesFileHandle) s.textContent = 'Notes: linked (file active)';
-  else if (notesDirHandle) s.textContent = 'Notes: linked (folder)';
-  else s.textContent = 'Notes: not linked';
+  if (notesFileHandle) s.textContent = `Notes: linked (file: ${notesFileHandle.name})`;
+  else if (notesDirHandle) s.textContent = 'Notes: linked (folder only – no file yet)';
+  else s.textContent = 'Notes: NOT linked (local only)';
 }
+
 
 async function idbSetHandle(key, val){ return idbSet(key, val); }
 async function idbGetHandle(key){ return idbGet(key); }
@@ -1355,20 +1358,22 @@ function notesBaseName() {
 
 async function notesEnsureNewFile() {
   if (!notesDirHandle || __notesFileCreatedThisRun) return;
-  const base = notesBaseName();
+
+  const base = notesBaseName(); // YYYYMMDD_SessionNotes
   let name = `${base}.json`, i = 2;
   while (await fileExistsInDir(notesDirHandle, name)) {
-    name = `${base} (${i++}).json`;   // SessionNotes (2).json, (3)...
+    name = `${base} (${i++}).json`;
   }
+
   notesFileHandle = await notesDirHandle.getFileHandle(name, { create: true });
   __notesFileCreatedThisRun = true;
-  // Нулираме UI/state за новата сесия
-  st.sessionNotes = "";
-  save();                 // обнови localStorage + UI
 
-  await notesWriteNow();          // начален запис (празно съдържание/metadata)
+  // нова сесия → (по желание) нулирай и запиши празно
+  // st.sessionNotes = ""; save();
+  await notesWriteNow();
   updateNotesStatus();
 }
+
 
 async function notesWriteNow() {
   if (notesDirHandle && !notesFileHandle) {
@@ -1413,8 +1418,13 @@ async function notesPickDir() {
 
 async function notesRestoreDir() {
   try {
-    const h = await idbGetHandle(NOTES_DIR_KEY);
-    if (!h) { notesDirHandle = null; notesFileHandle = null; updateNotesStatus(); return; }
+    const h = await idbGet("notesDirHandle_v2") || await idbGet("notesDirHandle");
+    if (!h) { 
+      notesDirHandle = null; 
+      notesFileHandle = null; 
+      updateNotesStatus(); 
+      return; 
+    }
     notesDirHandle = h;
     notesFileHandle = null;
     updateNotesStatus();
@@ -1556,17 +1566,20 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
 
 
 // ==== Boot ====
+// ==== Boot ====
 (async () => {
-  __notesFileCreatedThisRun = false;
-  notesFileHandle = null;
   await cloudRestore();
-  await notesRestoreDir();     // възстановява папката, ако е избрана преди
-  await notesEnsureNewFile();  // създава/избира днешния файл веднъж на стартиране
-  renderAll();            // първи рендер
-  attachShenanigans();    // ← ВЕДНЪЖ
-  attachOneLiners();      // ← ВЕДНЪЖ
-  attachExcuses();        // ← ВЕДНЪЖ
-  attachAliasLog();       // ← ВЕДНЪЖ      // първи рендер
+
+  __notesFileCreatedThisRun = false;     // <-- гарантирано нов файл за тази сесия
+  await notesRestoreDir();               // опитай да върнеш папката
+  await notesEnsureNewFile();            // ако има папка → създай *нов* днешен файл
+
+  renderAll();
+  attachShenanigans();
+  attachOneLiners();
+  attachExcuses();
+  attachAliasLog();
   attachInventory();
   attachPCChar();
 })();
+
