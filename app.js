@@ -836,15 +836,16 @@ const notesSchedule = debounce(() => notesWriteNow(), 1200);
 
 async function notesPickDir() {
   try {
-    const handle = await window.showSaveFilePicker({
-      suggestedName: "SessionNotes.json",
-      types:[{ description:"JSON", accept:{ "application/json":[".json"] } }]
-    });
-    notesHandle = handle;
-    await idbSet(NOTES_DB_KEY, handle);
-    await notesInitNewFile();
-  } catch(e){ console.error("notesPickDir", e); }
+    const dir = await window.showDirectoryPicker({ mode: 'readwrite' });
+    notesDirHandle = dir;
+    notesFileHandle = null;
+    __notesFileCreatedThisRun = false;
+    await idbSet(NOTES_DIR_KEY, dir);
+    await notesEnsureNewFile();        // създава файл веднага след избор на папка
+    updateNotesStatus();
+  } catch { /* cancel */ }
 }
+
 
 // ---- Session Notes wiring ----
 let __notesBound = false;
@@ -965,16 +966,16 @@ async function cloudWriteNow() {
   }
 }
 
-async function notesRestore() {
-  try {
-    const h = await notesIdbGet();
-    if (!h) { notesHandle = null; return; }
-    const perm = await h.queryPermission({ mode: "readwrite" });
-    notesHandle = h;
-  } catch (e) {
-    notesHandle = null;
-  }
-}
+// async function notesRestore() {
+//   try {
+//     const h = await notesIdbGet();
+//     if (!h) { notesHandle = null; return; }
+//     const perm = await h.queryPermission({ mode: "readwrite" });
+//     notesHandle = h;
+//   } catch (e) {
+//     notesHandle = null;
+//   }
+// }
 
 const cloudSchedule = debounce(() => { cloudWriteNow(); }, 1000);
 
@@ -1355,44 +1356,34 @@ function notesBaseName() {
 async function notesEnsureNewFile() {
   if (!notesDirHandle || __notesFileCreatedThisRun) return;
   const base = notesBaseName();
-
-  let name = `${base}.json`;
-  let i = 2;
+  let name = `${base}.json`, i = 2;
   while (await fileExistsInDir(notesDirHandle, name)) {
-    name = `${base} (${i++}).json`;
+    name = `${base} (${i++}).json`;   // SessionNotes (2).json, (3)...
   }
-
   notesFileHandle = await notesDirHandle.getFileHandle(name, { create: true });
   __notesFileCreatedThisRun = true;
-
-  // първоначален запис (празно съдържание)
-  await notesWriteNow(true);
-  updateNotesStatus();
+  await notesWriteNow();              // начален запис (празно съдържание/metadata)
 }
 
-async function notesWriteNow(initial = false) {
-  if (!notesFileHandle) return;
+async function notesWriteNow() {
+  if (notesDirHandle && !notesFileHandle) {
+    await notesEnsureNewFile();
+  }
+  if (!notesFileHandle) return; // няма папка/файл -> нищо
 
   try {
-    const perm = await notesFileHandle.queryPermission?.({ mode: "readwrite" }) ?? "granted";
+    const perm = await notesFileHandle.queryPermission({ mode:"readwrite" });
     if (perm !== "granted") {
-      const req = await notesFileHandle.requestPermission?.({ mode: "readwrite" });
+      const req = await notesFileHandle.requestPermission({ mode:"readwrite" });
       if (req !== "granted") return;
     }
-
-    const writable = await notesFileHandle.createWritable();
-    const obj = {
-      schema: "sessionNotes/v1",
-      updated: new Date().toISOString(),
-      content: st.sessionNotes || ""
-    };
-    if (!initial) await writable.truncate(0);
-    await writable.write(new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" }));
-    await writable.close();
-  } catch (e) {
-    console.error("notesWriteNow error:", e);
-  }
+    const w = await notesFileHandle.createWritable();
+    const obj = { schema:"sessionNotes/v1", updated:new Date().toISOString(), content: st.sessionNotes || "" };
+    await w.write(new Blob([JSON.stringify(obj, null, 2)], { type:"application/json" }));
+    await w.close();
+  } catch (e) { console.error("notesWriteNow", e); }
 }
+
 
 const notesDebouncedSave = debounce(() => notesWriteNow(), 1000);
 
