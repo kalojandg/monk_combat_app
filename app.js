@@ -1362,7 +1362,12 @@ async function notesEnsureNewFile() {
   }
   notesFileHandle = await notesDirHandle.getFileHandle(name, { create: true });
   __notesFileCreatedThisRun = true;
-  await notesWriteNow();              // начален запис (празно съдържание/metadata)
+  // Нулираме UI/state за новата сесия
+  st.sessionNotes = "";
+  save();                 // обнови localStorage + UI
+
+  await notesWriteNow();          // начален запис (празно съдържание/metadata)
+  updateNotesStatus();
 }
 
 async function notesWriteNow() {
@@ -1464,11 +1469,6 @@ function renderDeathSaves() {
   const ov = el("youDiedOverlay");
   if (ov) ov.classList.toggle("hidden", st.status !== "dead");
 }
-
-el("notesInput") && el("notesInput").addEventListener("input", () => {
-  st.sessionNotes = el("notesInput").value;
-  notesSchedule();
-});
 
 el("importNotesFile") && el("importNotesFile").addEventListener("change", (e)=>{
   const file = e.target.files[0]; if (!file) return;
