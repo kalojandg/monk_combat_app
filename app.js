@@ -315,7 +315,7 @@ function renderAll() {
   renderSkills(d.mods, d.prof);
   renderDeathSaves();
   renderInventoryTable();
-  renderFeaturesAccordion();
+  renderFeaturesAccordion(d.level);
 }
 
 // ===== Events: inputs =====
