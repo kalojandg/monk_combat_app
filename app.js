@@ -810,33 +810,33 @@ async function notesInitNewFile() {
   if (!notesHandle) return;
   try {
     const d = new Date();
-    const pad = n => String(n).padStart(2,"0");
-    let base = `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_SessionNotes.json`;
+    const pad = n => String(n).padStart(2, "0");
+    let base = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_SessionNotes.json`;
     let name = base;
     let i = 2;
     const dir = await notesHandle.getFile();
     // За съжаление File System Access API не позволява лесно да провериш имена в директорията.
     // По-просто: винаги overwrite-ваш нов файл със stamp (или timestamp в ms).
     const file = await notesHandle.createWritable();
-    const obj = { schema:"sessionNotes/v1", created:d.toISOString(), title:"Session Notes", content:"" };
-    await file.write(new Blob([JSON.stringify(obj,null,2)], {type:"application/json"}));
+    const obj = { schema: "sessionNotes/v1", created: d.toISOString(), title: "Session Notes", content: "" };
+    await file.write(new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" }));
     await file.close();
-  } catch(e){ console.error("notesInitNewFile", e); }
+  } catch (e) { console.error("notesInitNewFile", e); }
 }
 
 async function notesWriteNow() {
   if (!notesHandle) return;
   try {
-    const perm = await notesHandle.queryPermission({ mode:"readwrite" });
+    const perm = await notesHandle.queryPermission({ mode: "readwrite" });
     if (perm !== "granted") {
-      const req = await notesHandle.requestPermission({ mode:"readwrite" });
+      const req = await notesHandle.requestPermission({ mode: "readwrite" });
       if (req !== "granted") return;
     }
     const writable = await notesHandle.createWritable();
-    const obj = { schema:"sessionNotes/v1", created:new Date().toISOString(), title:"Session Notes", content: st.sessionNotes };
-    await writable.write(new Blob([JSON.stringify(obj,null,2)], {type:"application/json"}));
+    const obj = { schema: "sessionNotes/v1", created: new Date().toISOString(), title: "Session Notes", content: st.sessionNotes };
+    await writable.write(new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" }));
     await writable.close();
-  } catch(e){ console.error("notesWriteNow", e); }
+  } catch (e) { console.error("notesWriteNow", e); }
 }
 const notesSchedule = debounce(() => notesWriteNow(), 1200);
 
@@ -848,11 +848,11 @@ async function notesPickDir() {
     __notesFileCreatedThisRun = false;
     await idbSet("notesDirHandle_v2", dir);
     // по желание: чисти legacy ключове
-    try { await idbDel("notesDirHandle"); } catch {}
-    try { await idbDel("notesFileHandle"); } catch {}
+    try { await idbDel("notesDirHandle"); } catch { }
+    try { await idbDel("notesFileHandle"); } catch { }
     updateNotesStatus();
     await notesEnsureNewFile();
-  } catch {}
+  } catch { }
 }
 
 // ---- Session Notes wiring ----
@@ -867,7 +867,7 @@ async function onNotesTabShown() {
 
   // първи път: ако няма handle → попитай
   if (!notesHandle) {
-    try { await notesPickDir(); } catch (_) {}
+    try { await notesPickDir(); } catch (_) { }
   }
 
   // зареди runtime стойност (ако пазиш в st.sessionNotes)
@@ -1359,7 +1359,7 @@ function renderFeaturesAccordion(level) {
     const items = Array.isArray(data) ? data : (Array.isArray(data.features) ? data.features : []);
     const list = items
       .filter(it => (Number(it.level) || 1) <= level)
-      .sort((a, b) => (a.level||0) - (b.level||0));
+      .sort((a, b) => (a.level || 0) - (b.level || 0));
 
     if (!list.length) {
       host.innerHTML = '<small>Няма записи за това ниво.</small>';
@@ -1368,7 +1368,7 @@ function renderFeaturesAccordion(level) {
 
     const html = list.map(it => {
       const name = escapeHtml(it.name || '');
-      const lvl  = Number(it.level) || 1;
+      const lvl = Number(it.level) || 1;
 
       const descHtml =
         (Array.isArray(it.desc) ? it.desc : (it.desc ? [it.desc] : []))
@@ -1377,10 +1377,11 @@ function renderFeaturesAccordion(level) {
 
       const bulletsHtml =
         (Array.isArray(it.bullets) && it.bullets.length)
-          ? `<ul class="feat-bullets">` +
-            it.bullets.map(li => `<li>${escapeHtml(String(li))}</li>`).join('') +
-            `</ul>`
+          ? it.bullets
+            .map(li => `<div class="feat-bullet">• ${escapeHtml(String(li))}</div>`)
+            .join('')
           : '';
+z
 
       const notesHtml = it.notes
         ? `<p class="small-note">${escapeHtml(String(it.notes))}</p>`
@@ -1442,7 +1443,7 @@ function renderFeaturesAccordion(charLevel) {
       return;
     }
 
-    const escapeHtml = s => String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    const escapeHtml = s => String(s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
     const normalizeText = f => {
       // хващаме възможни ключове: text / description / desc / body / content (вкл. масив)
       let t = f.text ?? f.description ?? f.desc ?? f.body ?? f.content ?? '';
@@ -1452,7 +1453,7 @@ function renderFeaturesAccordion(charLevel) {
 
     root.innerHTML = upToLevel.map(f => {
       const title = escapeHtml(`Lv ${f.level} ${f.name || ''}`.trim());
-      const body  = escapeHtml(normalizeText(f)).replace(/\n/g, '<br>');
+      const body = escapeHtml(normalizeText(f)).replace(/\n/g, '<br>');
       return `
         <details class="feat-item">
           <summary class="feat-summary">${title}</summary>
@@ -1480,8 +1481,8 @@ function updateNotesStatus() {
   else s.textContent = 'Notes: NOT linked (local only)';
 }
 
-async function idbSetHandle(key, val){ return idbSet(key, val); }
-async function idbGetHandle(key){ return idbGet(key); }
+async function idbSetHandle(key, val) { return idbSet(key, val); }
+async function idbGetHandle(key) { return idbGet(key); }
 
 async function fileExistsInDir(dirHandle, name) {
   try { await dirHandle.getFileHandle(name); return true; }
@@ -1490,8 +1491,8 @@ async function fileExistsInDir(dirHandle, name) {
 
 function notesBaseName() {
   const d = new Date();
-  const pad = n => String(n).padStart(2,'0');
-  return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_SessionNotes`;
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}_SessionNotes`;
 }
 
 async function notesEnsureNewFile() {
@@ -1520,14 +1521,14 @@ async function notesWriteNow() {
   if (!notesFileHandle) return; // няма папка/файл -> нищо
 
   try {
-    const perm = await notesFileHandle.queryPermission({ mode:"readwrite" });
+    const perm = await notesFileHandle.queryPermission({ mode: "readwrite" });
     if (perm !== "granted") {
-      const req = await notesFileHandle.requestPermission({ mode:"readwrite" });
+      const req = await notesFileHandle.requestPermission({ mode: "readwrite" });
       if (req !== "granted") return;
     }
     const w = await notesFileHandle.createWritable();
-    const obj = { schema:"sessionNotes/v1", updated:new Date().toISOString(), content: st.sessionNotes || "" };
-    await w.write(new Blob([JSON.stringify(obj, null, 2)], { type:"application/json" }));
+    const obj = { schema: "sessionNotes/v1", updated: new Date().toISOString(), content: st.sessionNotes || "" };
+    await w.write(new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" }));
     await w.close();
   } catch (e) { console.error("notesWriteNow", e); }
 }
@@ -1549,7 +1550,7 @@ async function notesPickDir() {
     updateNotesStatus();
     await notesEnsureNewFile(); // веднъж за този boot
   } catch (e) {
-    /* cancel or error */ 
+    /* cancel or error */
     console.warn(e);
   }
 }
@@ -1557,14 +1558,14 @@ async function notesPickDir() {
 async function notesRestoreDir() {
   try {
     const h = await idbGet("notesDirHandle_v2") || await idbGet("notesDirHandle");
-    if (!h) { 
-      notesDirHandle = null; 
-      notesFileHandle = null; 
-      updateNotesStatus(); 
-      return; 
+    if (!h) {
+      notesDirHandle = null;
+      notesFileHandle = null;
+      updateNotesStatus();
+      return;
     }
     if (!notesFileHandle) {
-      st.sessionNotes = ""; 
+      st.sessionNotes = "";
       const ta = document.getElementById('notesInput');
       if (ta) ta.value = "";
     }
@@ -1578,7 +1579,7 @@ async function notesRestoreDir() {
 
 // UI wiring (textarea + бутон Link folder)
 function wireNotesUI() {
-  const ta  = document.getElementById('notesInput');
+  const ta = document.getElementById('notesInput');
   const btn = document.getElementById('btnNotesLink');
 
   if (btn && !btn.__wired) {
@@ -1597,7 +1598,7 @@ function wireNotesUI() {
       if (!firstInputHandled) {
         firstInputHandled = true;
         if (notesDirHandle && !notesFileHandle) {
-          try { await notesEnsureNewFile(); } catch {}
+          try { await notesEnsureNewFile(); } catch { }
         }
       }
     };
@@ -1641,7 +1642,7 @@ function renderDeathSaves() {
   if (ov) ov.classList.toggle("hidden", st.status !== "dead");
 }
 
-el("importNotesFile") && el("importNotesFile").addEventListener("change", (e)=>{
+el("importNotesFile") && el("importNotesFile").addEventListener("change", (e) => {
   const file = e.target.files[0]; if (!file) return;
   const reader = new FileReader();
   reader.onload = () => {
@@ -1717,7 +1718,7 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
   }
 
   btns.forEach(b => {
-    b.setAttribute('type','button');
+    b.setAttribute('type', 'button');
     b.addEventListener('click', () => setActive(activeName === b.dataset.tab ? null : b.dataset.tab));
   });
 
