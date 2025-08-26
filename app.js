@@ -1403,6 +1403,21 @@ async function renderFeaturesAccordion(level) {
   }
 }
 
+// след глобалния таб-контрол
+document.addEventListener('click', (e) => {
+  const tabBtn = e.target.closest("[data-tab]");
+  if (!tabBtn) return;
+  const tab = tabBtn.getAttribute("data-tab");
+
+  // ... твоята логика за активиране/скриване ...
+
+  if (tab === 'skills' || tab === 'features') {
+    // гарантирано рисуваме при отваряне
+    const d = derived();           // вземи текущото ниво
+    renderFeaturesAccordion(d.level);
+  }
+});
+
 
 // ===== Session Notes — FOLDER MODE =====
 const NOTES_DIR_KEY = "notesDirHandle_v2"; // ключ в IndexedDB
