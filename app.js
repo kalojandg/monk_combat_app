@@ -1402,7 +1402,15 @@ function renderFeaturesAccordion(level) {
   });
 }
 
-
+// делегиран клик за отваряне/затваряне на body
+document.addEventListener('click', (e) => {
+  const head = e.target.closest('.acc-head');
+  if (!head) return;
+  const item = head.closest('.acc-item');
+  const body = head.nextElementSibling;
+  if (!item || !body) return;
+  body.classList.toggle('hidden');
+});
 
 // ===== Session Notes — FOLDER MODE =====
 const NOTES_DIR_KEY = "notesDirHandle_v2"; // ключ в IndexedDB
