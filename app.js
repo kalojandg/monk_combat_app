@@ -1333,18 +1333,65 @@ function attachAliasLog() {
   setSaveEnabled(false);
 }
 
-// --- Class Features (lazy load JSON) ---
-let __feat_cache = null;
-// ако файлът ти е точно с интервал в името — пази пътя 1:1
-const FEAT_URL = 'skills and features.json';
+// ===== Class Features (accordion) =====
+let __featCache = null;
+const FEAT_URL = 'skills%20and%20features.json'; // интервалът е %20
 
 async function loadFeaturesJson() {
-  if (__feat_cache) return __feat_cache;
+  if (__featCache) return __featCache;
   const res = await fetch(FEAT_URL, { cache: 'no-store' });
   if (!res.ok) throw new Error('Cannot load skills and features.json');
-  __feat_cache = await res.json();
-  return __feat_cache;
+  __featCache = await res.json();
+  return __featCache;
 }
+
+// помощник да изрисуваме текста от масиви/стрингове
+function fmtBody(body) {
+  if (Array.isArray(body)) {
+    return body.map(p => `<p>${escapeHtml(String(p))}</p>`).join('');
+  }
+  if (typeof body === 'string') return `<p>${escapeHtml(body)}</p>`;
+  return '';
+}
+
+function renderFeaturesAccordion(currentLevel) {
+  const root = document.getElementById('featuresAccordion');
+  if (!root) return;
+
+  loadFeaturesJson().then(data => {
+    const list = Array.isArray(data.features) ? data.features : [];
+    // показвай само нещата до твоето ниво
+    const toShow = list.filter(f => (f.level || f.minLevel || 1) <= currentLevel);
+
+    root.innerHTML = toShow.map(f => {
+      const title = `Lv ${f.level || f.minLevel || 1} ${escapeHtml(f.name || '')}`;
+      const meta = f.source ? ` <span class="acc-meta">${escapeHtml(f.source)}</span>` : '';
+      return `
+        <div class="acc-item">
+          <button type="button" class="acc-head">
+            <span class="acc-title">${title}</span>${meta}
+          </button>
+          <div class="acc-body hidden">
+            ${fmtBody(f.body || f.text || f.desc)}
+          </div>
+        </div>
+      `;
+    }).join('') || '<small>Няма записи за това ниво.</small>';
+  }).catch(() => {
+    const root = document.getElementById('featuresAccordion');
+    if (root) root.innerHTML = '<small>(failed to load features)</small>';
+  });
+}
+
+// делегиран клик за отваряне/затваряне на body
+document.addEventListener('click', (e) => {
+  const head = e.target.closest('.acc-head');
+  if (!head) return;
+  const item = head.closest('.acc-item');
+  const body = head.nextElementSibling;
+  if (!item || !body) return;
+  body.classList.toggle('hidden');
+});
 
 /**
  * Рендерира акордеон с клас-фийчърите до твоето ниво.
