@@ -636,6 +636,56 @@
       /* стак на телефон */
     }
 
+    /* Accordion */
+    .acc-root {
+      display: grid;
+      gap: 8px;
+    }
+
+    .acc-item {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--panel2);
+      overflow: hidden;
+    }
+
+    .acc-head {
+      width: 100%;
+      text-align: left;
+      background: #101527;
+      border: 0;
+      padding: 10px 12px;
+      cursor: pointer;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .acc-title {
+      font-weight: 700;
+      flex: 1;
+    }
+
+    .acc-meta {
+      opacity: .8;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .acc-body {
+      padding: 12px;
+      background: var(--panel);
+      border-top: 1px solid var(--border);
+    }
+
+    .acc-body p {
+      margin: 0 0 8px 0;
+    }
+
+    .acc-body ul {
+      margin: 0 0 8px 18px;
+    }
+
     .notes-box {
       background: #111827;
       /* тъмносиво като one-liner-box */
@@ -800,6 +850,7 @@
       <button data-tab="shenanigans">Shenanigans</button>
       <button data-tab="liners">One-Liners</button>
       <button data-tab="excuses">Excuses</button>
+      <button class="tab-btn" data-tab="skills">Skills</button>
       <button data-tab="sessionNotes">Session Notes</button>
       <button id="btnInstall" class="hidden" title="Install PWA">Install</button>
     </div>
@@ -1230,21 +1281,28 @@
       <small>Чете от <code>excuses.json</code>.</small>
     </div>
 
+    <!-- Skills tab (accordion) -->
+    <div id="tab-skills" class="tab hidden">
+      <div class="section-title">Class Features (up to your level)</div>
+      <div id="skillsAcc" class="acc-root"></div>
+      <small>Чете от <code>skills and features.json</code>.</small>
+    </div>
+
     <div id="tab-sessionNotes" class="tab hidden">
       <h2>Session Notes</h2>
-    
+
       <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem;">
         <button id="btnNotesLink" type="button">Link notes folder…</button>
         <small id="notesStatus">Notes: not linked</small>
       </div>
-    
+
       <textarea id="notesInput" rows="12" class="notes-box"></textarea>
-    
+
       <h3>📂 Преглед на стари записки</h3>
       <input type="file" id="importNotesFile" accept="application/json,.json">
       <textarea id="notesPreview" rows="12" class="notes-box" readonly></textarea>
     </div>
-    
+
   </div>
 
 

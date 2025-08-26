@@ -315,7 +315,7 @@ function renderAll() {
   renderSkills(d.mods, d.prof);
   renderDeathSaves();
   renderInventoryTable();
-
+  renderFeaturesAccordion();
 }
 
 // ===== Events: inputs =====
@@ -1331,6 +1331,17 @@ function attachAliasLog() {
   // init
   renderAliasTable();
   setSaveEnabled(false);
+}
+
+// --- Features/Skills (lazy load JSON) ---
+let __feat_cache = null;
+const FEAT_URL = 'skills and features.json'; // файлът, който ми прати
+async function loadFeaturesJson() {
+  if (__feat_cache) return __feat_cache;
+  const res = await fetch(FEAT_URL, { cache: 'no-store' });
+  if (!res.ok) throw new Error('Cannot load skills and features.json');
+  __feat_cache = await res.json();
+  return __feat_cache;
 }
 
 // ===== Session Notes — FOLDER MODE =====
