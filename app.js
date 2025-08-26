@@ -1335,14 +1335,13 @@ function attachAliasLog() {
 
 // ===== Class Features (accordion) =====
 
-// --- Class Features (lazy load JSON) ---
 let __feat_cache = null;
-const FEAT_URL = 'skills and features.json';
+const FEAT_URL = 'skills-and-features.json';  // <-- без интервали
 
 async function loadFeatures() {
   if (__feat_cache) return __feat_cache;
-  const res = await fetch(FEAT_URL, { cache: 'no-store' });
-  if (!res.ok) throw new Error('Cannot load skills and features.json');
+  const res = await fetch(`${FEAT_URL}?v=${Date.now()}`, { cache: 'no-store' });
+  if (!res.ok) throw new Error('Cannot load skills-and-features.json');
   __feat_cache = await res.json();
   return __feat_cache;
 }
@@ -1350,16 +1349,14 @@ async function loadFeatures() {
 function renderFeaturesAccordion(level) {
   const host = document.getElementById('featuresList');
   if (!host) return;
-
-  // докато зарежда – placeholder
-  host.innerHTML = '<small>Чете от <code>skills and features.json</code>…</small>';
+  host.innerHTML = '<small>Чете от <code>skills-and-features.json</code>…</small>';
 
   loadFeatures().then(data => {
-    // приемаме и двата формата: [{...}] или {features:[...]}
-    const items = Array.isArray(data) ? data : (Array.isArray(data.features) ? data.features : []);
+    const items = Array.isArray(data) ? data :
+      (Array.isArray(data.features) ? data.features : []);
     const list = items
-      .filter(it => (Number(it.level) || 1) <= level)
-      .sort((a, b) => (a.level || 0) - (b.level || 0));
+      .filter(it => (Number(it.level) || 1) <= Number(level || 1))
+      .sort((a, b) => (Number(a.level) || 0) - (Number(b.level) || 0));
 
     if (!list.length) {
       host.innerHTML = '<small>Няма записи за това ниво.</small>';
@@ -1369,38 +1366,26 @@ function renderFeaturesAccordion(level) {
     const html = list.map(it => {
       const name = escapeHtml(it.name || '');
       const lvl = Number(it.level) || 1;
-
-      const descHtml =
-        (Array.isArray(it.desc) ? it.desc : (it.desc ? [it.desc] : []))
-          .map(p => `<p>${escapeHtml(String(p))}</p>`)
-          .join('');
-
-      const bulletsHtml =
-        (Array.isArray(it.bullets) && it.bullets.length)
-          ? it.bullets
-            .map(li => `<div class="feat-bullet">• ${escapeHtml(String(li))}</div>`)
-            .join('')
-          : '';
-
-      const notesHtml = it.notes
-        ? `<p class="small-note">${escapeHtml(String(it.notes))}</p>`
+      const descHtml = (Array.isArray(it.desc) ? it.desc : (it.desc ? [it.desc] : []))
+        .map(p => `<p>${escapeHtml(String(p))}</p>`).join('');
+      const bulletsHtml = (Array.isArray(it.bullets) && it.bullets.length)
+        ? it.bullets.map(li => `<div class="feat-bullet">• ${escapeHtml(String(li))}</div>`).join('')
         : '';
-
+      const notesHtml = it.notes ? `<p class="small-note">${escapeHtml(String(it.notes))}</p>` : '';
       return `
         <details class="feat">
           <summary>Lv ${lvl} ${name}</summary>
-          <div class="feature-card">
-            ${descHtml}${bulletsHtml}${notesHtml}
-          </div>
+          <div class="feature-card">${descHtml}${bulletsHtml}${notesHtml}</div>
         </details>`;
     }).join('');
 
-    host.innerHTML = html + `<small>Чете от <code>skills and features.json</code>.</small>`;
+    host.innerHTML = html + `<small>Чете от <code>skills-and-features.json</code>.</small>`;
   }).catch(err => {
     console.error(err);
     host.innerHTML = '<small style="color:#f66">Грешка при зареждане на features.</small>';
   });
 }
+
 
 // делегиран клик за отваряне/затваряне на body
 document.addEventListener('click', (e) => {
