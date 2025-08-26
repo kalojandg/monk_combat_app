@@ -1333,15 +1333,70 @@ function attachAliasLog() {
   setSaveEnabled(false);
 }
 
-// --- Features/Skills (lazy load JSON) ---
+// --- Class Features (lazy load JSON) ---
 let __feat_cache = null;
-const FEAT_URL = 'skills and features.json'; // файлът, който ми прати
+// ако файлът ти е точно с интервал в името — пази пътя 1:1
+const FEAT_URL = 'skills and features.json';
+
 async function loadFeaturesJson() {
   if (__feat_cache) return __feat_cache;
   const res = await fetch(FEAT_URL, { cache: 'no-store' });
   if (!res.ok) throw new Error('Cannot load skills and features.json');
   __feat_cache = await res.json();
   return __feat_cache;
+}
+
+/**
+ * Рендерира акордеон с клас-фийчърите до твоето ниво.
+ * Очакван минимален формат на елементите:
+ * { "name": "Evasion", "level": 7, "text": "…описание…" }
+ * Допълнителни полета (source, page и т.н.) са по желание.
+ */
+async function renderFeaturesAccordion(level) {
+  const host = document.getElementById('featuresAccordion');
+  if (!host) return; // няма секция → нищо не правим
+
+  // Показваме „loading“ докато четем
+  host.innerHTML = '<div class="feat-loading">Loading…</div>';
+
+  try {
+    const data = await loadFeaturesJson();
+
+    // приемаме, че в JSON има масив "features"
+    const feats = Array.isArray(data.features) ? data.features : data;
+
+    // филтър до текущото ниво и стабилен sort по level, после по name
+    const visible = feats
+      .filter(f => Number(f.level || 1) <= Number(level || 1))
+      .sort((a, b) => (a.level - b.level) || String(a.name).localeCompare(String(b.name)));
+
+    if (!visible.length) {
+      host.innerHTML = '<small>(No features for your level)</small>';
+      return;
+    }
+
+    const rows = visible.map(f => {
+      const lvl = Number(f.level || 1);
+      const name = escapeHtml(f.name || 'Feature');
+      const src  = f.source ? ` <span class="feat-src">(${escapeHtml(f.source)})</span>` : '';
+      const body = escapeHtml(f.text || '');  // ако имаш HTML в текста – тук махни escapeHtml
+
+      return `
+        <details class="feat-item">
+          <summary>
+            <span class="feat-tag">Lv ${lvl}</span>
+            <span class="feat-name">${name}</span>${src}
+          </summary>
+          <div class="feat-body">${body.replace(/\n/g, '<br>')}</div>
+        </details>
+      `;
+    }).join('');
+
+    host.innerHTML = rows;
+  } catch (e) {
+    console.error(e);
+    host.innerHTML = '<small class="feat-error">(failed to load skills and features.json)</small>';
+  }
 }
 
 // ===== Session Notes — FOLDER MODE =====
