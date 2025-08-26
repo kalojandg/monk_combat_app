@@ -1352,52 +1352,42 @@ async function loadFeaturesJson() {
  * { "name": "Evasion", "level": 7, "text": "…описание…" }
  * Допълнителни полета (source, page и т.н.) са по желание.
  */
-async function renderFeaturesAccordion(level) {
-  const host = document.getElementById('featuresAccordion');
-  if (!host) return; // няма секция → нищо не правим
+function renderFeaturesAccordion(charLevel) {
+  const root = document.getElementById('featuresAccordion');
+  if (!root) return;
 
-  // Показваме „loading“ докато четем
-  host.innerHTML = '<div class="feat-loading">Loading…</div>';
+  loadFeaturesJson().then(data => {
+    const feats = Array.isArray(data?.features) ? data.features : [];
+    const upToLevel = feats.filter(f => Number(f.level || 0) <= Number(charLevel || 1));
 
-  try {
-    const data = await loadFeaturesJson();
-
-    // приемаме, че в JSON има масив "features"
-    const feats = Array.isArray(data.features) ? data.features : data;
-
-    // филтър до текущото ниво и стабилен sort по level, после по name
-    const visible = feats
-      .filter(f => Number(f.level || 1) <= Number(level || 1))
-      .sort((a, b) => (a.level - b.level) || String(a.name).localeCompare(String(b.name)));
-
-    if (!visible.length) {
-      host.innerHTML = '<small>(No features for your level)</small>';
+    if (!upToLevel.length) {
+      root.innerHTML = '<small>Няма записи за това ниво.</small>';
       return;
     }
 
-    const rows = visible.map(f => {
-      const lvl = Number(f.level || 1);
-      const name = escapeHtml(f.name || 'Feature');
-      const src  = f.source ? ` <span class="feat-src">(${escapeHtml(f.source)})</span>` : '';
-      const body = escapeHtml(f.text || '');  // ако имаш HTML в текста – тук махни escapeHtml
+    const escapeHtml = s => String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    const normalizeText = f => {
+      // хващаме възможни ключове: text / description / desc / body / content (вкл. масив)
+      let t = f.text ?? f.description ?? f.desc ?? f.body ?? f.content ?? '';
+      if (Array.isArray(t)) t = t.join('\n\n');
+      return String(t ?? '');
+    };
 
+    root.innerHTML = upToLevel.map(f => {
+      const title = escapeHtml(`Lv ${f.level} ${f.name || ''}`.trim());
+      const body  = escapeHtml(normalizeText(f)).replace(/\n/g, '<br>');
       return `
         <details class="feat-item">
-          <summary>
-            <span class="feat-tag">Lv ${lvl}</span>
-            <span class="feat-name">${name}</span>${src}
-          </summary>
-          <div class="feat-body">${body.replace(/\n/g, '<br>')}</div>
-        </details>
-      `;
+          <summary class="feat-summary">${title}</summary>
+          <div class="feat-body">${body || '<em>(няма текст)</em>'}</div>
+        </details>`;
     }).join('');
-
-    host.innerHTML = rows;
-  } catch (e) {
-    console.error(e);
-    host.innerHTML = '<small class="feat-error">(failed to load skills and features.json)</small>';
-  }
+  }).catch(err => {
+    console.error(err);
+    root.innerHTML = '<small>Грешка при четене на <code>skills and features.json</code>.</small>';
+  });
 }
+
 
 // ===== Session Notes — FOLDER MODE =====
 const NOTES_DIR_KEY = "notesDirHandle_v2"; // ключ в IndexedDB

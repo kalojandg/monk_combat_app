@@ -700,6 +700,27 @@
       font-family: inherit;
     }
 
+    .feat-summary {
+      font-size: 1.05rem;
+      font-weight: 700;
+      padding: 6px 0;
+      cursor: pointer;
+    }
+
+    .feat-body {
+      margin: 8px 0 14px 0;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #15192b;
+      line-height: 1.5;
+      white-space: normal;
+      /* показва целия текст */
+      overflow: visible;
+      /* без вътрешни скролове */
+    }
+
+
     /* fail 3 */
     /* Оверлей – статичен */
     .you-died {
@@ -1284,7 +1305,7 @@
     <!-- Skills tab (accordion) -->
     <div id="featuresAccordion" class="feat-accordion"></div>
     <small>Чете от <code>skills and features.json</code>.</small>
-    
+
 
     <div id="tab-sessionNotes" class="tab hidden">
       <h2>Session Notes</h2>
