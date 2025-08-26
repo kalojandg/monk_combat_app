@@ -225,6 +225,7 @@ document.addEventListener("click", (e) => {
 
 // ===== Rendering =====
 function renderAll() {
+  console.log("renderAll");
   const d = derived();
 
   // Emoji
