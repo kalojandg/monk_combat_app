@@ -1334,15 +1334,72 @@ function attachAliasLog() {
 }
 
 // ===== Class Features (accordion) =====
-let __featCache = null;
-const FEAT_URL = 'skills%20and%20features.json'; // интервалът е %20
 
-async function loadFeaturesJson() {
-  if (__featCache) return __featCache;
+// --- Class Features (lazy load JSON) ---
+let __feat_cache = null;
+const FEAT_URL = 'skills and features.json';
+
+async function loadFeatures() {
+  if (__feat_cache) return __feat_cache;
   const res = await fetch(FEAT_URL, { cache: 'no-store' });
   if (!res.ok) throw new Error('Cannot load skills and features.json');
-  __featCache = await res.json();
-  return __featCache;
+  __feat_cache = await res.json();
+  return __feat_cache;
+}
+
+function renderFeaturesAccordion(level) {
+  const host = document.getElementById('featuresList');
+  if (!host) return;
+
+  // докато зарежда – placeholder
+  host.innerHTML = '<small>Чете от <code>skills and features.json</code>…</small>';
+
+  loadFeatures().then(data => {
+    // приемаме и двата формата: [{...}] или {features:[...]}
+    const items = Array.isArray(data) ? data : (Array.isArray(data.features) ? data.features : []);
+    const list = items
+      .filter(it => (Number(it.level) || 1) <= level)
+      .sort((a, b) => (a.level||0) - (b.level||0));
+
+    if (!list.length) {
+      host.innerHTML = '<small>Няма записи за това ниво.</small>';
+      return;
+    }
+
+    const html = list.map(it => {
+      const name = escapeHtml(it.name || '');
+      const lvl  = Number(it.level) || 1;
+
+      const descHtml =
+        (Array.isArray(it.desc) ? it.desc : (it.desc ? [it.desc] : []))
+          .map(p => `<p>${escapeHtml(String(p))}</p>`)
+          .join('');
+
+      const bulletsHtml =
+        (Array.isArray(it.bullets) && it.bullets.length)
+          ? `<ul class="feat-bullets">` +
+            it.bullets.map(li => `<li>${escapeHtml(String(li))}</li>`).join('') +
+            `</ul>`
+          : '';
+
+      const notesHtml = it.notes
+        ? `<p class="small-note">${escapeHtml(String(it.notes))}</p>`
+        : '';
+
+      return `
+        <details class="feat">
+          <summary>Lv ${lvl} ${name}</summary>
+          <div class="feature-card">
+            ${descHtml}${bulletsHtml}${notesHtml}
+          </div>
+        </details>`;
+    }).join('');
+
+    host.innerHTML = html + `<small>Чете от <code>skills and features.json</code>.</small>`;
+  }).catch(err => {
+    console.error(err);
+    host.innerHTML = '<small style="color:#f66">Грешка при зареждане на features.</small>';
+  });
 }
 
 // помощник да изрисуваме текста от масиви/стрингове
@@ -1354,34 +1411,7 @@ function fmtBody(body) {
   return '';
 }
 
-function renderFeaturesAccordion(currentLevel) {
-  const root = document.getElementById('featuresAccordion');
-  if (!root) return;
 
-  loadFeaturesJson().then(data => {
-    const list = Array.isArray(data.features) ? data.features : [];
-    // показвай само нещата до твоето ниво
-    const toShow = list.filter(f => (f.level || f.minLevel || 1) <= currentLevel);
-
-    root.innerHTML = toShow.map(f => {
-      const title = `Lv ${f.level || f.minLevel || 1} ${escapeHtml(f.name || '')}`;
-      const meta = f.source ? ` <span class="acc-meta">${escapeHtml(f.source)}</span>` : '';
-      return `
-        <div class="acc-item">
-          <button type="button" class="acc-head">
-            <span class="acc-title">${title}</span>${meta}
-          </button>
-          <div class="acc-body hidden">
-            ${fmtBody(f.body || f.text || f.desc)}
-          </div>
-        </div>
-      `;
-    }).join('') || '<small>Няма записи за това ниво.</small>';
-  }).catch(() => {
-    const root = document.getElementById('featuresAccordion');
-    if (root) root.innerHTML = '<small>(failed to load features)</small>';
-  });
-}
 
 // делегиран клик за отваряне/затваряне на body
 document.addEventListener('click', (e) => {
