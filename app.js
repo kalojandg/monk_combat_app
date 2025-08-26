@@ -1375,13 +1375,12 @@ function renderFeaturesAccordion(level) {
           .map(p => `<p>${escapeHtml(String(p))}</p>`)
           .join('');
 
-          const bulletsHtml =
-          (Array.isArray(it.bullets) && it.bullets.length)
-            ? it.bullets
-                .map(li => `<div class="feat-bullet">• ${escapeHtml(String(li))}</div>`)
-                .join('')
-            : '';
-        
+      const bulletsHtml =
+        (Array.isArray(it.bullets) && it.bullets.length)
+          ? `<ul class="feat-bullets">` +
+            it.bullets.map(li => `<li>${escapeHtml(String(li))}</li>`).join('') +
+            `</ul>`
+          : '';
 
       const notesHtml = it.notes
         ? `<p class="small-note">${escapeHtml(String(it.notes))}</p>`
@@ -1403,68 +1402,6 @@ function renderFeaturesAccordion(level) {
   });
 }
 
-// помощник да изрисуваме текста от масиви/стрингове
-function fmtBody(body) {
-  if (Array.isArray(body)) {
-    return body.map(p => `<p>${escapeHtml(String(p))}</p>`).join('');
-  }
-  if (typeof body === 'string') return `<p>${escapeHtml(body)}</p>`;
-  return '';
-}
-
-
-
-// делегиран клик за отваряне/затваряне на body
-document.addEventListener('click', (e) => {
-  const head = e.target.closest('.acc-head');
-  if (!head) return;
-  const item = head.closest('.acc-item');
-  const body = head.nextElementSibling;
-  if (!item || !body) return;
-  body.classList.toggle('hidden');
-});
-
-/**
- * Рендерира акордеон с клас-фийчърите до твоето ниво.
- * Очакван минимален формат на елементите:
- * { "name": "Evasion", "level": 7, "text": "…описание…" }
- * Допълнителни полета (source, page и т.н.) са по желание.
- */
-function renderFeaturesAccordion(charLevel) {
-  const root = document.getElementById('featuresAccordion');
-  if (!root) return;
-
-  loadFeaturesJson().then(data => {
-    const feats = Array.isArray(data?.features) ? data.features : [];
-    const upToLevel = feats.filter(f => Number(f.level || 0) <= Number(charLevel || 1));
-
-    if (!upToLevel.length) {
-      root.innerHTML = '<small>Няма записи за това ниво.</small>';
-      return;
-    }
-
-    const escapeHtml = s => String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-    const normalizeText = f => {
-      // хващаме възможни ключове: text / description / desc / body / content (вкл. масив)
-      let t = f.text ?? f.description ?? f.desc ?? f.body ?? f.content ?? '';
-      if (Array.isArray(t)) t = t.join('\n\n');
-      return String(t ?? '');
-    };
-
-    root.innerHTML = upToLevel.map(f => {
-      const title = escapeHtml(`Lv ${f.level} ${f.name || ''}`.trim());
-      const body  = escapeHtml(normalizeText(f)).replace(/\n/g, '<br>');
-      return `
-        <details class="feat-item">
-          <summary class="feat-summary">${title}</summary>
-          <div class="feat-body">${body || '<em>(няма текст)</em>'}</div>
-        </details>`;
-    }).join('');
-  }).catch(err => {
-    console.error(err);
-    root.innerHTML = '<small>Грешка при четене на <code>skills and features.json</code>.</small>';
-  });
-}
 
 
 // ===== Session Notes — FOLDER MODE =====
