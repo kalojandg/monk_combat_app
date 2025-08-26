@@ -225,7 +225,6 @@ document.addEventListener("click", (e) => {
 
 // ===== Rendering =====
 function renderAll() {
-  console.log("renderAll");
   const d = derived();
 
   // Emoji
@@ -1413,6 +1412,7 @@ document.addEventListener('click', (e) => {
   // ... твоята логика за активиране/скриване ...
 
   if (tab === 'skills' || tab === 'features') {
+  console.log("render");
     // гарантирано рисуваме при отваряне
     const d = derived();           // вземи текущото ниво
     renderFeaturesAccordion(d.level);
