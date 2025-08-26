@@ -1402,7 +1402,7 @@ async function renderFeaturesAccordion(level) {
     host.innerHTML = '<small style="color:#f66">Грешка при зареждане на features.</small>';
   }
 }
- 
+
 
 // ===== Session Notes — FOLDER MODE =====
 const NOTES_DIR_KEY = "notesDirHandle_v2"; // ключ в IndexedDB
