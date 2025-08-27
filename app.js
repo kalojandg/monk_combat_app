@@ -1407,6 +1407,10 @@ async function renderFeaturesAccordion(level) {
   }
 }
 
+document.getElementById('collapseAllBtn')?.addEventListener('click', () => {
+  document.querySelectorAll('#featuresAccordion details[open]')
+    .forEach(el => el.removeAttribute('open'));
+});
 
 // след глобалния таб-контрол
 document.addEventListener('click', (e) => {
