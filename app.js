@@ -9,6 +9,9 @@ async function ensureDirRW(dirHandle) {
   return r === 'granted';
 }
 
+let _featuresRendered = false;
+let _featuresDirty = false;  // ще го ползваме при смяна на ниво
+
 // XP thresholds 1..20 (RAW без 0-праг)
 const XP_THRESH = [300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000, 85000, 100000, 120000, 140000, 165000, 195000, 225000, 265000, 305000, 355000];
 const NOTES_DB_NAME = "monkNotesDB";
@@ -315,7 +318,7 @@ function renderAll() {
   renderSkills(d.mods, d.prof);
   renderDeathSaves();
   renderInventoryTable();
-  renderFeaturesAccordion(d.level);
+  // renderFeaturesAccordion(d.level);
 }
 
 // ===== Events: inputs =====
@@ -327,6 +330,9 @@ el("xpInput") && el("xpInput").addEventListener("input", () => {
   const d = derived();
   st.hdAvail = clamp(st.hdAvail, 0, d.hdMax);
   st.kiCurrent = clamp(st.kiCurrent, 0, d.kiMax);
+
+  _featuresDirty = true;  // 👈 маркираме за повторен рендер следващия път
+
   save();
 });
 
@@ -1410,6 +1416,23 @@ async function renderFeaturesAccordion(level) {
 document.getElementById('collapseAllBtn')?.addEventListener('click', () => {
   document.querySelectorAll('#featuresAccordion details[open]')
     .forEach(el => el.removeAttribute('open'));
+});
+
+document.addEventListener("click", (e) => {
+  const tabBtn = e.target.closest("[data-tab]");
+  if (!tabBtn) return;
+  const tab = tabBtn.getAttribute("data-tab");
+
+  // ... твоя код за превключване ...
+
+  if (tab === 'skills' || tab === 'features') {
+    const d = derived();
+    if (!_featuresRendered || _featuresDirty) {
+      renderFeaturesAccordion(d.level);
+      _featuresRendered = true;
+      _featuresDirty = false;
+    }
+  }
 });
 
 // след глобалния таб-контрол
