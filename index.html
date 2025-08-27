@@ -23,6 +23,16 @@
       --pill2: #14182a;
       /* по-плътно за inputs/бутоните */
       --accent: #3a7afe;
+
+      --feat-head-bg: rgba(105, 122, 160, 0.18);
+      --feat-head-text: #cfe1ff;
+      --feat-head-border: rgba(170, 190, 255, 0.25);
+
+      --feat-card-bg: rgba(20, 24, 34, 0.9);
+      --feat-card-border: rgba(255, 255, 255, 0.08);
+
+      --feat-accent: #8fb4ff;
+      /* стрелка/акценти */
     }
 
     * {
@@ -731,6 +741,119 @@
       margin: .25rem 0;
       line-height: 1.35;
       padding-left: .25rem;
+    }
+
+    /* ========== Features / Skills accordion ========== */
+    /* контейнерът ти е #featuresAccordion — пазим въздух */
+    #featuresAccordion.acc-root {
+      display: block;
+      margin-top: .5rem;
+    }
+
+    /* всеки елемент */
+    details.feat {
+      margin: .75rem 0 1rem;
+      border-radius: 14px;
+    }
+
+    /* заглавката */
+    details.feat>summary {
+      list-style: none;
+      cursor: pointer;
+      font-size: 1.08rem;
+      /* по-едър */
+      font-weight: 650;
+      color: var(--feat-head-text);
+      background: var(--feat-head-bg);
+      border: 1px solid var(--feat-head-border);
+      border-radius: 14px;
+      padding: .70rem .95rem;
+      display: flex;
+      align-items: center;
+      gap: .55rem;
+      transition: background .2s ease, border-color .2s ease, transform .06s ease;
+      outline: none;
+    }
+
+    details.feat>summary:hover {
+      border-color: rgba(170, 190, 255, 0.45);
+      background: rgba(105, 122, 160, 0.24);
+    }
+
+    details.feat>summary:active {
+      transform: translateY(1px) scale(0.998);
+    }
+
+    /* стрелка/иконка в summary */
+    details.feat>summary::before {
+      content: '▸';
+      color: var(--feat-accent);
+      font-size: 1.05rem;
+      transform: translateY(1px);
+      transition: transform .25s ease;
+    }
+
+    details.feat[open]>summary::before {
+      transform: rotate(90deg) translateX(1px);
+    }
+
+    /* картата с текста — има shadow, radius и плавно разгръщане */
+    .feature-card {
+      margin-top: .55rem;
+      /* малко отстояние от хедъра */
+      background: var(--feat-card-bg);
+      border: 1px solid var(--feat-card-border);
+      border-radius: 16px;
+      padding: .95rem 1.05rem;
+      line-height: 1.58;
+      font-size: 1.03rem;
+      /* четим текст */
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
+      /* анимация на отварянето */
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: max-height .36s ease, opacity .25s ease, transform .36s ease;
+    }
+
+    details.feat[open] .feature-card {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* параграфи вътре */
+    .feature-card p {
+      margin: .35rem 0 .55rem;
+    }
+
+    /* точки (булети) — подравнени и четими */
+    .feat-bullet {
+      margin: .25rem 0 .25rem 1.1rem;
+      position: relative;
+      padding-left: .35rem;
+    }
+
+    .feat-bullet::before {
+      content: '•';
+      position: absolute;
+      left: -1.05rem;
+      top: 0;
+      opacity: .75;
+    }
+
+    /* бележка с по-слаба контрастност */
+    .small-note {
+      margin-top: .6rem;
+      font-size: .95rem;
+      opacity: .8;
+    }
+
+    /* достъпност: ако потребителят е с reduced motion — без височинни анимации */
+    @media (prefers-reduced-motion: reduce) {
+      .feature-card {
+        transition: opacity .2s ease;
+      }
     }
 
 

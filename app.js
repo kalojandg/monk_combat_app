@@ -1346,6 +1346,31 @@ async function loadFeatures() {
   return __feat_cache;
 }
 
+function enhanceFeatureAccordions() {
+  const root = document.getElementById('featuresAccordion');
+  if (!root) return;
+
+  root.querySelectorAll('details.feat').forEach(d => {
+    const card = d.querySelector('.feature-card');
+    if (!card) return;
+
+    // инициална височина
+    card.style.maxHeight = d.open ? card.scrollHeight + 'px' : '0px';
+
+    d.addEventListener('toggle', () => {
+      // динамична височина при отваряне/затваряне
+      const h = d.open ? card.scrollHeight : 0;
+      card.style.maxHeight = h + 'px';
+    });
+
+    // ако съдържанието се промени динамично (рядко), обнови височината
+    const ro = new ResizeObserver(() => {
+      if (d.open) card.style.maxHeight = card.scrollHeight + 'px';
+    });
+    ro.observe(card);
+  });
+}
+
 async function renderFeaturesAccordion(level) {
   const host = document.getElementById('featuresAccordion'); // <-- тук
   if (!host) return;
@@ -1374,6 +1399,8 @@ async function renderFeaturesAccordion(level) {
           <div class="feature-card">${desc}${bullets}${notes}</div>
         </details>`;
     }).join('');
+
+    enhanceFeatureAccordions();
   } catch (e) {
     console.error(e);
     host.innerHTML = '<small style="color:#f66">Грешка при зареждане на features.</small>';
