@@ -763,7 +763,16 @@ el("btnExport") && el("btnExport").addEventListener("click", () => {
   const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url; a.download = (st.name || "monk") + "_bundle.json";
+  a.href = url;
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const h = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  const dateStr = `${day}${m}${y}_${h}${min}`;
+
+  a.download = `${dateStr}_${(st.name || "monk")}_bundle.json`;
   document.body.appendChild(a); a.click(); URL.revokeObjectURL(url); a.remove();
 });
 
@@ -1412,19 +1421,19 @@ async function renderFeaturesAccordion(level) {
   try {
     const data = await loadFeatures();
     const items = Array.isArray(data) ? data :
-                  Array.isArray(data.features) ? data.features : [];
+      Array.isArray(data.features) ? data.features : [];
     const list = items
       .filter(it => (Number(it.level) || 1) <= Number(level || 1))
-      .sort((a,b) => (Number(a.level)||0) - (Number(b.level)||0));
+      .sort((a, b) => (Number(a.level) || 0) - (Number(b.level) || 0));
 
     host.innerHTML = list.map(it => {
-      const name = (it.name || '').replace(/</g,'&lt;');
-      const lvl  = Number(it.level) || 1;
+      const name = (it.name || '').replace(/</g, '&lt;');
+      const lvl = Number(it.level) || 1;
       const desc = (Array.isArray(it.desc) ? it.desc : (it.desc ? [it.desc] : []))
-                    .map(p => `<p>${String(p).replace(/</g,'&lt;')}</p>`).join('');
+        .map(p => `<p>${String(p).replace(/</g, '&lt;')}</p>`).join('');
       const bullets = (Array.isArray(it.bullets) ? it.bullets : [])
-                      .map(li => `<div class="feat-bullet">• ${String(li).replace(/</g,'&lt;')}</div>`).join('');
-      const notes = it.notes ? `<p class="small-note">${String(it.notes).replace(/</g,'&lt;')}</p>` : '';
+        .map(li => `<div class="feat-bullet">• ${String(li).replace(/</g, '&lt;')}</div>`).join('');
+      const notes = it.notes ? `<p class="small-note">${String(it.notes).replace(/</g, '&lt;')}</p>` : '';
       return `
         <details class="feat">
           <summary>Lv ${lvl} ${name}</summary>
@@ -1470,7 +1479,7 @@ document.addEventListener('click', (e) => {
   // ... твоята логика за активиране/скриване ...
 
   if (tab === 'skills' || tab === 'features') {
-  console.log("render");
+    console.log("render");
     // гарантирано рисуваме при отваряне
     const d = derived();           // вземи текущото ниво
     renderFeaturesAccordion(d.level);
@@ -1741,23 +1750,23 @@ window.addEventListener('beforeunload', (e) => {
   e.preventDefault();
   e.returnValue = ''; // стандартен трик за prompt
 });
++
 
+  // ==== Boot ====
+  // ==== Boot ====
+  (async () => {
+    await cloudRestore();
 
-// ==== Boot ====
-// ==== Boot ====
-(async () => {
-  await cloudRestore();
+    __notesFileCreatedThisRun = false;     // <-- гарантирано нов файл за тази сесия
+    await notesRestoreDir();               // опитай да върнеш папката
+    await notesEnsureNewFile();            // ако има папка → създай *нов* днешен файл
 
-  __notesFileCreatedThisRun = false;     // <-- гарантирано нов файл за тази сесия
-  await notesRestoreDir();               // опитай да върнеш папката
-  await notesEnsureNewFile();            // ако има папка → създай *нов* днешен файл
-
-  renderAll();
-  attachShenanigans();
-  attachOneLiners();
-  attachExcuses();
-  attachAliasLog();
-  attachInventory();
-  attachPCChar();
-})();
+    renderAll();
+    attachShenanigans();
+    attachOneLiners();
+    attachExcuses();
+    attachAliasLog();
+    attachInventory();
+    attachPCChar();
+  })();
 
