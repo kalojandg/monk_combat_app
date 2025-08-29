@@ -759,27 +759,39 @@ function renderToolTable() {
 
 // Export / Import / Reset
 el("btnExport") && el("btnExport").addEventListener("click", () => {
-  const bundle = getBundle();
+  const bundle = buildBundle();
   const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url; a.download = (st.name || "monk") + "_sheet.json";
+  a.href = url; a.download = (st.name || "monk") + "_bundle.json";
   document.body.appendChild(a); a.click(); URL.revokeObjectURL(url); a.remove();
 });
+
 
 el("importFile") && el("importFile").addEventListener("change", (e) => {
   const file = e.target.files[0]; if (!file) return;
   const reader = new FileReader();
   reader.onload = () => {
     try {
-      const obj = JSON.parse(reader.result);
-      applyBundle(obj);  // ще приеме и стар state JSON
+      const raw = JSON.parse(reader.result);
+
+      // Поддържа и стария формат (плосък st), и новия bundle
+      const nextState = raw && raw.state ? raw.state : raw;
+      st = { ...defaultState, ...nextState };
+
+      if (raw && Array.isArray(raw.aliases)) {
+        saveAliases(raw.aliases);
+        renderAliasTable(); // да се опресни таблицата веднага
+      }
+
+      save();
     } catch {
       alert("Грешен JSON.");
     }
   };
   reader.readAsText(file); e.target.value = "";
 });
+
 el("btnReset") && el("btnReset").addEventListener("click", () => {
   if (!confirm("Да нулирам всичко?")) return;
   st = { ...defaultState };
@@ -970,15 +982,12 @@ async function cloudWriteNow() {
       if (req !== "granted") return;
     }
     const writable = await cloudHandle.createWritable();
-    await writable.truncate(0); // <-- ключово!
-    await writable.write(new Blob([JSON.stringify(getBundle(), null, 2)], {
-      type: "application/json"
-    }));
+    const bundle = buildBundle();
+    await writable.write(new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" }));
     await writable.close();
-  } catch (e) {
-    console.error("cloudWriteNow error:", e);
-  }
+  } catch (e) { /* тихо */ }
 }
+
 
 // async function notesRestore() {
 //   try {
@@ -990,6 +999,14 @@ async function cloudWriteNow() {
 //     notesHandle = null;
 //   }
 // }
+function buildBundle() {
+  return {
+    version: 1,
+    state: st,
+    aliases: loadAliases()
+  };
+}
+
 
 const cloudSchedule = debounce(() => { cloudWriteNow(); }, 1000);
 
@@ -1017,10 +1034,19 @@ async function cloudPull() {
     const file = await cloudHandle.getFile();
     const text = await file.text();
     const json = JSON.parse(text);
-    applyBundle(json);  // ако е стар файл (само state), пак ще сработи
+
+    const nextState = json && json.state ? json.state : json;
+    st = { ...defaultState, ...nextState };
+
+    if (json && Array.isArray(json.aliases)) {
+      saveAliases(json.aliases);
+      renderAliasTable();
+    }
+
     save();
   } catch (e) { alert("Cloud pull error."); }
 }
+
 
 async function cloudRestore() {
   try {
@@ -1709,8 +1735,6 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
 
   setActive(null); // старт без отворен таб
 })();
-
-
 
 // ==== Boot ====
 // ==== Boot ====
