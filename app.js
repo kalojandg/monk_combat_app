@@ -1736,6 +1736,13 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
   setActive(null); // старт без отворен таб
 })();
 
+window.addEventListener('beforeunload', (e) => {
+  // покажи подсказка ако има непратени промени
+  e.preventDefault();
+  e.returnValue = ''; // стандартен трик за prompt
+});
+
+
 // ==== Boot ====
 // ==== Boot ====
 (async () => {
