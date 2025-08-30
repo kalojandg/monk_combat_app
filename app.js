@@ -76,6 +76,8 @@ const defaultState = {
   hdAvail: 1,
 
   sessionNotes: "",
+  aliases: [],
+  familiars: [],
 
   acMagic: 0,
   baseSpeed: 30,
@@ -552,37 +554,45 @@ function getBundle() {
   };
 }
 
-function applyBundle(obj) {
-  if (!obj) return;
+function applyBundle(bundle) {
+  try {
+    const b = typeof bundle === "string" ? JSON.parse(bundle) : bundle;
 
-  // Новият bundle формат
-  if (obj.schema === "monkSheetBundle/v1") {
-    const incomingState = obj.state || {};
-    const incomingAliases = Array.isArray(obj.aliases) ? obj.aliases : [];
+    // v2 => {version, state}; v1/legacy => директно полета
+    const incoming = b?.state ?? b ?? {};
 
-    // ако по грешка има aliases И във state, и отвън – слей уникално
-    const innerAliases = Array.isArray(incomingState.aliases) ? incomingState.aliases : [];
-    const mergedAliases = [...incomingAliases, ...innerAliases];
+    // Миграция: ако има топ-левъл aliases/familiars от стар формат – влей ги в state
+    if (Array.isArray(b?.aliases))   incoming.aliases   = b.aliases;
+    if (Array.isArray(b?.familiars)) incoming.familiars = b.familiars;
 
-    // махни aliases от state (да не влизат вътре)
-    const cleaned = { ...incomingState };
-    delete cleaned.aliases;
+    // Сливане върху defaultState, за да не липсват полета
+    st = { ...defaultState, ...incoming };
 
-    st = { ...defaultState, ...cleaned };
-    if (mergedAliases.length) saveAliases(mergedAliases);
-    save();
-    return;
+    // (по желание) дедуп на масиви, ако смесваме стари/нови
+    st.aliases    = Array.isArray(st.aliases)    ? dedupeByKey(st.aliases,    x => `${x.name}|${x.to}|${x.ts||""}`) : [];
+    st.familiars  = Array.isArray(st.familiars)  ? dedupeByKey(st.familiars,  x => `${x.name}|${x.cat}|${x.ts||""}`) : [];
+    st.inventory  = Array.isArray(st.inventory)  ? st.inventory : [];
+
+    // възстанови textarea за бележките (UI)
+    const ta = document.getElementById("sessionNotesText");
+    if (ta) ta.value = st.sessionNotes || "";
+
+    save();       // persist + renderAll()
+  } catch (e) {
+    console.error(e);
+    alert("Грешен JSON.");
   }
-
-  // Стар плосък state JSON
-  st = { ...defaultState, ...obj };
-  // ако случайно е имало obj.aliases тук – запази ги отделно
-  if (Array.isArray(obj.aliases)) saveAliases(obj.aliases);
-  save();
 }
 
-
-
+function dedupeByKey(arr, keyFn) {
+  const seen = new Set();
+  const out = [];
+  for (const it of arr) {
+    const k = keyFn(it);
+    if (!seen.has(k)) { seen.add(k); out.push(it); }
+  }
+  return out;
+}
 // ---------- Inventory ----------
 let __invEditIndex = null; // null => Add, число => Edit
 
@@ -782,30 +792,17 @@ function renderToolTable() {
 
 // Export / Import / Reset
 // Export (bundle)
-el("btnExport") && el("btnExport").addEventListener("click", () => {
-  const bundle = {
-    version: 3,
-    state: st,                       // <-- само state вътре
-    aliases: loadAliases?.() || [],  // <-- top-level
-    familiars: loadFamiliars?.() || [] // <-- top-level
-  };
-
-  const now = new Date();
-  const stamp = [
-    now.getFullYear(),
-    String(now.getMonth()+1).padStart(2,'0'),
-    String(now.getDate()).padStart(2,'0'),
-    '-',
-    String(now.getHours()).padStart(2,'0'),
-    String(now.getMinutes()).padStart(2,'0')
-  ].join('');
-  const fname = `${stamp}_${(st.name||'monk').replace(/\s+/g,'_')}.json`;
-
+el("btnExport")?.addEventListener("click", () => {
+  const bundle = buildBundle();
   const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url; a.download = fname;
-  document.body.appendChild(a); a.click(); URL.revokeObjectURL(url); a.remove();
+  const t = new Date();
+  const y = t.getFullYear();
+  const m = String(t.getMonth()+1).padStart(2,"0");
+  const d = String(t.getDate()).padStart(2,"0");
+  a.href = URL.createObjectURL(blob);
+  a.download = `${(st.name || "monk").replace(/[^\w\-]+/g,"_")}_${y}${m}${d}_bundle.json`;
+  document.body.appendChild(a); a.click(); URL.revokeObjectURL(a.href); a.remove();
 });
 
 
@@ -855,38 +852,11 @@ async function importBundleFromFile(file) {
   alert('Импортът мина успешно.');
 }
 
-el("importFile") && el("importFile").addEventListener("change", (e) => {
-  const file = e.target.files[0]; if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    try {
-      const data = JSON.parse(reader.result);
-
-      // v3 bundle {version, state, aliases?, familiars?}
-      // legacy: директно state (без обвивка)
-      let next;
-      if (data && data.state) {
-        next = { ...defaultState, ...data.state };
-      } else {
-        next = { ...defaultState, ...data };
-      }
-
-      // Никога НЕ четем top-level sessionNotes (ако някога е имало такова).
-      // Връщаме колекциите към localStorage:
-      if (Array.isArray(data?.aliases) && typeof saveAliases === 'function') {
-        saveAliases(data.aliases);
-      }
-      if (Array.isArray(data?.familiars) && typeof saveFamiliars === 'function') {
-        saveFamiliars(data.familiars);
-      }
-
-      st = next;
-      save();
-    } catch {
-      alert("Грешен JSON.");
-    }
-  };
-  reader.readAsText(file);
+el("importFile")?.addEventListener("change", (e) => {
+  const file = e.target.files?.[0]; if (!file) return;
+  const rd = new FileReader();
+  rd.onload = () => applyBundle(rd.result);
+  rd.readAsText(file);
   e.target.value = "";
 });
 
@@ -1092,24 +1062,8 @@ async function cloudWriteNow() {
 }
 
 function buildBundle() {
-  // 1) вземи текущия state, но махни вътрешните aliases/familiars ако случайно са попаднали там
-  const state = { ...st };
-  delete state.aliases;
-  delete state.familiars;
-
-  // 2) източникът за тези списъци е локалният „лог“
-  const aliases = (typeof loadAliases === 'function') ? loadAliases() : [];
-  const familiars = (typeof loadFamiliars === 'function') ? loadFamiliars() : [];
-
-  // 3) експортен формат v2
-  return {
-    version: 2,
-    state,        // чист state, без aliases/familiars вътре
-    aliases,      // плоско на корен
-    familiars     // плоско на корен
-  };
-}
-
+  return { version: 2, state: { ...st } };   // нищо „навън“
+} 
 
 const cloudSchedule = debounce(() => { cloudWriteNow(); }, 1000);
 
