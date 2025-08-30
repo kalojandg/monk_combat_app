@@ -1278,7 +1278,7 @@ function attachExcuses() {
 let __fam_names = null;
 const FAM_URL = 'familiars.json';
 
-async function loadFamiliarNames() {
+async function loadFamiliars() {
   if (__fam_names) return __fam_names;
   const res = await fetch(FAM_URL, { cache: 'no-store' });
   if (!res.ok) throw new Error('Cannot load familiars.json');
@@ -1366,7 +1366,7 @@ function attachFamiliars() {
     btn.addEventListener('click', async () => {
       const cat = btn.getAttribute('data-famcat');
       try {
-        const data = await loadFamiliarNames();
+        const data = await loadFamiliars();
         const list = Array.isArray(data[cat]) ? data[cat] : [];
         const name = (famPickRandom(list) || '').trim();
         const out = document.getElementById('famNameOutput');
