@@ -1329,7 +1329,6 @@
       </div>
     </div>
 
-
     <!-- One-Liners tab -->
     <div id="tab-liners" class="tab hidden">
       <div class="section-title">One-Liners</div>
@@ -1514,11 +1513,14 @@
       </div>
     </div>
 
-    <div class="section-title">
-      Class Features (up to your level)
-      <button id="collapseAllBtn" class="btn-collapse">Collapse all</button>
+    <div id="featuresSection" class="hidden">
+      <div class="section-title">
+        Class Features (up to your level)
+        <button id="collapseAllBtn" class="btn-collapse">Collapse all</button>
+      </div>
+      <div id="featuresAccordion" class="acc-root"></div>
     </div>
-    <div id="featuresAccordion" class="acc-root"></div>
+
 
     <div id="tab-sessionNotes" class="tab hidden">
       <h2>Session Notes</h2>
@@ -1534,7 +1536,6 @@
       <input type="file" id="importNotesFile" accept="application/json,.json">
       <textarea id="notesPreview" rows="12" class="notes-box" readonly></textarea>
     </div>
-
   </div>
 
 

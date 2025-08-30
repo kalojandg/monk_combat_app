@@ -103,7 +103,7 @@ function load() {
         obj.aliases = oldAliases;
         localStorage.removeItem('aliases_v1');
       }
-    } catch {}
+    } catch { }
 
     return obj;
   } catch {
@@ -784,10 +784,10 @@ function renderToolTable() {
 el('btnExport')?.addEventListener('click', () => {
   const bundle = buildBundle();
   const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  const ts   = new Date();
-  const y = ts.getFullYear(), m = String(ts.getMonth()+1).padStart(2,'0'), d = String(ts.getDate()).padStart(2,'0');
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const ts = new Date();
+  const y = ts.getFullYear(), m = String(ts.getMonth() + 1).padStart(2, '0'), d = String(ts.getDate()).padStart(2, '0');
   a.href = url;
   a.download = `${(st.name || 'monk')}_${y}${m}${d}_bundle.json`; // по твое желание
   document.body.appendChild(a); a.click(); URL.revokeObjectURL(url); a.remove();
@@ -808,21 +808,21 @@ async function importBundleFromFile(file) {
       // v2
       Object.assign(next, data.state);
       // коренови масиви (истинският източник)
-      if (Array.isArray(data.aliases))   next.aliases   = data.aliases.slice();
+      if (Array.isArray(data.aliases)) next.aliases = data.aliases.slice();
       if (Array.isArray(data.familiars)) next.familiars = data.familiars.slice();
       // ако все пак има state.familiars ⇒ слей и де-дуп
       if (data.state.familiars && Array.isArray(data.state.familiars)) {
-        const merged = [...(next.familiars||[]), ...data.state.familiars];
+        const merged = [...(next.familiars || []), ...data.state.familiars];
         const seen = new Set();
         next.familiars = merged.filter(it => {
-          const key = (it.name||'') + '|' + (it.cat||it.type||'');
+          const key = (it.name || '') + '|' + (it.cat || it.type || '');
           if (seen.has(key)) return false; seen.add(key); return true;
         });
       }
     } else {
       // v1 fallback – всичко е в root
       Object.assign(next, data);
-      if (Array.isArray(data.aliases))   next.aliases   = data.aliases.slice();
+      if (Array.isArray(data.aliases)) next.aliases = data.aliases.slice();
       if (Array.isArray(data.familiars)) next.familiars = data.familiars.slice();
     }
   }
@@ -833,7 +833,7 @@ async function importBundleFromFile(file) {
   renderAll();
 
   // ако поддържаш и отделни „логове“, обнови ги от state
-  if (typeof saveAliases   === 'function' && Array.isArray(st.aliases))   saveAliases(st.aliases);
+  if (typeof saveAliases === 'function' && Array.isArray(st.aliases)) saveAliases(st.aliases);
   if (typeof saveFamiliars === 'function' && Array.isArray(st.familiars)) saveFamiliars(st.familiars);
 
   alert('Импортът мина успешно.');
@@ -1062,7 +1062,7 @@ function buildBundle() {
   delete state.familiars;
 
   // 2) източникът за тези списъци е локалният „лог“
-  const aliases   = (typeof loadAliases   === 'function') ? loadAliases()   : [];
+  const aliases = (typeof loadAliases === 'function') ? loadAliases() : [];
   const familiars = (typeof loadFamiliars === 'function') ? loadFamiliars() : [];
 
   // 3) експортен формат v2
@@ -1469,16 +1469,19 @@ function setSaveEnabled(on) {
 // modal controls
 function openAliasModal() {
   const m = document.getElementById('aliasModal');
-  const t = document.getElementById('aliasToInput');
-  if (!m || !t) return;
-  t.value = '';
+  document.getElementById('aliasToInput').value = '';
   m.classList.remove('hidden');
-  t.focus();
+  setTimeout(() => document.getElementById('aliasToInput').focus(), 0);
 }
+
 function closeAliasModal() {
   const m = document.getElementById('aliasModal');
   if (m) m.classList.add('hidden');
 }
+
+document.getElementById('aliasModal')?.addEventListener('click', (e) => {
+  if (e.target.id === 'aliasModal') closeAliasModal();
+});
 
 let __pcModalType = null;     // 'lang' | 'tool'
 let __pcModalIndex = null;    // null => add, number => edit
@@ -1895,14 +1898,20 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
   const btns = Array.from(document.querySelectorAll('.tabs [data-tab]'));
   const panels = Array.from(document.querySelectorAll('.tab'));
 
-  function showTab(name) {
-    panels.forEach(p => p.classList.add('hidden'));
-    const active = document.getElementById(`tab-${name}`);
-    if (active) active.classList.remove('hidden');
+  function showTab(tab) {
+    // ... текущата логика, която скрива/показва .tab ...
 
-    btns.forEach(b => b.classList.toggle('active', b.dataset.tab === name));
-    localStorage.setItem('activeTab', name);
+    // крий/показвай секцията за features, ако стои извън таба
+    const fs = document.getElementById('featuresSection');
+    if (fs) fs.classList.toggle('hidden', tab !== 'skills');
+
+    // рендерирай клас-фийчърите само когато отворим Skills
+    if (tab === 'skills') {
+      const d = derived();
+      renderFeaturesAccordion(d.level);
+    }
   }
+
 
   // wire
   btns.forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
