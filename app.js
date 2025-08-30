@@ -75,6 +75,8 @@ const defaultState = {
   dsSuccess: 0, dsFail: 0, status: "alive",
   hdAvail: 1,
 
+  aliases: [],
+  familiars: [],
   sessionNotes: "",
 
   acMagic: 0,
@@ -89,15 +91,33 @@ let st = load();
 function load() {
   try {
     const raw = localStorage.getItem("monkSheet_v3");
-    return raw ? { ...defaultState, ...JSON.parse(raw) } : { ...defaultState };
-  } catch { return { ...defaultState }; }
+    let obj = raw ? { ...defaultState, ...JSON.parse(raw) } : { ...defaultState };
+
+    // --- миграция на стари алиаси от 'aliases_v1' → st.aliases
+    try {
+      const oldAliases = JSON.parse(localStorage.getItem('aliases_v1') || '[]');
+      if (Array.isArray(oldAliases) && oldAliases.length && (!obj.aliases || obj.aliases.length === 0)) {
+        obj.aliases = oldAliases;
+        localStorage.removeItem('aliases_v1');
+      }
+    } catch {}
+
+    return obj;
+  } catch {
+    return { ...defaultState };
+  }
 }
+
 function save() {
   localStorage.setItem("monkSheet_v3", JSON.stringify(st));
   renderAll();
-  // Cloud write (debounced)
-  cloudSchedule();
+  renderAliasTable?.();      // ← безопасно, ще се изпълни ако функцията съществува
+  // ако добавиш familiars таб:
+  // renderFamiliarsTable?.();
+
+  cloudSchedule();           // ← остава си
 }
+
 
 // ===== Derived =====
 function levelFromXP(xp) {
@@ -758,48 +778,58 @@ function renderToolTable() {
 }
 
 // Export / Import / Reset
+// Export (bundle)
 el("btnExport") && el("btnExport").addEventListener("click", () => {
-  const bundle = buildBundle();
+  const bundle = {
+    version: 2,
+    state: st,
+    aliases: loadAliases(),
+    familiars: loadFamRecords()
+  };
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth()+1).padStart(2,'0');
+  const dd = String(now.getDate()).padStart(2,'0');
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mi = String(now.getMinutes()).padStart(2,'0');
+  const name = (st.name || "monk").replace(/[^\p{L}\p{N}_-]+/gu, '_');
+  const fileName = `${yyyy}${mm}${dd}_${hh}${mi}_${name}_sheet.json`;
+
   const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url;
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  const h = String(d.getHours()).padStart(2, '0');
-  const min = String(d.getMinutes()).padStart(2, '0');
-  const dateStr = `${day}${m}${y}_${h}${min}`;
-
-  a.download = `${dateStr}_${(st.name || "monk")}_bundle.json`;
+  a.href = url; a.download = fileName;
   document.body.appendChild(a); a.click(); URL.revokeObjectURL(url); a.remove();
 });
 
-
+// Import (bundle-aware)
 el("importFile") && el("importFile").addEventListener("change", (e) => {
   const file = e.target.files[0]; if (!file) return;
   const reader = new FileReader();
   reader.onload = () => {
     try {
-      const raw = JSON.parse(reader.result);
+      const json = JSON.parse(reader.result);
 
-      // Поддържа и стария формат (плосък st), и новия bundle
-      const nextState = raw && raw.state ? raw.state : raw;
-      st = { ...defaultState, ...nextState };
-
-      if (raw && Array.isArray(raw.aliases)) {
-        saveAliases(raw.aliases);
-        renderAliasTable(); // да се опресни таблицата веднага
+      // ако е чист state (стар формат)
+      if (json && !json.version && !json.state) {
+        st = { ...defaultState, ...json };
+      } else {
+        // нов bundle
+        st = { ...defaultState, ...(json.state || {}) };
+        if (Array.isArray(json.aliases)) saveAliases(json.aliases);
+        if (Array.isArray(json.familiars)) saveFamRecords(json.familiars);
       }
 
-      save();
+      save();            // ще rerender-не stats/combat и т.н.
+      renderAliasTable();
+      renderFamTable();
     } catch {
       alert("Грешен JSON.");
     }
   };
   reader.readAsText(file); e.target.value = "";
 });
+
 
 el("btnReset") && el("btnReset").addEventListener("click", () => {
   if (!confirm("Да нулирам всичко?")) return;
@@ -1181,6 +1211,140 @@ function attachExcuses() {
   });
 }
 
+// --- Familiar Names (lazy load JSON) ---
+let __fam_names = null;
+const FAM_URL = 'familiars.json';
+
+async function loadFamiliarNames() {
+  if (__fam_names) return __fam_names;
+  const res = await fetch(FAM_URL, { cache: 'no-store' });
+  if (!res.ok) throw new Error('Cannot load familiars.json');
+  __fam_names = await res.json(); // очакваме { feline:[], canine:[], ... }
+  return __fam_names;
+}
+
+function famPickRandom(arr) {
+  return arr && arr.length ? arr[Math.floor(Math.random() * arr.length)] : '';
+}
+
+// --- Familiar records (localStorage) ---
+const FAM_LS_KEY = 'familiars_v1';
+
+function loadFamRecords() {
+  try { return JSON.parse(localStorage.getItem(FAM_LS_KEY)) || []; }
+  catch { return []; }
+}
+function saveFamRecords(arr) {
+  try { localStorage.setItem(FAM_LS_KEY, JSON.stringify(arr)); } catch { }
+}
+
+// текущ избор (за Save)
+let _lastFamName = null;
+let _lastFamCat = null;
+
+function famSetSaveEnabled(on) {
+  const b = document.getElementById('btnFamSave');
+  if (b) b.disabled = !on;
+}
+
+function renderFamTable() {
+  const root = document.getElementById('famLog');
+  if (!root) return;
+  const list = loadFamRecords();
+  if (!list.length) {
+    root.innerHTML = '<small>Няма записани имена още.</small>';
+    return;
+  }
+  const rows = list.map((rec, i) => {
+    const d = new Date(rec.ts || Date.now());
+    const when = d.toLocaleString();
+    return `<tr>
+      <td>${escapeHtml(rec.name || '')}</td>
+      <td>${escapeHtml(rec.cat || '')}</td>
+      <td>${escapeHtml(rec.note || '')}</td>
+      <td style="white-space:nowrap">${when}</td>
+      <td style="text-align:center"><button class="alias-del" data-idx="${i}">🗑️</button></td>
+    </tr>`;
+  }).join('');
+  root.innerHTML = `<table class="alias-table">
+    <thead>
+      <tr><th>Име</th><th>Тип</th><th>Бележка</th><th>Кога</th><th></th></tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+
+  root.querySelectorAll('.alias-del').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const idx = parseInt(e.currentTarget.dataset.idx, 10);
+      const arr = loadFamRecords();
+      arr.splice(idx, 1);
+      saveFamRecords(arr);
+      renderFamTable();
+    });
+  });
+}
+
+function openFamModal() {
+  const m = document.getElementById('famModal');
+  const t = document.getElementById('famNoteInput');
+  if (!m || !t) return;
+  t.value = '';
+  m.classList.remove('hidden');
+  t.focus();
+}
+function closeFamModal() {
+  const m = document.getElementById('famModal');
+  if (m) m.classList.add('hidden');
+}
+
+function attachFamiliars() {
+  // групови бутони
+  document.querySelectorAll('.fam-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const cat = btn.getAttribute('data-famcat');
+      try {
+        const data = await loadFamiliarNames();
+        const list = Array.isArray(data[cat]) ? data[cat] : [];
+        const name = (famPickRandom(list) || '').trim();
+        const out = document.getElementById('famNameOutput');
+        if (out) out.value = name || '(no names found)';
+        _lastFamName = name || null;
+        _lastFamCat = cat || null;
+        famSetSaveEnabled(!!_lastFamName);
+      } catch (e) {
+        console.error(e);
+      }
+    });
+  });
+
+  // Save → модал
+  const saveBtn = document.getElementById('btnFamSave');
+  if (saveBtn) saveBtn.addEventListener('click', () => {
+    if (!_lastFamName) return;
+    openFamModal();
+  });
+
+  // модал бутони
+  const cancelBtn = document.getElementById('famCancel');
+  const okBtn = document.getElementById('famConfirm');
+  const noteEl = document.getElementById('famNoteInput');
+  cancelBtn && cancelBtn.addEventListener('click', closeFamModal);
+  okBtn && okBtn.addEventListener('click', () => {
+    const note = (noteEl && noteEl.value || '').trim();
+    const rec = { name: _lastFamName, cat: _lastFamCat, note, ts: Date.now() };
+    const arr = loadFamRecords();
+    arr.unshift(rec);
+    saveFamRecords(arr);
+    renderFamTable();
+    closeFamModal();
+    famSetSaveEnabled(false);
+  });
+
+  // init
+  renderFamTable();
+  famSetSaveEnabled(false);
+}
+
 function attachShenanigans() {
   const btn = document.getElementById('btnGetName');
   if (!btn) return;
@@ -1203,14 +1367,17 @@ const ALIAS_LS_KEY = 'aliases_v1';  // localStorage
 let _lastRandomName = null;
 
 // helpers
+// ---------- Shenanigans aliases log ----------
+// ПРЕПИШИ тези две функции така:
 function loadAliases() {
-  try { return JSON.parse(localStorage.getItem(ALIAS_LS_KEY)) || []; }
-  catch { return []; }
+  if (!Array.isArray(st.aliases)) st.aliases = [];
+  return st.aliases;
 }
 function saveAliases(arr) {
-  try { localStorage.setItem(ALIAS_LS_KEY, JSON.stringify(arr)); }
-  catch { }
+  st.aliases = Array.isArray(arr) ? arr : [];
+  save();                // ← пазим през твоята save(), за да тръгне cloud/рендър
 }
+
 
 function renderAliasTable() {
   const list = loadAliases();
@@ -1255,11 +1422,10 @@ function renderAliasTable() {
 }
 
 
-function deleteAlias(index) {
-  const list = loadAliases();
-  list.splice(index, 1); // махаме 1 елемент на дадения индекс
-  saveAliases(list);     // записваме пак
-  renderAliasTable();    // ре-рендерваме таблицата
+function deleteAliasAt(index) {
+  if (!Array.isArray(st.aliases)) st.aliases = [];
+  st.aliases.splice(index, 1);
+  save();
 }
 
 function escapeHtml(s) {
@@ -1765,6 +1931,7 @@ window.addEventListener('beforeunload', (e) => {
     attachShenanigans();
     attachOneLiners();
     attachExcuses();
+    attachFamiliars();
     attachAliasLog();
     attachInventory();
     attachPCChar();

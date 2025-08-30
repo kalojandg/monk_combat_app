@@ -873,6 +873,25 @@
       color: #fff;
     }
 
+    .fam-groups {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .fam-btn {
+      background: #1a223a;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+
+    .fam-btn:hover {
+      filter: brightness(1.08);
+    }
 
     /* fail 3 */
     /* Оверлей – статичен */
@@ -1018,12 +1037,13 @@
     </div>
     <div class="tabs">
       <!-- <button data-tab="combat">Combat</button> -->
-      <button data-tab="stats">Stats</button>
-      <button data-tab="pcchar">PC Characteristics</button>
-      <button data-tab="inventory">Inventory</button>
-      <button data-tab="shenanigans">Shenanigans</button>
-      <button data-tab="liners">One-Liners</button>
-      <button data-tab="excuses">Excuses</button>
+      <button class="tab-btn" data-tab="stats">Stats</button>
+      <button class="tab-btn" data-tab="pcchar">PC Characteristics</button>
+      <button class="tab-btn" data-tab="inventory">Inventory</button>
+      <button class="tab-btn" data-tab="shenanigans">Shenanigans</button>
+      <button class="tab-btn" data-tab="liners">One-Liners</button>
+      <button class="tab-btn" data-tab="excuses">Excuses</button>
+      <button class="tab-btn" data-tab="familiars">Familiar Names</button>
       <button class="tab-btn" data-tab="skills">Skills</button>
       <button data-tab="sessionNotes">Session Notes</button>
       <button id="btnInstall" class="hidden" title="Install PWA">Install</button>
@@ -1453,6 +1473,44 @@
       </div>
 
       <small>Чете от <code>excuses.json</code>.</small>
+    </div>
+
+    <!-- Familiar Names tab -->
+    <div id="tab-familiars" class="tab hidden">
+      <div class="section-title">Familiar Names</div>
+
+      <!-- ред: поле + бутони -->
+      <div class="one-liner-box" style="margin-bottom: 12px;">
+        <input id="famNameOutput" type="text" readonly placeholder="(click a group to roll a name)">
+        <button id="btnFamSave" disabled>Save</button>
+      </div>
+
+      <!-- групови бутони -->
+      <div class="fam-groups">
+        <button class="fam-btn" data-famcat="feline">Feline</button>
+        <button class="fam-btn" data-famcat="canine">Canine</button>
+        <button class="fam-btn" data-famcat="avian">Avian</button>
+        <button class="fam-btn" data-famcat="rodentia">Rodentia</button>
+        <button class="fam-btn" data-famcat="creepycrawlies">Creepycrawlies</button>
+        <button class="fam-btn" data-famcat="aquatic">Aquatic</button>
+        <button class="fam-btn" data-famcat="arcane">Arcane</button>
+      </div>
+
+      <!-- таблица -->
+      <div id="famLog" class="mt8"></div>
+
+      <!-- модален диалог за бележка -->
+      <div id="famModal" class="alias-modal hidden">
+        <div class="alias-modal__card">
+          <div class="alias-modal__title">На кого/какво е това име?</div>
+          <textarea id="famNoteInput" rows="5"
+            placeholder="напр. „ястребът на Майора“, 'паяк в шапката', 'вълкът на друида'…"></textarea>
+          <div class="alias-modal__actions">
+            <button id="famCancel">Отказ</button>
+            <button id="famConfirm">Запази</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="section-title">
