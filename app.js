@@ -112,8 +112,7 @@ function save() {
   localStorage.setItem("monkSheet_v3", JSON.stringify(st));
   renderAll();
   renderAliasTable?.();      // ← безопасно, ще се изпълни ако функцията съществува
-  // ако добавиш familiars таб:
-  // renderFamiliarsTable?.();
+  renderFamiliarsTable?.();
 
   cloudSchedule();           // ← остава си
 }
