@@ -570,7 +570,6 @@ function applyBundle(data) {
   st = { ...defaultState, ...incoming };
   save();
   renderAll();
-  attachNotesTab();  // ← допълнително, за да обнови текста
 }
 
 // ---------- Inventory ----------
