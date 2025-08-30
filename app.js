@@ -771,24 +771,28 @@ function renderToolTable() {
 // Export / Import / Reset
 // Export (bundle)
 el("btnExport")?.addEventListener("click", () => {
-  const bundle = buildBundle();                     // ← само това
+  const bundle = buildBundle();
   const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" });
 
-  const now = new Date();
-  const stamp = now.toISOString()
-    .replace(/[-:]/g, "")   // маха тирета и двуеточия
-    .replace(/\.\d+Z$/, "") // маха милисекунди и Z
-    .replace("T", "_");     // T -> _
+  // timestamp: YYYYMMDD_HHMMSS
+  const stamp = new Date().toISOString()
+    .replace(/[-:]/g, "")
+    .replace(/\.\d+Z$/, "")
+    .replace("T", "_");
 
-  // взимаме името на героя, fallback "hero"
-  const heroName = (st.name || "hero").replace(/[^\w\-]+/g, "_");
+  // име на героя (пази Unicode, чисти само забранени за файлове символи)
+  const rawName = (st.name ?? "").trim() || "hero";
+  const safeName = rawName
+    .replace(/[\\\/:*?"<>|]+/g, "_")  // забранени в имена на файлове
+    .replace(/\s+/g, "_");           // интервали -> "_"
 
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  // примерно: Пийс Ошит → Piece_Oshiet_20250830_174430_bundle.json
-  a.download = `${heroName}_${stamp}_bundle.json`;
-
-  document.body.appendChild(a); a.click(); URL.revokeObjectURL(a.href); a.remove();
+  a.download = `${safeName}_${stamp}_bundle.json`;
+  document.body.appendChild(a);
+  a.click();
+  URL.revokeObjectURL(a.href);
+  a.remove();
 });
 
 
