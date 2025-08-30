@@ -569,6 +569,7 @@ function applyBundle(data) {
 
   st = { ...defaultState, ...incoming };
   save();
+  renderAll();
 }
 
 // ---------- Inventory ----------
