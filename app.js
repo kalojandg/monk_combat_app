@@ -554,45 +554,23 @@ function getBundle() {
   };
 }
 
-function applyBundle(bundle) {
-  try {
-    const b = typeof bundle === "string" ? JSON.parse(bundle) : bundle;
-
-    // v2 => {version, state}; v1/legacy => директно полета
-    const incoming = b?.state ?? b ?? {};
-
-    // Миграция: ако има топ-левъл aliases/familiars от стар формат – влей ги в state
-    if (Array.isArray(b?.aliases))   incoming.aliases   = b.aliases;
-    if (Array.isArray(b?.familiars)) incoming.familiars = b.familiars;
-
-    // Сливане върху defaultState, за да не липсват полета
-    st = { ...defaultState, ...incoming };
-
-    // (по желание) дедуп на масиви, ако смесваме стари/нови
-    st.aliases    = Array.isArray(st.aliases)    ? dedupeByKey(st.aliases,    x => `${x.name}|${x.to}|${x.ts||""}`) : [];
-    st.familiars  = Array.isArray(st.familiars)  ? dedupeByKey(st.familiars,  x => `${x.name}|${x.cat}|${x.ts||""}`) : [];
-    st.inventory  = Array.isArray(st.inventory)  ? st.inventory : [];
-
-    // възстанови textarea за бележките (UI)
-    const ta = document.getElementById("sessionNotesText");
-    if (ta) ta.value = st.sessionNotes || "";
-
-    save();       // persist + renderAll()
-  } catch (e) {
-    console.error(e);
-    alert("Грешен JSON.");
-  }
+function readBundleOrState(x) {
+  const obj = typeof x === "string" ? JSON.parse(x) : x;
+  if (obj && typeof obj === "object" && obj.version === 2 && obj.state) return obj.state; // v2
+  return obj || {};  // legacy raw state
 }
 
-function dedupeByKey(arr, keyFn) {
-  const seen = new Set();
-  const out = [];
-  for (const it of arr) {
-    const k = keyFn(it);
-    if (!seen.has(k)) { seen.add(k); out.push(it); }
-  }
-  return out;
+function applyBundle(data) {
+  const incoming = readBundleOrState(data);
+
+  // За legacy файлове, където aliases/familiars бяха top-level:
+  if (Array.isArray(data?.aliases) && !Array.isArray(incoming.aliases)) incoming.aliases = data.aliases;
+  if (Array.isArray(data?.familiars) && !Array.isArray(incoming.familiars)) incoming.familiars = data.familiars;
+
+  st = { ...defaultState, ...incoming };
+  save();
 }
+
 // ---------- Inventory ----------
 let __invEditIndex = null; // null => Add, число => Edit
 
@@ -793,17 +771,16 @@ function renderToolTable() {
 // Export / Import / Reset
 // Export (bundle)
 el("btnExport")?.addEventListener("click", () => {
-  const bundle = buildBundle();
+  const bundle = buildBundle();                     // ← само това
   const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" });
+
+  const t = new Date(), y=t.getFullYear(), m=String(t.getMonth()+1).padStart(2,"0"), d=String(t.getDate()).padStart(2,"0");
   const a = document.createElement("a");
-  const t = new Date();
-  const y = t.getFullYear();
-  const m = String(t.getMonth()+1).padStart(2,"0");
-  const d = String(t.getDate()).padStart(2,"0");
   a.href = URL.createObjectURL(blob);
-  a.download = `${(st.name || "monk").replace(/[^\w\-]+/g,"_")}_${y}${m}${d}_bundle.json`;
+  a.download = `${(st.name||"monk").replace(/[^\w\-]+/g,"_")}_${y}${m}${d}_bundle.json`;
   document.body.appendChild(a); a.click(); URL.revokeObjectURL(a.href); a.remove();
 });
+
 
 
 // Import (bundle-aware)
@@ -1046,24 +1023,19 @@ async function cloudWriteNow() {
   try {
     const perm = await cloudHandle.queryPermission({ mode: "readwrite" });
     if (perm !== "granted") {
-      const req = await cloudHandle.requestPermission({ mode: "readwrite" });
-      if (req !== "granted") return;
+      if (await cloudHandle.requestPermission({ mode: "readwrite" }) !== "granted") return;
     }
     const writable = await cloudHandle.createWritable();
-    const bundle = {
-      version: 3,
-      state: st,
-      aliases: loadAliases?.() || [],
-      familiars: loadFamiliars?.() || []
-    };
-    await writable.write(new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" }));
+    await writable.write(new Blob([JSON.stringify(buildBundle(), null, 2)], { type: "application/json" }));
     await writable.close();
-  } catch (e) { /* тихо */ }
+  } catch {}
 }
 
+
+// ---- Bundle v2 (единственият формат) ----
 function buildBundle() {
-  return { version: 2, state: { ...st } };   // нищо „навън“
-} 
+  return { version: 2, state: { ...st } };
+}
 
 const cloudSchedule = debounce(() => { cloudWriteNow(); }, 1000);
 
