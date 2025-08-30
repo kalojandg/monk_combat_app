@@ -774,10 +774,20 @@ el("btnExport")?.addEventListener("click", () => {
   const bundle = buildBundle();                     // ← само това
   const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" });
 
-  const t = new Date(), y=t.getFullYear(), m=String(t.getMonth()+1).padStart(2,"0"), d=String(t.getDate()).padStart(2,"0");
+  const now = new Date();
+  const stamp = now.toISOString()
+    .replace(/[-:]/g, "")   // маха тирета и двуеточия
+    .replace(/\.\d+Z$/, "") // маха милисекунди и Z
+    .replace("T", "_");     // T -> _
+
+  // взимаме името на героя, fallback "hero"
+  const heroName = (st.name || "hero").replace(/[^\w\-]+/g, "_");
+
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `${(st.name||"monk").replace(/[^\w\-]+/g,"_")}_${y}${m}${d}_bundle.json`;
+  // примерно: Пийс Ошит → Piece_Oshiet_20250830_174430_bundle.json
+  a.download = `${heroName}_${stamp}_bundle.json`;
+
   document.body.appendChild(a); a.click(); URL.revokeObjectURL(a.href); a.remove();
 });
 
@@ -1028,7 +1038,7 @@ async function cloudWriteNow() {
     const writable = await cloudHandle.createWritable();
     await writable.write(new Blob([JSON.stringify(buildBundle(), null, 2)], { type: "application/json" }));
     await writable.close();
-  } catch {}
+  } catch { }
 }
 
 
