@@ -560,37 +560,16 @@ function readBundleOrState(x) {
   return obj || {};  // legacy raw state
 }
 
-// Нормализира входа: връща чист "state" обект, без да оставя дубли
-function readBundleOrState(data) {
-  const src = (data && typeof data === 'object' && data.state && typeof data.state === 'object')
-    ? data.state          // v2: { state: {...} }
-    : (data || {});       // v1: чист state
-
-  const next = { ...defaultState, ...src };
-
-  // legacy root масиви (ако ги има на топ ниво в файла)
-  if (Array.isArray(data?.aliases))   next.aliases   = data.aliases.slice();
-  if (Array.isArray(data?.familiars)) next.familiars = data.familiars.slice();
-
-  // малко safety за дубликати при familiars
-  if (Array.isArray(next.familiars)) {
-    const seen = new Set();
-    next.familiars = next.familiars.filter(it => {
-      const key = (it?.name || '') + '|' + (it?.type || it?.cat || '');
-      if (seen.has(key)) return false; seen.add(key); return true;
-    });
-  }
-
-  return next;
-}
-
 function applyBundle(data) {
   const incoming = readBundleOrState(data);
-  st = incoming;        // пълна подмяна – включително sessionNotes
-  save();               // запиши в localStorage/Cloud
-  renderAll();          // !!! задължително – иначе textarea-то остава със стария value
-}
 
+  // За legacy файлове, където aliases/familiars бяха top-level:
+  if (Array.isArray(data?.aliases) && !Array.isArray(incoming.aliases)) incoming.aliases = data.aliases;
+  if (Array.isArray(data?.familiars) && !Array.isArray(incoming.familiars)) incoming.familiars = data.familiars;
+
+  st = { ...defaultState, ...incoming };
+  save();
+}
 
 // ---------- Inventory ----------
 let __invEditIndex = null; // null => Add, число => Edit
@@ -956,16 +935,29 @@ async function notesPickDir() {
 // ---- Session Notes wiring ----
 let __notesBound = false;
 
-function onNotesTabShown() {
-  const ta = document.getElementById('sessionNotesInput');
-  if (ta) ta.value = st.sessionNotes || '';
+async function onNotesTabShown() {
+  if (__notesBound) return;          // не ребиндваме
+  __notesBound = true;
+
+  const ta = document.getElementById('notesInput');
+  if (!ta) return;
+
+  // първи път: ако няма handle → попитай
+  if (!notesHandle) {
+    try { await notesPickDir(); } catch (_) { }
+  }
+
+  // зареди runtime стойност (ако пазиш в st.sessionNotes)
+  ta.value = st.sessionNotes || '';
+
+  // авто-сейв с debounce към JSON файла
+  const debSave = debounce(async () => {
+    st.sessionNotes = ta.value;
+    await notesWriteNow();
+  }, 1200);
+
+  ta.addEventListener('input', debSave);
 }
-
-document.getElementById('sessionNotesInput')?.addEventListener('input', (e) => {
-  st.sessionNotes = e.target.value;
-  saveThrottled?.() ?? save();   // както ти е схемата
-});
-
 
 // ===== Cloud Sync (File System Access API) =====
 const DB_NAME = "monkSheetCloudDB";
