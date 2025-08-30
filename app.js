@@ -1048,8 +1048,16 @@ async function cloudWriteNow() {
 
 // ---- Bundle v2 (единственият формат) ----
 function buildBundle() {
-  return { version: 2, state: { ...st } };
+  const clone = (typeof structuredClone === 'function')
+    ? structuredClone(st)
+    : JSON.parse(JSON.stringify(st));
+
+  return {
+    version: 2,
+    state: clone
+  };
 }
+
 
 const cloudSchedule = debounce(() => { cloudWriteNow(); }, 1000);
 
