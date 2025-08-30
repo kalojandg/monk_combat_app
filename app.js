@@ -245,7 +245,7 @@ document.addEventListener("click", (e) => {
   // hide/show tabs
   document.querySelectorAll(".tab").forEach(p => p.classList.add("hidden"));
   console.log(tab);
-  const pane = document.querySelector(C) || document.querySelector(`#${tab}`);
+  const pane = document.querySelector(`#tab-${tab}`) || document.querySelector(`#${tab}`);
   if (pane) pane.classList.remove("hidden");
 });
 
