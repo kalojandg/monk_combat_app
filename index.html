@@ -558,11 +558,12 @@
     }
 
     /* Modal */
-    .alias-modal.hidden {
+    .modal.hidden {
       display: none;
     }
 
-    .alias-modal {
+
+    .modal {
       position: fixed;
       inset: 0;
       z-index: 1000;
@@ -571,7 +572,7 @@
       place-items: center;
     }
 
-    .alias-modal__card {
+    .modal__card {
       width: min(700px, 92vw);
       background: #0f0f1a;
       border: 1px solid #333;
@@ -581,12 +582,12 @@
       box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
     }
 
-    .alias-modal__title {
+    .modal__title {
       font-weight: 700;
       margin-bottom: 8px;
     }
 
-    .alias-modal__card textarea {
+    .modal__card textarea {
       width: 100%;
       background: #18182a;
       color: #f5f5f5;
@@ -596,14 +597,14 @@
       line-height: 1.4;
     }
 
-    .alias-modal__actions {
+    .modal__actions {
       display: flex;
       gap: 10px;
       justify-content: flex-end;
       margin-top: 10px;
     }
 
-    .alias-modal__actions button {
+    .modal__actions button {
       background: #2a2a3d;
       color: #fff;
       border: 1px solid #444;
@@ -612,7 +613,7 @@
       cursor: pointer;
     }
 
-    .alias-modal__actions button:hover {
+    .modal__actions button:hover {
       background: #3b3b57;
     }
 
@@ -1247,14 +1248,14 @@
         style="width:100%;background:#101323;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px"></textarea>
 
       <!-- споделен модал (използва стила на alias/inventory) -->
-      <div id="pcModal" class="alias-modal hidden">
-        <div class="alias-modal__card">
-          <div class="alias-modal__title" id="pcModalTitle">Add</div>
+      <div id="pcModal" class="modal hidden">
+        <div class="modal__card">
+          <div class="modal__title" id="pcModalTitle">Add</div>
           <div class="field" style="margin-top:8px">
             <label id="pcModalLabel">Name</label>
             <input id="pcModalName" type="text" placeholder="Abyssal / Brewer's Supplies...">
           </div>
-          <div class="alias-modal__actions">
+          <div class="modal__actions">
             <button id="pcModalCancel">Отказ</button>
             <button id="pcModalSave" class="primary">Запази</button>
           </div>
@@ -1272,10 +1273,10 @@
 
       <div id="invTableRoot"></div>
 
-      <!-- Modal за Add/Edit (ползваме стила на alias-modal) -->
-      <div id="invModal" class="alias-modal hidden">
-        <div class="alias-modal__card">
-          <div class="alias-modal__title" id="invModalTitle">Add item</div>
+      <!-- Modal за Add/Edit (ползваме стила на modal) -->
+      <div id="invModal" class="modal hidden">
+        <div class="modal__card">
+          <div class="modal__title" id="invModalTitle">Add item</div>
 
           <div class="row-grid" style="margin-top:8px">
             <div class="field">
@@ -1294,7 +1295,7 @@
               style="width:100%;background:#101323;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px"></textarea>
           </div>
 
-          <div class="alias-modal__actions">
+          <div class="modal__actions">
             <button id="invCancel">Отказ</button>
             <button id="invSave" class="primary">Запази</button>
           </div>
@@ -1316,11 +1317,11 @@
       <div id="aliasLog"></div>
 
       <!-- модален диалог -->
-      <div id="aliasModal" class="alias-modal hidden">
-        <div class="alias-modal__card">
-          <div class="alias-modal__title">На кого си се представил така?</div>
+      <div id="aliasModal" class="modal hidden">
+        <div class="modal__card">
+          <div class="modal__title">На кого си се представил така?</div>
           <textarea id="aliasToInput" rows="5" placeholder="Име/описание на човека, ситуация, бележки..."></textarea>
-          <div class="alias-modal__actions">
+          <div class="modal__actions">
             <button id="aliasCancel">Отказ</button>
             <button id="aliasConfirm">Запази</button>
           </div>
@@ -1500,12 +1501,12 @@
       <div id="famLog" class="mt8"></div>
 
       <!-- модален диалог за бележка -->
-      <div id="famModal" class="alias-modal hidden">
-        <div class="alias-modal__card">
-          <div class="alias-modal__title">На кого/какво е това име?</div>
+      <div id="famModal" class="modal hidden">
+        <div class="modal__card">
+          <div class="modal__title">На кого/какво е това име?</div>
           <textarea id="famNoteInput" rows="5"
             placeholder="напр. „ястребът на Майора“, 'паяк в шапката', 'вълкът на друида'…"></textarea>
-          <div class="alias-modal__actions">
+          <div class="modal__actions">
             <button id="famCancel">Отказ</button>
             <button id="famConfirm">Запази</button>
           </div>
