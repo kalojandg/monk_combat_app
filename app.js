@@ -75,8 +75,6 @@ const defaultState = {
   dsSuccess: 0, dsFail: 0, status: "alive",
   hdAvail: 1,
 
-  aliases: [],
-  familiars: [],
   sessionNotes: "",
 
   acMagic: 0,
@@ -85,6 +83,11 @@ const defaultState = {
   hpAdjust: 0
 };
 
+// --- bundle helpers ---
+function stripTransientState(s) {
+  const { aliases, familiars, ...rest } = s; // ако все още съществуват – игнорирай
+  return rest;
+}
 
 // ===== Load/save =====
 let st = load();
@@ -807,21 +810,27 @@ el("importFile") && el("importFile").addEventListener("change", (e) => {
   const reader = new FileReader();
   reader.onload = () => {
     try {
-      const json = JSON.parse(reader.result);
+      const data = JSON.parse(reader.result);
 
-      // ако е чист state (стар формат)
-      if (json && !json.version && !json.state) {
-        st = { ...defaultState, ...json };
+      if (data && typeof data === "object" && "version" in data && "state" in data) {
+        // v2 bundle
+        st = { ...defaultState, ...data.state };
+
+        // миграция, ако по погрешка има масиви в state
+        if (Array.isArray(st.aliases)) { saveAliases(st.aliases); delete st.aliases; }
+        if (Array.isArray(st.familiars)) { saveFamiliars(st.familiars); delete st.familiars; }
+
+        if (Array.isArray(data.aliases))   saveAliases(data.aliases);
+        if (Array.isArray(data.familiars)) saveFamiliars(data.familiars);
       } else {
-        // нов bundle
-        st = { ...defaultState, ...(json.state || {}) };
-        if (Array.isArray(json.aliases)) saveAliases(json.aliases);
-        if (Array.isArray(json.familiars)) saveFamRecords(json.familiars);
+        // v1 (стар формат) – беше просто state
+        st = { ...defaultState, ...data };
+        // ако случайно съдържа масиви:
+        if (Array.isArray(st.aliases))   { saveAliases(st.aliases);   delete st.aliases; }
+        if (Array.isArray(st.familiars)) { saveFamiliars(st.familiars); delete st.familiars; }
       }
 
-      save();            // ще rerender-не stats/combat и т.н.
-      renderAliasTable();
-      renderFamTable();
+      save();                 // пререндер + cloud schedule
     } catch {
       alert("Грешен JSON.");
     }
@@ -1037,11 +1046,13 @@ async function cloudWriteNow() {
 //     notesHandle = null;
 //   }
 // }
+
 function buildBundle() {
   return {
-    version: 1,
-    state: st,
-    aliases: loadAliases()
+    version: 2,
+    state: stripTransientState(st),
+    aliases: loadAliases(),      // вече ги пазим отделно в LS
+    familiars: loadFamiliars(),  // същото и за фамилиарите
   };
 }
 
@@ -1532,6 +1543,7 @@ function attachAliasLog() {
     renderAliasTable();
     closeAliasModal();
     setSaveEnabled(false);
+    closeAliasModal();
   });
 
   // init
