@@ -1481,7 +1481,13 @@ function closeAliasModal() {
 }
 
 document.getElementById('aliasModal')?.addEventListener('click', (e) => {
-  if (e.target.id === 'aliasModal') closeAliasModal();
+  if (e.target.id === 'aliasModal') {
+    closeAliasModal();
+
+    document.getElementById('aliasToInput').value = '';
+    document.getElementById('fakeNameOutput').value = '';
+    document.getElementById('btnSaveAlias').disabled = true;
+  }
 });
 
 let __pcModalType = null;     // 'lang' | 'tool'
@@ -1563,9 +1569,13 @@ function attachAliasLog() {
     arr.unshift(rec);      // новите най-отгоре
     saveAliases(arr);
     renderAliasTable();
-    closeAliasModal();
     setSaveEnabled(false);
     closeAliasModal();
+
+
+    document.getElementById('aliasToInput').value = '';
+    document.getElementById('fakeNameOutput').value = '';
+    document.getElementById('btnSaveAlias').disabled = true;
   });
 
   // init
@@ -1899,17 +1909,25 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
   const btns = Array.from(document.querySelectorAll('.tabs [data-tab]'));
   const panels = Array.from(document.querySelectorAll('.tab'));
 
-  function showTab(tab) {
-    // ... текущата логика, която скрива/показва .tab ...
+  function showTab(tabKey) {
+    // 1) бутони
+    document.querySelectorAll('.tabs .tab-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.tab === tabKey);
+    });
 
-    // крий/показвай секцията за features, ако стои извън таба
-    const fs = document.getElementById('featuresSection');
-    if (fs) fs.classList.toggle('hidden', tab !== 'skills');
+    // 2) табове
+    document.querySelectorAll('.tab').forEach(t => t.classList.add('hidden'));
+    const tabEl = document.getElementById(`tab-${tabKey}`);
+    if (tabEl) tabEl.classList.remove('hidden');
 
-    // рендерирай клас-фийчърите само когато отворим Skills
-    if (tab === 'skills') {
+    // 3) лениво рендериране само когато е нужно
+    if (tabKey === 'featuresSection') {
       const d = derived();
       renderFeaturesAccordion(d.level);
+    }
+
+    if (tabKey === 'skills') {
+      // ако имаш друго lazy тук – извикай го
     }
   }
 
@@ -1930,24 +1948,35 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
   function setActive(name) {
     activeName = name;
 
+    // 1) скрий всички табове
     panels.forEach(p => p.classList.add('hidden'));
+
+    // 2) покажи избрания
     if (name) {
       const panel = document.getElementById(`tab-${name}`);
       if (panel) panel.classList.remove('hidden');
     }
 
+    // 3) активна визия за бутоните
     btns.forEach(b => b.classList.toggle('active', !!name && b.dataset.tab === name));
 
-    // >>> Добави това:
-    if (name === 'sessionNotes') onNotesTabShown();
+    // 4) лениво зареждане на съдържание
+    if (name === 'skills') {            // ако таб-ключът ти е "skills"
+      const d = derived();
+      renderFeaturesAccordion(d.level); // чертай акордеона тук
+    }
+    if (name === 'sessionNotes') {
+      onNotesTabShown();                // както вече имаш
+    }
   }
 
   btns.forEach(b => {
     b.setAttribute('type', 'button');
+    // поддържаме "collapse all" при повторно кликване
     b.addEventListener('click', () => setActive(activeName === b.dataset.tab ? null : b.dataset.tab));
   });
 
-  setActive(null); // старт без отворен таб
+  setActive(null); // старт без отворен таб (ако искаш определен — подай името му)
 })();
 
 window.addEventListener('beforeunload', (e) => {
@@ -1957,7 +1986,6 @@ window.addEventListener('beforeunload', (e) => {
 });
 +
 
-  // ==== Boot ====
   // ==== Boot ====
   (async () => {
     await cloudRestore();
