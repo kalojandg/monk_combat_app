@@ -782,17 +782,32 @@ function renderToolTable() {
 
 // Export / Import / Reset
 // Export (bundle)
-el('btnExport')?.addEventListener('click', () => {
-  const bundle = buildBundle();
-  const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
+el("btnExport") && el("btnExport").addEventListener("click", () => {
+  const bundle = {
+    version: 3,
+    state: st,                       // <-- само state вътре
+    aliases: loadAliases?.() || [],  // <-- top-level
+    familiars: loadFamiliars?.() || [] // <-- top-level
+  };
+
+  const now = new Date();
+  const stamp = [
+    now.getFullYear(),
+    String(now.getMonth()+1).padStart(2,'0'),
+    String(now.getDate()).padStart(2,'0'),
+    '-',
+    String(now.getHours()).padStart(2,'0'),
+    String(now.getMinutes()).padStart(2,'0')
+  ].join('');
+  const fname = `${stamp}_${(st.name||'monk').replace(/\s+/g,'_')}.json`;
+
+  const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  const ts = new Date();
-  const y = ts.getFullYear(), m = String(ts.getMonth() + 1).padStart(2, '0'), d = String(ts.getDate()).padStart(2, '0');
-  a.href = url;
-  a.download = `${(st.name || 'monk')}_${y}${m}${d}_bundle.json`; // по твое желание
+  const a = document.createElement("a");
+  a.href = url; a.download = fname;
   document.body.appendChild(a); a.click(); URL.revokeObjectURL(url); a.remove();
 });
+
 
 // Import (bundle-aware)
 async function importBundleFromFile(file) {
@@ -840,13 +855,40 @@ async function importBundleFromFile(file) {
   alert('Импортът мина успешно.');
 }
 
-el('importFile')?.addEventListener('change', (e) => {
-  const f = e.target.files?.[0];
-  if (f) importBundleFromFile(f);
-  e.target.value = ''; // за да може същия файл да се избере отново
+el("importFile") && el("importFile").addEventListener("change", (e) => {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+
+      // v3 bundle {version, state, aliases?, familiars?}
+      // legacy: директно state (без обвивка)
+      let next;
+      if (data && data.state) {
+        next = { ...defaultState, ...data.state };
+      } else {
+        next = { ...defaultState, ...data };
+      }
+
+      // Никога НЕ четем top-level sessionNotes (ако някога е имало такова).
+      // Връщаме колекциите към localStorage:
+      if (Array.isArray(data?.aliases) && typeof saveAliases === 'function') {
+        saveAliases(data.aliases);
+      }
+      if (Array.isArray(data?.familiars) && typeof saveFamiliars === 'function') {
+        saveFamiliars(data.familiars);
+      }
+
+      st = next;
+      save();
+    } catch {
+      alert("Грешен JSON.");
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = "";
 });
-
-
 
 el("btnReset") && el("btnReset").addEventListener("click", () => {
   if (!confirm("Да нулирам всичко?")) return;
@@ -1038,23 +1080,16 @@ async function cloudWriteNow() {
       if (req !== "granted") return;
     }
     const writable = await cloudHandle.createWritable();
-    const bundle = buildBundle();
+    const bundle = {
+      version: 3,
+      state: st,
+      aliases: loadAliases?.() || [],
+      familiars: loadFamiliars?.() || []
+    };
     await writable.write(new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" }));
     await writable.close();
   } catch (e) { /* тихо */ }
 }
-
-
-// async function notesRestore() {
-//   try {
-//     const h = await notesIdbGet();
-//     if (!h) { notesHandle = null; return; }
-//     const perm = await h.queryPermission({ mode: "readwrite" });
-//     notesHandle = h;
-//   } catch (e) {
-//     notesHandle = null;
-//   }
-// }
 
 function buildBundle() {
   // 1) вземи текущия state, но махни вътрешните aliases/familiars ако случайно са попаднали там
@@ -1101,20 +1136,19 @@ async function cloudPull() {
     }
     const file = await cloudHandle.getFile();
     const text = await file.text();
-    const json = JSON.parse(text);
+    const data = JSON.parse(text);
 
-    const nextState = json && json.state ? json.state : json;
-    st = { ...defaultState, ...nextState };
+    let next;
+    if (data && data.state) next = { ...defaultState, ...data.state };
+    else next = { ...defaultState, ...data };
 
-    if (json && Array.isArray(json.aliases)) {
-      saveAliases(json.aliases);
-      renderAliasTable();
-    }
+    if (Array.isArray(data?.aliases) && typeof saveAliases === 'function') saveAliases(data.aliases);
+    if (Array.isArray(data?.familiars) && typeof saveFamiliars === 'function') saveFamiliars(data.familiars);
 
+    st = next;
     save();
   } catch (e) { alert("Cloud pull error."); }
 }
-
 
 async function cloudRestore() {
   try {
