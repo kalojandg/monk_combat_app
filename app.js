@@ -781,62 +781,70 @@ function renderToolTable() {
 
 // Export / Import / Reset
 // Export (bundle)
-el("btnExport") && el("btnExport").addEventListener("click", () => {
-  const bundle = {
-    version: 2,
-    state: st,
-    aliases: loadAliases(),
-    familiars: loadFamRecords()
-  };
-  const now = new Date();
-  const yyyy = now.getFullYear();
-  const mm = String(now.getMonth()+1).padStart(2,'0');
-  const dd = String(now.getDate()).padStart(2,'0');
-  const hh = String(now.getHours()).padStart(2,'0');
-  const mi = String(now.getMinutes()).padStart(2,'0');
-  const name = (st.name || "monk").replace(/[^\p{L}\p{N}_-]+/gu, '_');
-  const fileName = `${yyyy}${mm}${dd}_${hh}${mi}_${name}_sheet.json`;
-
-  const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = fileName;
+el('btnExport')?.addEventListener('click', () => {
+  const bundle = buildBundle();
+  const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const ts   = new Date();
+  const y = ts.getFullYear(), m = String(ts.getMonth()+1).padStart(2,'0'), d = String(ts.getDate()).padStart(2,'0');
+  a.href = url;
+  a.download = `${(st.name || 'monk')}_${y}${m}${d}_bundle.json`; // по твое желание
   document.body.appendChild(a); a.click(); URL.revokeObjectURL(url); a.remove();
 });
 
 // Import (bundle-aware)
-el("importFile") && el("importFile").addEventListener("change", (e) => {
-  const file = e.target.files[0]; if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    try {
-      const data = JSON.parse(reader.result);
+async function importBundleFromFile(file) {
+  const txt = await file.text();
+  let data;
+  try { data = JSON.parse(txt); }
+  catch { alert('Грешен JSON.'); return; }
 
-      if (data && typeof data === "object" && "version" in data && "state" in data) {
-        // v2 bundle
-        st = { ...defaultState, ...data.state };
+  // започваме от чисто
+  let next = { ...defaultState };
 
-        // миграция, ако по погрешка има масиви в state
-        if (Array.isArray(st.aliases)) { saveAliases(st.aliases); delete st.aliases; }
-        if (Array.isArray(st.familiars)) { saveFamiliars(st.familiars); delete st.familiars; }
-
-        if (Array.isArray(data.aliases))   saveAliases(data.aliases);
-        if (Array.isArray(data.familiars)) saveFamiliars(data.familiars);
-      } else {
-        // v1 (стар формат) – беше просто state
-        st = { ...defaultState, ...data };
-        // ако случайно съдържа масиви:
-        if (Array.isArray(st.aliases))   { saveAliases(st.aliases);   delete st.aliases; }
-        if (Array.isArray(st.familiars)) { saveFamiliars(st.familiars); delete st.familiars; }
+  if (data && typeof data === 'object') {
+    if (data.state) {
+      // v2
+      Object.assign(next, data.state);
+      // коренови масиви (истинският източник)
+      if (Array.isArray(data.aliases))   next.aliases   = data.aliases.slice();
+      if (Array.isArray(data.familiars)) next.familiars = data.familiars.slice();
+      // ако все пак има state.familiars ⇒ слей и де-дуп
+      if (data.state.familiars && Array.isArray(data.state.familiars)) {
+        const merged = [...(next.familiars||[]), ...data.state.familiars];
+        const seen = new Set();
+        next.familiars = merged.filter(it => {
+          const key = (it.name||'') + '|' + (it.cat||it.type||'');
+          if (seen.has(key)) return false; seen.add(key); return true;
+        });
       }
-
-      save();                 // пререндер + cloud schedule
-    } catch {
-      alert("Грешен JSON.");
+    } else {
+      // v1 fallback – всичко е в root
+      Object.assign(next, data);
+      if (Array.isArray(data.aliases))   next.aliases   = data.aliases.slice();
+      if (Array.isArray(data.familiars)) next.familiars = data.familiars.slice();
     }
-  };
-  reader.readAsText(file); e.target.value = "";
+  }
+
+  // финално записване
+  st = next;
+  save();         // твоята функция, която localStorage-ва и render-ва
+  renderAll();
+
+  // ако поддържаш и отделни „логове“, обнови ги от state
+  if (typeof saveAliases   === 'function' && Array.isArray(st.aliases))   saveAliases(st.aliases);
+  if (typeof saveFamiliars === 'function' && Array.isArray(st.familiars)) saveFamiliars(st.familiars);
+
+  alert('Импортът мина успешно.');
+}
+
+el('importFile')?.addEventListener('change', (e) => {
+  const f = e.target.files?.[0];
+  if (f) importBundleFromFile(f);
+  e.target.value = ''; // за да може същия файл да се избере отново
 });
+
 
 
 el("btnReset") && el("btnReset").addEventListener("click", () => {
@@ -1048,11 +1056,21 @@ async function cloudWriteNow() {
 // }
 
 function buildBundle() {
+  // 1) вземи текущия state, но махни вътрешните aliases/familiars ако случайно са попаднали там
+  const state = { ...st };
+  delete state.aliases;
+  delete state.familiars;
+
+  // 2) източникът за тези списъци е локалният „лог“
+  const aliases   = (typeof loadAliases   === 'function') ? loadAliases()   : [];
+  const familiars = (typeof loadFamiliars === 'function') ? loadFamiliars() : [];
+
+  // 3) експортен формат v2
   return {
     version: 2,
-    state: stripTransientState(st),
-    aliases: loadAliases(),      // вече ги пазим отделно в LS
-    familiars: loadFamiliars(),  // същото и за фамилиарите
+    state,        // чист state, без aliases/familiars вътре
+    aliases,      // плоско на корен
+    familiars     // плоско на корен
   };
 }
 
