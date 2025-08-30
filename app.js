@@ -1658,7 +1658,7 @@ document.addEventListener("click", (e) => {
 
   // ... твоя код за превключване ...
 
-  if (tab === 'skills' || tab === 'features') {
+  if (tab === 'tab-features-section') {
     const d = derived();
     if (!_featuresRendered || _featuresDirty) {
       renderFeaturesAccordion(d.level);
@@ -1676,7 +1676,7 @@ document.addEventListener('click', (e) => {
 
   // ... твоята логика за активиране/скриване ...
 
-  if (tab === 'skills' || tab === 'features') {
+  if (tab === 'tab-features-section') {
     console.log("render");
     // гарантирано рисуваме при отваряне
     const d = derived();           // вземи текущото ниво
@@ -1902,11 +1902,11 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
     // ... текущата логика, която скрива/показва .tab ...
 
     // крий/показвай секцията за features, ако стои извън таба
-    const fs = document.getElementById('featuresSection');
-    if (fs) fs.classList.toggle('hidden', tab !== 'skills');
+    const fs = document.getElementById('tabs-features-section');
+    if (fs) fs.classList.toggle('hidden', tab !== 'tab-features-section');
 
     // рендерирай клас-фийчърите само когато отворим Skills
-    if (tab === 'skills') {
+    if (tab === 'tab-features-section') {
       const d = derived();
       renderFeaturesAccordion(d.level);
     }
