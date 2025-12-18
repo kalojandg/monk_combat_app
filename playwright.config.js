@@ -18,7 +18,7 @@ export default defineConfig({
   
   // Reporter - подробен output в конзолата
   reporter: [
-    ['list'], // Показва всеки тест като list
+    ['line'], // По-компактен: само една линия per test
     ['html', { open: 'never' }] // HTML report (виж с: npm run test:report)
   ],
   
@@ -42,7 +42,7 @@ export default defineConfig({
   
   // Web server (автоматично стартира за тестовете)
   webServer: {
-    command: 'python -m http.server 8000',
+    command: 'npm run serve',
     port: 8000,
     reuseExistingServer: true,
     timeout: 10000,

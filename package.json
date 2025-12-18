@@ -10,12 +10,13 @@
     "test:ui": "playwright test --ui",
     "test:critical": "playwright test critical-path",
     "test:report": "playwright show-report",
-    "serve": "python -m http.server 8000"
+    "serve": "http-server . -p 8000 -c-1"
   },
   "keywords": ["dnd", "monk", "character-sheet"],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@playwright/test": "^1.40.0"
+    "@playwright/test": "^1.40.0",
+    "http-server": "^14.1.1"
   }
 }
