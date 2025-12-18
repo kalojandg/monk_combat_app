@@ -1,0 +1,21 @@
+{
+  "name": "monk-combat-app",
+  "version": "3.0.0",
+  "description": "D&D Monk Character Sheet with automated testing",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
+    "test:critical": "playwright test critical-path",
+    "test:report": "playwright show-report",
+    "serve": "python -m http.server 8000"
+  },
+  "keywords": ["dnd", "monk", "character-sheet"],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  }
+}

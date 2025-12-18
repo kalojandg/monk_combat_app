@@ -1,0 +1,24 @@
+# Dependencies (НЕ commit - генерирани от npm install)
+node_modules/
+
+# Test Results (НЕ commit - генерирани от playwright)
+test-results/
+playwright-report/
+.playwright/
+
+# OS Files
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Editor/IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Logs
+*.log
+npm-debug.log*
+
+# Optional: Ако искаш shared VS Code settings, махни .vscode/ от тук
