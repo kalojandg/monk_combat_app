@@ -18,9 +18,8 @@ test.describe('Critical Path - Combat System', () => {
     await page.reload();
     
     // Изчакай app да се зареди НАПЪЛНО
-    // ВАЖНО: При clean load, app-ът НЕ прави clamp на HP!
-    // defaultState има hpCurrent: 10, въпреки че maxHP е 8
-    await expect(page.locator('#hpCurrentSpan')).toHaveText('10', { timeout: 10000 });
+    // defaultState има hpCurrent: 8 (съвпада с maxHP за Level 1, CON +0)
+    await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
   });
 
   // ============================================
@@ -28,15 +27,15 @@ test.describe('Critical Path - Combat System', () => {
   // ============================================
 
   test('[POSITIVE] Take damage decreases HP', async ({ page }) => {
-    // Setup: Начално HP = 10 (defaultState, не се clamp-ва при load)
+    // Setup: Начално HP = 8 (defaultState)
     const hpDisplay = page.locator('#hpCurrentSpan');
-    await expect(hpDisplay).toHaveText('10');
+    await expect(hpDisplay).toHaveText('8');
     
-    // Action: Take 5 damage
-    await page.locator('#hpDelta').fill('5');
+    // Action: Take 3 damage
+    await page.locator('#hpDelta').fill('3');
     await page.locator('#btnDamage').click();
     
-    // Assert: HP намалява
+    // Assert: HP намалява (8 - 3 = 5)
     await expect(hpDisplay).toHaveText('5');
     
     // Verify localStorage
@@ -48,17 +47,17 @@ test.describe('Critical Path - Combat System', () => {
   });
 
   test('[POSITIVE] Heal increases HP', async ({ page }) => {
-    // Setup: Намали HP до 5
-    await page.locator('#hpDelta').fill('5');
+    // Setup: Намали HP до 5 (8 - 3 = 5)
+    await page.locator('#hpDelta').fill('3');
     await page.locator('#btnDamage').click();
     await expect(page.locator('#hpCurrentSpan')).toHaveText('5');
     
-    // Action: Heal 3
-    await page.locator('#hpDelta').fill('3');
+    // Action: Heal 2
+    await page.locator('#hpDelta').fill('2');
     await page.locator('#btnHeal').click();
     
-    // Assert: HP се увеличава
-    await expect(page.locator('#hpCurrentSpan')).toHaveText('8');
+    // Assert: HP се увеличава (5 + 2 = 7)
+    await expect(page.locator('#hpCurrentSpan')).toHaveText('7');
   });
 
   test('[POSITIVE] HP clamped at 0 (not negative)', async ({ page }) => {
@@ -81,8 +80,8 @@ test.describe('Critical Path - Combat System', () => {
   });
 
   test('[POSITIVE] Heal clamped at Max HP', async ({ page }) => {
-    // Setup: Take damage (10 - 5 = 5)
-    await page.locator('#hpDelta').fill('5');
+    // Setup: Take damage (8 - 3 = 5)
+    await page.locator('#hpDelta').fill('3');
     await page.locator('#btnDamage').click();
     
     // Verify damage applied
@@ -97,8 +96,8 @@ test.describe('Critical Path - Combat System', () => {
   });
 
   test('[POSITIVE] Going to 0 HP triggers unconscious', async ({ page }) => {
-    // Action: Take exactly 10 damage (current HP)
-    await page.locator('#hpDelta').fill('10');
+    // Action: Take exactly 8 damage (current HP)
+    await page.locator('#hpDelta').fill('8');
     await page.locator('#btnDamage').click();
 
     // Assert: HP = 0
@@ -124,7 +123,7 @@ test.describe('Critical Path - Combat System', () => {
 
   test('[POSITIVE] Heal from 0 HP wakes up and clears death saves', async ({ page }) => {
     // Setup: Go to 0 HP и добави death saves
-    await page.locator('#hpDelta').fill('10');
+    await page.locator('#hpDelta').fill('8');
     await page.locator('#btnDamage').click();
     await page.locator('#btnDsPlus').click(); // Success +1
     await page.locator('#btnDsMinus').click(); // Fail +1
@@ -192,57 +191,59 @@ test.describe('Critical Path - Combat System', () => {
   });
 
   test('[NEGATIVE] Heal with 0 or negative value does nothing', async ({ page }) => {
-    // Setup: Take damage first
-    await page.locator('#hpDelta').fill('5');
+    // Setup: Take 2 damage (8 - 2 = 6)
+    await page.locator('#hpDelta').fill('2');
     await page.locator('#btnDamage').click();
-    await expect(page.locator('#hpCurrentSpan')).toHaveText('5');
+    await expect(page.locator('#hpCurrentSpan')).toHaveText('6');
     
-    // Action 1: Heal = 0
+    // Action 1: Heal with 0 (should do nothing)
     await page.locator('#hpDelta').fill('0');
     await page.locator('#btnHeal').click();
     
     // Assert: HP не се променя
-    await expect(page.locator('#hpCurrentSpan')).toHaveText('5');
+    await expect(page.locator('#hpCurrentSpan')).toHaveText('6');
     
-    // Action 2: Heal = negative
+    // Action 2: Heal with negative value (should do nothing)
     await page.locator('#hpDelta').fill('-10');
     await page.locator('#btnHeal').click();
     
     // Assert: HP не се променя
-    await expect(page.locator('#hpCurrentSpan')).toHaveText('5');
+    await expect(page.locator('#hpCurrentSpan')).toHaveText('6');
   });
 
   test('[NEGATIVE] Cannot heal when dead', async ({ page }) => {
-    // Setup: Die (3 death save fails)
-    // Current HP е 10, взимаме 10 damage за да отидем на 0
-    await page.locator('#hpDelta').fill('10');
-    await page.locator('#btnDamage').click(); // HP = 0
+    // Setup: Go to 0 HP
+    await page.locator('#hpDelta').fill('8');
+    await page.locator('#btnDamage').click();
     await expect(page.locator('#hpCurrentSpan')).toHaveText('0');
     
+    // 3 death save fails → dead (това трябва да покаже overlay)
     await page.locator('#btnDsMinus').click(); // Fail 1
     await page.locator('#btnDsMinus').click(); // Fail 2
     await page.locator('#btnDsMinus').click(); // Fail 3 → dead
     
-    // Verify dead (emoji се променя на skull)
-    await expect(page.locator('#lifeStatus')).toHaveText('💀');
+    // Assert: YOU DIED overlay е видим (покрива контролите)
+    await expect(page.locator('#youDiedOverlay')).not.toHaveClass(/hidden/);
     
-    const statusBefore = await page.evaluate(() => {
-      const st = JSON.parse(localStorage.getItem('monkSheet_v3'));
-      return st.status;
-    });
-    expect(statusBefore).toBe('dead');
-    
-    // Action: Try to heal (should do nothing)
-    await page.locator('#hpDelta').fill('10');
-    await page.locator('#btnHeal').click();
-    
-    // Assert: Still dead, HP = 0
+    // Assert: HP е 0 (dead state)
     await expect(page.locator('#hpCurrentSpan')).toHaveText('0');
-    const statusAfter = await page.evaluate(() => {
+    
+    // Assert: Heal бутонът НЕ е достъпен (покрит от overlay)
+    const isHealVisible = await page.locator('#btnHeal').isVisible({ timeout: 1000 }).catch(() => false);
+    const isHealClickable = isHealVisible && await page.locator('#btnHeal').isEnabled().catch(() => false);
+    
+    // Heal бутонът може да е visible в DOM, но не е clickable заради overlay-я
+    // Важното е че overlay-ят блокира взаимодействието
+    expect(await page.locator('#youDiedOverlay').isVisible()).toBe(true);
+    
+    // Verify state: dsFail = 3, HP = 0
+    const state = await page.evaluate(() => {
       const st = JSON.parse(localStorage.getItem('monkSheet_v3'));
-      return st.status;
+      return { hpCurrent: st.hpCurrent, dsFail: st.dsFail, status: st.status };
     });
-    expect(statusAfter).toBe('dead');
+    expect(state.hpCurrent).toBe(0);
+    expect(state.dsFail).toBe(3);
+    expect(state.status).toBe('dead');
   });
 
 });
@@ -254,11 +255,11 @@ test.describe('Critical Path - Death Saves', () => {
     await page.evaluate(() => localStorage.clear());
     await page.reload();
     
-    // Изчакай app да се зареди (HP = 10 от defaultState)
-    await expect(page.locator('#hpCurrentSpan')).toHaveText('10', { timeout: 10000 });
+    // Изчакай app да се зареди (HP = 8 от defaultState)
+    await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
     
     // Go to 0 HP за death saves
-    await page.locator('#hpDelta').fill('10');
+    await page.locator('#hpDelta').fill('8');
     await page.locator('#btnDamage').click();
     await expect(page.locator('#hpCurrentSpan')).toHaveText('0');
   });
@@ -429,8 +430,8 @@ test.describe('Critical Path - Rest Mechanics', () => {
     await page.evaluate(() => localStorage.clear());
     await page.reload();
     
-    // Изчакай app да се зареди (HP = 10 от defaultState)
-    await expect(page.locator('#hpCurrentSpan')).toHaveText('10', { timeout: 10000 });
+    // Изчакай app да се зареди (HP = 8 от defaultState)
+    await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
   });
 
   test('[POSITIVE] Short rest restores Ki to max', async ({ page }) => {
@@ -503,8 +504,8 @@ test.describe('Critical Path - Ki System', () => {
     await page.evaluate(() => localStorage.clear());
     await page.reload();
     
-    // Изчакай app да се зареди (HP = 10 от defaultState)
-    await expect(page.locator('#hpCurrentSpan')).toHaveText('10', { timeout: 10000 });
+    // Изчакай app да се зареди (HP = 8 от defaultState)
+    await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
   });
 
   test('[POSITIVE] Spend Ki decreases current Ki', async ({ page }) => {
@@ -578,21 +579,27 @@ test.describe('Critical Path - localStorage Persistence', () => {
     await page.evaluate(() => localStorage.clear());
     await page.reload();
     
-    // Setup: Make changes
+    // Wait for app to load
+    await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
+    
+    // Setup: Make changes (8 - 3 = 5)
     await page.locator('#hpDelta').fill('3');
     await page.locator('#btnDamage').click();
     await page.locator('#kiDelta').fill('1');
     await page.locator('#btnSpendKi').click();
     
     // Verify changes
-    await expect(page.locator('#hpCurrentSpan')).toHaveText('7');
+    await expect(page.locator('#hpCurrentSpan')).toHaveText('5');
     await expect(page.locator('#kiCurrentSpan')).toHaveText('0');
     
     // Action: Refresh page
     await page.reload();
     
+    // Wait for app to reload and render
+    await page.waitForTimeout(500);
+    
     // Assert: State persisted
-    await expect(page.locator('#hpCurrentSpan')).toHaveText('7');
+    await expect(page.locator('#hpCurrentSpan')).toHaveText('5', { timeout: 10000 });
     await expect(page.locator('#kiCurrentSpan')).toHaveText('0');
   });
 

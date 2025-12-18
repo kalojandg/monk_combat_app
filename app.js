@@ -69,7 +69,7 @@ const defaultState = {
   flaw: "",
 
   inventory: [],
-  hpCurrent: 10,
+  hpCurrent: 8,
   hpHomebrew: null,      // добавка към формулната Max HP (може отрицателна)
   kiCurrent: 1,
   dsSuccess: 0, dsFail: 0, status: "alive",
