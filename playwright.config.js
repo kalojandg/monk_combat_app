@@ -19,7 +19,8 @@ export default defineConfig({
   // Reporter - подробен output в конзолата
   reporter: [
     ['line'], // По-компактен: само една линия per test
-    ['html', { open: 'never' }] // HTML report (виж с: npm run test:report)
+    ['html', { open: 'never' }], // HTML report (виж с: npm run test:report)
+    ['json', { outputFile: 'test-results/results.json' }] // JSON за автоматично четене
   ],
   
   use: {
