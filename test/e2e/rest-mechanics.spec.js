@@ -85,7 +85,17 @@ test.describe('Rest Mechanics - Level Progression (1-20)', () => {
       await page.reload();
       await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
       
-      // Set XP for this level
+      // Set XP for this level.
+      //
+      // ВАЖНО: В момента апът вдига level веднага при промяна на XP
+      // (чрез derived() в xpInput listener-а), а Long Rest само прилага
+      // ефектите на новото ниво (Ki, Max HP, Hit Dice и т.н.).
+      //
+      // По правилата на кампанията level up трябва да се случва ПРИ
+      // дългата почивка, а не веднага при въвеждане на XP – това е
+      // известен бъг/дълг и ще се променя на по-късен етап. Тестът тук
+      // отразява текущото имплементирано поведение, за да имаме
+      // стабилен regression suite до бъдещия refactor.
       const xp = XP_FOR_LEVEL[level];
       await page.locator('button[data-tab="stats"]').click();
       await page.locator('#xpInput').fill(xp.toString());
