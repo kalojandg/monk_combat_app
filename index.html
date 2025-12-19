@@ -2,84 +2,71 @@
 <html lang="bg">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Monk Sheet Lite — v3</title>
-  <link rel="manifest" href="manifest.json" />
-  <link rel="icon" href="icons/icon-192.png" />
-  <link rel="apple-touch-icon" href="icons/icon-192.png" />
-  <meta name="theme-color" content="#0b0c12" />
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monk Combat App</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.json">
 </head>
 
 <body>
-  <div class="wrap">
+  <div id="app">
+    <!-- Header -->
     <div class="header">
-      <div class="title">Monk Sheet Deluxe Ultra Pro Max+</div>
+      <div class="header-left">
+        <h1>Monk Combat App</h1>
+      </div>
       <div class="spacer"></div>
       <div id="lifeStatus" class="status-emoji">🙂</div>
-      <div class="controls mt8">
-        <button id="btnShortRest">Short rest</button>
-        <button id="btnLongRest" class="primary">Long rest</button>
+      <div class="header-right">
+        <button id="btnShortRest">Short Rest</button>
+        <button id="btnLongRest" class="primary">Long Rest</button>
         <button id="btnExport">Export</button>
-        <label class="tab-btn" for="importFile" style="cursor:pointer">Import</label>
-        <input id="importFile" type="file" accept="application/json" style="display:none" />
-        <!-- <button id="btnReset" class="danger">Reset</button> -->
-        <button id="btnCloudLink" class="pill">Cloud</button>
-        <button id="btnCloudPull" class="pill ghost">Pull</button>
+        <input type="file" id="importFile" accept="application/json,.json" style="display:none">
+        <button id="btnImport">Import</button>
+        <!-- <button id="btnCloudLink">Link Cloud</button>
+        <button id="btnCloudPull">Pull</button>
         <span id="cloudDot" class="dot" title="Not linked"></span>
+        <small id="cloudStatus">Cloud: not linked</small> -->
       </div>
     </div>
 
-    <div>
+    <!-- Combat Section (Always Visible - Not a Tab) -->
+    <div id="tab-combat" class="combat-section">
       <div class="pillbar">
-        <div class="pill">HP&nbsp;<span class="big" id="hpCurrentSpan">10</span>/<span class="big"
-            id="hpMaxSpan">10</span></div>
-        <div class="pill">Ki&nbsp;<span class="big" id="kiCurrentSpan">1</span>/<span class="big"
-            id="kiMaxSpan2">1</span></div>
+        <div class="pill">HP&nbsp;<span class="big" id="hpCurrentSpan">8</span>/<span class="big" id="hpMaxSpan">10</span></div>
+        <div class="pill">Ki&nbsp;<span class="big" id="kiCurrentSpan">1</span>/<span class="big" id="kiMaxSpan2">1</span></div>
         <div class="pill">AC&nbsp;<span class="big" id="acSpan">10</span></div>
         <div class="pill">Prof&nbsp;<span class="big" id="profSpan">+2</span></div>
       </div>
 
       <div class="pillbar">
-        <div class="pill">Melee Atk&nbsp;<span class="big" id="meleeAtkSpan">+0</span></div>
-        <div class="pill">Ranged Atk&nbsp;<span class="big" id="rangedAtkSpan">+0</span></div>
+        <div class="pill">Melee Atk&nbsp;<span class="big" id="meleeAtkSpan">+2</span></div>
+        <div class="pill">Ranged Atk&nbsp;<span class="big" id="rangedAtkSpan">+2</span></div>
       </div>
+
       <div class="controls">
-        <label>HP Δ <input id="hpDelta" type="number" class="small"></label>
+        <label>HP Δ <input id="hpDelta" type="number" step="1" value="1" class="small"></label>
         <button id="btnDamage" class="danger">Take damage</button>
         <button id="btnHeal" class="success">Heal</button>
         <button id="btnHitAtZero">Hit at 0 ⇒ DS fail</button>
         <button id="btnHealFromZero" class="success">Heal from 0</button>
       </div>
 
-      <div class="controls mt8">
-        <label>Ki Δ <input id="kiDelta" type="number" class="small"></label>
+      <div class="controls mt-8">
+        <label>Ki Δ <input id="kiDelta" type="number" step="1" value="1" class="small"></label>
         <button id="btnSpendKi">Spend Ki</button>
         <button id="btnGainKi" class="success">Gain Ki</button>
       </div>
 
-      <div class="controls mt8">
-        <button id="btnDsPlus">Death Save +</button>
+      <div class="controls mt-8">
+        <button id="btnDsPlus" class="success">Death Save +</button>
         <button id="btnDsMinus" class="danger">Death Save –</button>
         <button id="btnCrit" class="success">Crit Success</button>
         <button id="btnCritFail" class="danger">Crit Fail (+2)</button>
         <button id="btnStabilize">Stabilize</button>
       </div>
-    </div>
-    <div class="tabs">
-      <!-- <button data-tab="combat">Combat</button> -->
-      <button class="tab-btn" data-tab="stats">Stats</button>
-      <button class="tab-btn" data-tab="pcchar">PC Characteristics</button>
-      <button class="tab-btn" data-tab="inventory">Inventory</button>
-      <button class="tab-btn" data-tab="shenanigans">Shenanigans</button>
-      <button class="tab-btn" data-tab="liners">One-Liners</button>
-      <button class="tab-btn" data-tab="excuses">Excuses</button>
-      <button class="tab-btn" data-tab="familiars">Familiar Names</button>
-      <button class="tab-btn" data-tab="skills">Skills</button>
-      <button data-tab="sessionNotes">Session Notes</button>
-      <button id="btnInstall" class="hidden" title="Install PWA">Install</button>
+
     </div>
 
     <div id="deathSavesUI" class="ds-wrap">
@@ -101,8 +88,21 @@
     <div id="youDiedOverlay" class="you-died hidden">
       <div class="you-died-card">
         <div class="you-died-title">YOU DIED</div>
-        <button id="btnResurrect" class="btn success">Resurrect (1 HP)</button>
+        <button id="btnResurrect" class="success">Resurrect (1 HP)</button>
       </div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="tab-nav">
+      <button class="tab-btn" data-tab="stats">Stats</button>
+      <button class="tab-btn" data-tab="pcchar">PC Characteristics</button>
+      <button class="tab-btn" data-tab="inventory">Inventory</button>
+      <button class="tab-btn" data-tab="shenanigans">Shenanigans</button>
+      <button class="tab-btn" data-tab="liners">One-Liners</button>
+      <button class="tab-btn" data-tab="excuses">Excuses</button>
+      <button class="tab-btn" data-tab="familiars">Familiars</button>
+      <button class="tab-btn" data-tab="skills">Skills</button>
+      <button class="tab-btn" data-tab="sessionNotes">Session Notes</button>
     </div>
 
     <!-- Stats tab -->
@@ -245,331 +245,35 @@
       <textarea id="notes" rows="4"
         style="width:100%;background:#101323;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px"></textarea>
     </div>
-    <div id="tab-pcchar" class="tab hidden">
-      <div class="section-title">Characteristics</div>
-
-      <!-- двуколонен layout за широк екран -->
-      <div class="pcchar-grid">
-        <section>
-          <div class="section-title">Languages</div>
-          <div class="controls" style="justify-content:flex-start;margin-bottom:10px">
-            <button id="btnLangAdd" class="primary">+ Add language</button>
-          </div>
-          <div id="langTableRoot"></div>
-        </section>
-
-        <section>
-          <div class="section-title">Tools</div>
-          <div class="controls" style="justify-content:flex-start;margin-bottom:10px">
-            <button id="btnToolAdd" class="primary">+ Add tool</button>
-          </div>
-          <div id="toolTableRoot"></div>
-        </section>
-      </div>
-
-      <div class="section-title" style="margin-top:14px">Personality</div>
-      <textarea id="pcPersonality" rows="4"
-        style="width:100%;background:#101323;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px"></textarea>
-
-      <div class="section-title">Bond</div>
-      <textarea id="pcBond" rows="4"
-        style="width:100%;background:#101323;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px"></textarea>
-
-      <div class="section-title">Flaw</div>
-      <textarea id="pcFlaw" rows="4"
-        style="width:100%;background:#101323;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px"></textarea>
-
-      <!-- споделен модал (използва стила на alias/inventory) -->
-      <div id="pcModal" class="modal hidden">
-        <div class="modal__card">
-          <div class="modal__title" id="pcModalTitle">Add</div>
-          <div class="field" style="margin-top:8px">
-            <label id="pcModalLabel">Name</label>
-            <input id="pcModalName" type="text" placeholder="Abyssal / Brewer's Supplies...">
-          </div>
-          <div class="modal__actions">
-            <button id="pcModalCancel">Отказ</button>
-            <button id="pcModalSave" class="primary">Запази</button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <div id="tab-pcchar" class="tab hidden"><!-- Loading... --></div>
 
     <!-- Inventory tab -->
-    <div id="tab-inventory" class="tab hidden">
-      <div class="section-title">Inventory</div>
-
-      <div class="controls" style="justify-content:center;margin-bottom:10px">
-        <button id="btnInvAdd" class="primary">+ Add item</button>
-      </div>
-
-      <div id="invTableRoot"></div>
-
-      <!-- Modal за Add/Edit (ползваме стила на modal) -->
-      <div id="invModal" class="modal hidden">
-        <div class="modal__card">
-          <div class="modal__title" id="invModalTitle">Add item</div>
-
-          <div class="row-grid" style="margin-top:8px">
-            <div class="field">
-              <label>Име</label>
-              <input id="invName" type="text" placeholder="Dart / Rope / Potion..." />
-            </div>
-            <div class="field">
-              <label>Количество</label>
-              <input id="invQty" type="number" step="1" min="0" value="1" />
-            </div>
-          </div>
-
-          <div class="field" style="margin-top:8px">
-            <label>Бележка</label>
-            <textarea id="invNote" rows="4"
-              style="width:100%;background:#101323;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px"></textarea>
-          </div>
-
-          <div class="modal__actions">
-            <button id="invCancel">Отказ</button>
-            <button id="invSave" class="primary">Запази</button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <div id="tab-inventory" class="tab hidden"><!-- Loading... --></div>
     <!-- Shenanigans tab -->
-    <div id="tab-shenanigans" class="tab hidden">
-      <div class="section-title">Shenanigans</div>
-
-      <!-- редът с поле + бутони -->
-      <div class="one-liner-box" style="margin-bottom: 12px;">
-        <input id="fakeNameOutput" type="text" readonly placeholder="(click Get Name)">
-        <button id="btnGetName">Get Name</button>
-        <button id="btnSaveAlias" disabled>Save</button> <!-- нов -->
-      </div>
-
-      <!-- таблица с алиаси -->
-      <div id="aliasLog"></div>
-
-      <!-- модален диалог -->
-      <div id="aliasModal" class="modal hidden">
-        <div class="modal__card">
-          <div class="modal__title">На кого си се представил така?</div>
-          <textarea id="aliasToInput" rows="5" placeholder="Име/описание на човека, ситуация, бележки..."></textarea>
-          <div class="modal__actions">
-            <button id="aliasCancel">Отказ</button>
-            <button id="aliasConfirm">Запази</button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <div id="tab-shenanigans" class="tab hidden"><!-- Loading... --></div>
 
     <!-- One-Liners tab -->
-    <div id="tab-liners" class="tab hidden">
-      <div class="section-title">One-Liners</div>
-
-      <div class="row-grid">
-        <!-- Crit Miss -->
-        <div class="field">
-          <label class="one-liner-header">Critical Miss</label>
-          <div class="one-liner-box">
-
-            <textarea id="olCritMiss" rows="10" readonly></textarea>
-            <button id="btnCritMiss">Get</button>
-          </div>
-        </div>
-
-        <!-- Miss attack -->
-        <div class="field">
-          <label class="one-liner-header">Miss attack</label>
-          <div class="one-liner-box">
-
-            <textarea id="olMissAttack" rows="10" readonly></textarea>
-            <button id="btnMissAttack">Get</button>
-          </div>
-        </div>
-
-        <!-- Crit Attack -->
-        <div class="field">
-          <label class="one-liner-header">Critical Attack</label>
-          <div class="one-liner-box">
-            <textarea id="olCritAttack" rows="10" readonly></textarea>
-            <button id="btnCritAttack">Get</button>
-          </div>
-        </div>
-
-        <!-- Suffer Critical Hit -->
-        <div class="field">
-          <label class="one-liner-header">Suffer Critical Hit</label>
-          <div class="one-liner-box">
-            <textarea id="olSufferCrit" rows="10" readonly></textarea>
-            <button id="btnSufferCrit">Get</button>
-          </div>
-        </div>
-
-        <!-- Combat Tease -->
-        <div class="field">
-          <label class="one-liner-header">Combat Tease</label>
-          <div class="one-liner-box">
-            <textarea id="olTease" rows="10" readonly></textarea>
-            <button id="btnTease">Get</button>
-          </div>
-        </div>
-
-        <!-- Magic -->
-        <div class="field">
-          <label class="one-liner-header">Magic</label>
-          <div class="one-liner-box">
-            <textarea id="olMagic" rows="10" readonly></textarea>
-            <button id="btnMagic">Get</button>
-          </div>
-        </div>
-
-        <!-- Q&A -->
-        <div class="field">
-          <label class="one-liner-header">Q&A</label>
-          <div class="one-liner-box">
-            <textarea id="olQA" rows="10" readonly></textarea>
-            <button id="btnQA">Get</button>
-          </div>
-        </div>
-
-        <!-- Social -->
-        <div class="field">
-          <label class="one-liner-header">Social</label>
-          <div class="one-liner-box">
-            <textarea id="olSocial" rows="10" readonly></textarea>
-            <button id="btnSocial">Get</button>
-          </div>
-        </div>
-
-        <!-- Coctail magic -->
-        <div class="field">
-          <label class="one-liner-header">Coctail magic</label>
-          <div class="one-liner-box">
-            <textarea id="olCoctailMagic" rows="10" readonly></textarea>
-            <button id="btnCoctailMagic">Get</button>
-          </div>
-        </div>
-      </div>
-
-      <small>Чете от <code>one-liners.json</code>.</small>
-    </div>
+    <div id="tab-liners" class="tab hidden"><!-- Loading... --></div>
 
     <!-- Excuses tab -->
-    <div id="tab-excuses" class="tab hidden">
-      <div class="section-title">Excuses</div>
-
-      <div class="row-grid">
-        <!-- Life wisdom -->
-        <div class="field">
-          <label class="one-liner-header">Life wisdom</label>
-          <div class="one-liner-box">
-            <textarea id="exLifeWisdom" rows="10" readonly></textarea>
-            <button id="btnExLifeWisdom">Get</button>
-          </div>
-        </div>
-
-        <!-- Game cheating -->
-        <div class="field">
-          <label class="one-liner-header">Game cheating</label>
-          <div class="one-liner-box">
-            <textarea id="exGameCheating" rows="10" readonly></textarea>
-            <button id="btnExGameCheating">Get</button>
-          </div>
-        </div>
-
-        <!-- Excuses -->
-        <div class="field">
-          <label class="one-liner-header">Excuses</label>
-          <div class="one-liner-box">
-            <textarea id="exExcuses" rows="10" readonly></textarea>
-            <button id="btnExExcuses">Get</button>
-          </div>
-        </div>
-
-        <!-- Storytime -->
-        <div class="field">
-          <label class="one-liner-header">Storytime</label>
-          <div class="one-liner-box">
-            <textarea id="exStorytime" rows="10" readonly></textarea>
-            <button id="btnExStorytime">Get</button>
-          </div>
-        </div>
-
-        <!-- Slip away -->
-        <div class="field">
-          <label class="one-liner-header">Slip away</label>
-          <div class="one-liner-box">
-            <textarea id="exSlipaway" rows="10" readonly></textarea>
-            <button id="btnExSlipaway">Get</button>
-          </div>
-        </div>
-      </div>
-
-      <small>Чете от <code>excuses.json</code>.</small>
-    </div>
+    <div id="tab-excuses" class="tab hidden"><!-- Loading... --></div>
 
     <!-- Familiar Names tab -->
-    <div id="tab-familiars" class="tab hidden">
-      <div class="section-title">Familiar Names</div>
+    <div id="tab-familiars" class="tab hidden"><!-- Loading... --></div>
 
-      <!-- ред: поле + бутони -->
-      <div class="one-liner-box" style="margin-bottom: 12px;">
-        <input id="famNameOutput" type="text" readonly placeholder="(click a group to roll a name)">
-        <button id="btnFamSave" disabled>Save</button>
-      </div>
+    <div id="tab-skills" class="tab hidden"><!-- Loading... --></div>
 
-      <!-- групови бутони -->
-      <div class="fam-groups">
-        <button class="fam-btn" data-famcat="feline">Feline</button>
-        <button class="fam-btn" data-famcat="canine">Canine</button>
-        <button class="fam-btn" data-famcat="avian">Avian</button>
-        <button class="fam-btn" data-famcat="rodentia">Rodentia</button>
-        <button class="fam-btn" data-famcat="creepycrawlies">Creepycrawlies</button>
-        <button class="fam-btn" data-famcat="aquatic">Aquatic</button>
-        <button class="fam-btn" data-famcat="arcane">Arcane</button>
-      </div>
-
-      <!-- таблица -->
-      <div id="famLog" class="mt8"></div>
-
-      <!-- модален диалог за бележка -->
-      <div id="famModal" class="modal hidden">
-        <div class="modal__card">
-          <div class="modal__title">На кого/какво е това име?</div>
-          <textarea id="famNoteInput" rows="5"
-            placeholder="напр. „ястребът на Майора“, 'паяк в шапката', 'вълкът на друида'…"></textarea>
-          <div class="modal__actions">
-            <button id="famCancel">Отказ</button>
-            <button id="famConfirm">Запази</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div id="tab-skills" class="tab hidden">
-      <div class="section-title">
-        Class Features (up to your level)
-        <button id="collapseAllBtn" class="btn-collapse">Collapse all</button>
-      </div>
-      <div id="featuresAccordion" class="acc-root"></div>
-    </div>
-
-    <div id="tab-sessionNotes" class="tab hidden">
-      <h2>Session Notes</h2>
-
-      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem;">
-        <button id="btnNotesLink" type="button">Link notes folder…</button>
-        <small id="notesStatus">Notes: not linked</small>
-      </div>
-
-      <textarea id="notesInput" rows="12" class="notes-box"></textarea>
-
-      <h3>📂 Преглед на стари записки</h3>
-      <input type="file" id="importNotesFile" accept="application/json,.json">
-      <textarea id="notesPreview" rows="12" class="notes-box" readonly></textarea>
-    </div>
+    <div id="tab-sessionNotes" class="tab hidden"><!-- Loading... --></div>
   </div>
 
 
+  <!-- Module scripts (load before app.js) -->
+  <script src="modules/aliases.js"></script>
+  <script src="modules/familiars.js"></script>
+  <script src="modules/one-liners.js"></script>
+  <script src="modules/excuses.js"></script>
+  <script src="modules/inventory.js"></script>
+  <script src="modules/pcchar.js"></script>
   <script src="app.js"></script>
 </body>
 

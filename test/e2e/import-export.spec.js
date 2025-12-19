@@ -20,7 +20,10 @@ test.describe('Import / Export - Bundle v2', () => {
     await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
+    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
+    await expect(page.locator('#hpDelta')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#kiDelta')).toBeVisible({ timeout: 5000 });
   });
 
   test('buildBundle() съдържа текущото UI състояние', async ({ page }) => {

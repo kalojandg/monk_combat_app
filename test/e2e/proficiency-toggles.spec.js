@@ -469,7 +469,7 @@ test.describe('Proficiency scaling with level', () => {
       // Връщаме се в Stats и проверяваме level + proficiency бонуса
       await page.locator('button[data-tab="stats"]').click();
       await expect(page.locator('#levelSpan')).toHaveText(level.toString());
-      await expect(page.locator('#profSpan')).toHaveText(expectedProf);
+      await expect(page.locator('#profSpan2')).toHaveText(expectedProf);
 
       // Включваме STR save proficiency (за да е мод = prof)
       await page.locator('#saveStrProf').check();

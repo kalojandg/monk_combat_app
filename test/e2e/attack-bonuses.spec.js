@@ -13,6 +13,8 @@ test.describe('Attack Bonuses - Calculations', () => {
     await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
+    // Wait for tabs to load
+    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
   });
 
@@ -95,7 +97,7 @@ test.describe('Attack Bonuses - Calculations', () => {
     
     // Verify level and prof
     await expect(page.locator('#levelSpan')).toHaveText('5');
-    await expect(page.locator('#profSpan')).toHaveText('+3');
+    await expect(page.locator('#profSpan2')).toHaveText('+3');
     
     // Attack bonuses should increase
     await expect(page.locator('#meleeAtkSpan')).toHaveText('+3');

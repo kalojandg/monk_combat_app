@@ -13,6 +13,8 @@ test.describe('Tabs - Basic Navigation', () => {
     await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
+    // Wait for tabs to load
+    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
   });
 
@@ -92,6 +94,8 @@ test.describe('Tabs - Content Smoke Check', () => {
     await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
+    // Wait for tabs to load
+    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
   });
 
@@ -162,6 +166,8 @@ test.describe('Tabs - Content Persistence', () => {
     await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
+    // Wait for tabs to load
+    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
   });
 

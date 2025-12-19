@@ -1,0 +1,137 @@
+<div class="section-title">Basics</div>
+<div class="row-grid">
+  <div class="field"><label>Име</label><input id="charName" type="text" placeholder="Пийс Ошит"></div>
+</div>
+
+<!-- Row 1 -->
+<div class="row-grid">
+  <div class="field"><label>XP</label><input id="xpInput" type="number" step="1"></div>
+  <div class="field"><label>Level</label><span class="value-pill" id="levelSpan">1</span></div>
+  <div class="field"><label>Proficiency</label><span class="value-pill" id="profSpan2">+2</span></div>
+  <div class="field"><label>Martial Arts Die</label><span class="value-pill" id="maDieSpan">d4</span></div>
+</div>
+
+<!-- Row 2 -->
+<div class="row-grid">
+  <div class="field"><label>Max HP</label><span class="value-pill" id="maxHpSpan">10</span></div>
+  <div class="field"><label>Homebrew HP</label><input type="number" id="homebrewHp" value="0"></div>
+  <div class="field"><label>Max Hit Dice</label><span class="value-pill" id="hdMaxSpan">1</span></div>
+  <div class="field"><label>Available Hit Dice</label><span class="value-pill" id="hdAvailSpan">1</span></div>
+</div>
+
+<!-- Row 3 -->
+<div class="row-grid">
+  <div class="field"><label>Max Ki</label><span class="value-pill" id="kiMaxSpan">1</span></div>
+  <div class="field"><label>AC (Unarmored)</label><span class="value-pill" id="acSpan2">10</span></div>
+  <div class="field"><label>Magic Item Bonus (AC)</label><input id="acMagicInput" type="number" step="1"></div>
+</div>
+
+<!-- Row 4 -->
+<div class="row-grid">
+  <div class="field">
+    <label>Melee Magic item Atk Bonus</label>
+    <input id="meleeMagicInput" type="number" step="1" value="0">
+  </div>
+  <div class="field">
+    <label>Ranged Magic item Atk Bonus</label>
+    <input id="rangedMagicInput" type="number" step="1" value="0">
+  </div>
+</div>
+
+<!-- Row 5 -->
+<div class="row-grid">
+  <div class="field"><label>Unarmored Movement (+ft)</label><span class="value-pill" id="umBonusSpan">0</span>
+  </div>
+  <div class="field"><label>Passive Perception</label><span class="value-pill" id="passPercSpan">10</span></div>
+  <div class="field"><label>Passive Investigation</label><span class="value-pill" id="passInvSpan">10</span></div>
+  <div class="field"><label>Passive Insight</label><span class="value-pill" id="passInsSpan">10</span></div>
+</div>
+
+<!-- All saves bonus -->
+<div class="row-grid">
+  <div class="field" style="max-width:240px"><label>All Saves Bonus</label><input id="saveAllBonusInput"
+      type="number" step="1" value="0"></div>
+</div>
+
+<!-- Abilities -->
+<div class="section-title">Abilities & Saves</div>
+<div class="abilities-grid">
+  <!-- STR -->
+  <div class="abil">
+    <div class="top"><strong>STR</strong><span class="spacer"></span><label class="small-note"><input
+          type="checkbox" id="saveStrProf"> Prof</label></div>
+    <div class="bottom">
+      <input id="strInput" type="number" step="1" class="small">
+      <span class="value-pill mod" id="strModSpan">+0</span>
+      <span class="value-pill save" id="saveStrTotalSpan">+0</span>
+    </div>
+  </div>
+  <!-- DEX -->
+  <div class="abil">
+    <div class="top"><strong>DEX</strong><span class="spacer"></span><label class="small-note"><input
+          type="checkbox" id="saveDexProf"> Prof</label></div>
+    <div class="bottom">
+      <input id="dexInput" type="number" step="1" class="small">
+      <span class="value-pill mod" id="dexModSpan">+0</span>
+      <span class="value-pill save" id="saveDexTotalSpan">+0</span>
+    </div>
+  </div>
+  <!-- CON -->
+  <div class="abil">
+    <div class="top"><strong>CON</strong><span class="spacer"></span><label class="small-note"><input
+          type="checkbox" id="saveConProf"> Prof</label><label class="small-note" style="margin-left:10px"><input
+          type="checkbox" id="toughChk"> Tough</label></div>
+    <div class="bottom">
+      <input id="conInput" type="number" step="1" class="small">
+      <span class="value-pill mod" id="conModSpan">+0</span>
+      <span class="value-pill save" id="saveConTotalSpan">+0</span>
+    </div>
+  </div>
+  <!-- INT -->
+  <div class="abil">
+    <div class="top"><strong>INT</strong><span class="spacer"></span><label class="small-note"><input
+          type="checkbox" id="saveIntProf"> Prof</label></div>
+    <div class="bottom">
+      <input id="intInput" type="number" step="1" class="small">
+      <span class="value-pill mod" id="intModSpan">+0</span>
+      <span class="value-pill save" id="saveIntTotalSpan">+0</span>
+    </div>
+  </div>
+  <!-- WIS -->
+  <div class="abil">
+    <div class="top"><strong>WIS</strong><span class="spacer"></span><label class="small-note"><input
+          type="checkbox" id="saveWisProf"> Prof</label></div>
+    <div class="bottom">
+      <input id="wisInput" type="number" step="1" class="small">
+      <span class="value-pill mod" id="wisModSpan">+0</span>
+      <span class="value-pill save" id="saveWisTotalSpan">+0</span>
+    </div>
+  </div>
+  <!-- CHA -->
+  <div class="abil">
+    <div class="top"><strong>CHA</strong><span class="spacer"></span><label class="small-note"><input
+          type="checkbox" id="saveChaProf"> Prof</label></div>
+    <div class="bottom">
+      <input id="chaInput" type="number" step="1" class="small">
+      <span class="value-pill mod" id="chaModSpan">+0</span>
+      <span class="value-pill save" id="saveChaTotalSpan">+0</span>
+    </div>
+  </div>
+</div>
+
+<div class="section-title">Skills</div>
+<table>
+  <thead>
+    <tr>
+      <th>Skill</th>
+      <th>Ability</th>
+      <th>Prof</th>
+      <th class="right">Bonus</th>
+    </tr>
+  </thead>
+  <tbody id="skillsBody"></tbody>
+</table>
+
+<div class="section-title">Бележки</div>
+<textarea id="notes" rows="4"
+  style="width:100%;background:#101323;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:8px"></textarea>

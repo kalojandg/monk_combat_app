@@ -1,3 +1,43 @@
+// ===== Tab Loading (Dynamic HTML Fragments) =====
+// Зарежда HTML табове от отделни файлове
+async function loadTabs() {
+  const tabMap = {
+    'pcchar': 'tabs/pcchar.html',
+    'inventory': 'tabs/inventory.html',
+    'shenanigans': 'tabs/shenanigans.html',
+    'liners': 'tabs/liners.html',
+    'excuses': 'tabs/excuses.html',
+    'familiars': 'tabs/familiars.html',
+    'skills': 'tabs/skills.html',
+    'sessionNotes': 'tabs/sessionNotes.html'
+  };
+
+  const loadPromises = Object.entries(tabMap).map(async ([tabId, url]) => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        console.error(`Failed to load ${url}: ${response.statusText}`);
+        return;
+      }
+      const html = await response.text();
+      if (!html || html.trim() === '') {
+        console.error(`Empty content for ${url}`);
+        return;
+      }
+      const tabEl = document.getElementById(`tab-${tabId}`);
+      if (!tabEl) {
+        console.error(`Tab element not found: tab-${tabId}`);
+        return;
+      }
+      tabEl.innerHTML = html;
+    } catch (error) {
+      console.error(`Error loading tab ${tabId} from ${url}:`, error);
+    }
+  });
+
+  await Promise.all(loadPromises);
+}
+
 // ===== Helpers =====
 const el = id => document.getElementById(id);
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
@@ -93,6 +133,8 @@ function stripTransientState(s) {
 
 // ===== Load/save =====
 let st = load();
+// Export st to global scope for modules
+window.st = st;
 function load() {
   try {
     const raw = localStorage.getItem("monkSheet_v3");
@@ -116,11 +158,13 @@ function load() {
 function save() {
   localStorage.setItem("monkSheet_v3", JSON.stringify(st));
   renderAll();
-  renderAliasTable?.();      // ← безопасно, ще се изпълни ако функцията съществува
-  renderFamTable?.();
+  window.renderAliasTable?.();      // ← безопасно, ще се изпълни ако функцията съществува
+  window.renderFamTable?.();
 
   cloudSchedule();           // ← остава си
 }
+// Export save to global scope for modules
+window.save = save;
 
 
 // ===== Derived =====
@@ -246,13 +290,14 @@ document.addEventListener("click", (e) => {
 
   // hide/show tabs
   document.querySelectorAll(".tab").forEach(p => p.classList.add("hidden"));
-  console.log(tab);
   const pane = document.querySelector(`#tab-${tab}`) || document.querySelector(`#${tab}`);
   if (pane) pane.classList.remove("hidden");
 });
 
 // ===== Rendering =====
 function renderAll() {
+  // Update global st reference (in case it was reassigned)
+  window.st = st;
   const d = derived();
 
   // Emoji
@@ -337,12 +382,12 @@ function renderAll() {
   el("pcFlaw") && (el("pcFlaw").value = st.flaw || "");
 
   // tables
-  renderLangTable();
-  renderToolTable();
+  window.renderLangTable?.();
+  window.renderToolTable?.();
 
   renderSkills(d.mods, d.prof);
   renderDeathSaves();
-  renderInventoryTable();
+  window.renderInventoryTable?.();
   // renderFeaturesAccordion(d.level);
 }
 
@@ -550,13 +595,21 @@ function getBundle() {
   return {
     schema: "monkSheetBundle/v1",
     state: sanitizeStateForExport(st), // inventory си остава вътре – ОК е
-    aliases: loadAliases()             // само тук, извън state
+    aliases: Array.isArray(st.aliases) ? st.aliases : []  // само тук, извън state
   };
 }
 
 function readBundleOrState(x) {
   const obj = typeof x === "string" ? JSON.parse(x) : x;
-  if (obj && typeof obj === "object" && obj.version === 2 && obj.state) return obj.state; // v2
+  if (obj && typeof obj === "object" && obj.version === 2 && obj.state) {
+    // For v2, return state but also preserve root-level aliases/familiars/sessionNotes if they exist
+    const state = { ...obj.state };
+    // If root-level arrays exist, prefer them over state-level (for backward compatibility)
+    if (Array.isArray(obj.aliases)) state.aliases = obj.aliases;
+    if (Array.isArray(obj.familiars)) state.familiars = obj.familiars;
+    if (obj.sessionNotes !== undefined) state.sessionNotes = obj.sessionNotes;
+    return state;
+  }
   return obj || {};  // legacy raw state
 }
 
@@ -567,8 +620,31 @@ function applyBundle(data) {
   if (Array.isArray(data?.aliases) && !Array.isArray(incoming.aliases)) incoming.aliases = data.aliases;
   if (Array.isArray(data?.familiars) && !Array.isArray(incoming.familiars)) incoming.familiars = data.familiars;
 
+  // За v2 bundle, ако aliases/familiars са в root на bundle, а не в state:
+  if (data && typeof data === 'object' && data.version === 2) {
+    if (Array.isArray(data.aliases) && !Array.isArray(incoming.aliases)) incoming.aliases = data.aliases;
+    if (Array.isArray(data.familiars) && !Array.isArray(incoming.familiars)) incoming.familiars = data.familiars;
+    if (data.sessionNotes !== undefined && incoming.sessionNotes === undefined) incoming.sessionNotes = data.sessionNotes;
+  }
+
   st = { ...defaultState, ...incoming };
+  
+  // Ensure arrays exist
+  if (!Array.isArray(st.aliases)) st.aliases = [];
+  if (!Array.isArray(st.familiars)) st.familiars = [];
+  if (!Array.isArray(st.languages)) st.languages = [];
+  if (!Array.isArray(st.tools)) st.tools = [];
+  if (!Array.isArray(st.inventory)) st.inventory = [];
+  
   save();
+  renderAll();
+  
+  // Update module-specific tables if they exist
+  if (typeof window.renderLangTable === 'function') window.renderLangTable();
+  if (typeof window.renderToolTable === 'function') window.renderToolTable();
+  if (typeof window.renderInventoryTable === 'function') window.renderInventoryTable();
+  if (typeof window.renderAliasTable === 'function') window.renderAliasTable();
+  if (typeof window.renderFamTable === 'function') window.renderFamTable();
 }
 
 // ---------- Inventory ----------
@@ -680,93 +756,7 @@ function attachInventory() {
   });
 }
 
-function attachPCChar() {
-  const addLang = document.getElementById('btnLangAdd');
-  const addTool = document.getElementById('btnToolAdd');
-
-  addLang && addLang.addEventListener('click', () => openPcModal('lang'));
-  addTool && addTool.addEventListener('click', () => openPcModal('tool'));
-
-  const tPers = document.getElementById('pcPersonality');
-  const tBond = document.getElementById('pcBond');
-  const tFlaw = document.getElementById('pcFlaw');
-
-  tPers && tPers.addEventListener('input', () => { st.personality = tPers.value; save(); });
-  tBond && tBond.addEventListener('input', () => { st.bond = tBond.value; save(); });
-  tFlaw && tFlaw.addEventListener('input', () => { st.flaw = tFlaw.value; save(); });
-}
-
-function renderLangTable() {
-  const root = document.getElementById('langTableRoot');
-  if (!root) return;
-  const list = Array.isArray(st.languages) ? st.languages : [];
-  if (!list.length) { root.innerHTML = '<small>Няма добавени езици още.</small>'; return; }
-
-  const rows = list.map((it, i) => {
-    const safe = s => String(s || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
-    return `<tr>
-      <td>${i + 1}</td>
-      <td>${safe(it.name)}</td>
-      <td style="white-space:nowrap;text-align:center">
-        <button class="icon-btn" data-lang-edit="${i}" title="Edit">✏️</button>
-        <button class="icon-btn" data-lang-del="${i}" title="Delete">🗑️</button>
-      </td>
-    </tr>`;
-  }).join('');
-
-  root.innerHTML = `
-  <table class="alias-table">
-    <thead><tr><th>#</th><th>Language</th><th></th></tr></thead>
-    <tbody>${rows}</tbody>
-  </table>`;
-
-  root.querySelectorAll('[data-lang-edit]').forEach(btn => {
-    btn.addEventListener('click', e => openPcModal('lang', parseInt(e.currentTarget.dataset.langEdit, 10)));
-  });
-  root.querySelectorAll('[data-lang-del]').forEach(btn => {
-    btn.addEventListener('click', e => {
-      const idx = parseInt(e.currentTarget.dataset.langDel, 10);
-      const ok = confirm('Изтриване на този език?'); if (!ok) return;
-      st.languages.splice(idx, 1); save();
-    });
-  });
-}
-
-function renderToolTable() {
-  const root = document.getElementById('toolTableRoot');
-  if (!root) return;
-  const list = Array.isArray(st.tools) ? st.tools : [];
-  if (!list.length) { root.innerHTML = '<small>Няма добавени инструменти още.</small>'; return; }
-
-  const rows = list.map((it, i) => {
-    const safe = s => String(s || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
-    return `<tr>
-      <td>${i + 1}</td>
-      <td>${safe(it.name)}</td>
-      <td style="white-space:nowrap;text-align:center">
-        <button class="icon-btn" data-tool-edit="${i}" title="Edit">✏️</button>
-        <button class="icon-btn" data-tool-del="${i}" title="Delete">🗑️</button>
-      </td>
-    </tr>`;
-  }).join('');
-
-  root.innerHTML = `
-  <table class="alias-table">
-    <thead><tr><th>#</th><th>Tool</th><th></th></tr></thead>
-    <tbody>${rows}</tbody>
-  </table>`;
-
-  root.querySelectorAll('[data-tool-edit]').forEach(btn => {
-    btn.addEventListener('click', e => openPcModal('tool', parseInt(e.currentTarget.dataset.toolEdit, 10)));
-  });
-  root.querySelectorAll('[data-tool-del]').forEach(btn => {
-    btn.addEventListener('click', e => {
-      const idx = parseInt(e.currentTarget.dataset.toolDel, 10);
-      const ok = confirm('Изтриване на този инструмент?'); if (!ok) return;
-      st.tools.splice(idx, 1); save();
-    });
-  });
-}
+// PC Characteristics functions moved to modules/pcchar.js
 
 // Export / Import / Reset
 // Export (bundle)
@@ -842,6 +832,10 @@ async function importBundleFromFile(file) {
 
   alert('Импортът мина успешно.');
 }
+
+el("btnImport")?.addEventListener("click", () => {
+  el("importFile")?.click();
+});
 
 el("importFile")?.addEventListener("change", (e) => {
   const file = e.target.files?.[0]; if (!file) return;
@@ -1048,11 +1042,18 @@ async function cloudWriteNow() {
 
 // ---- Bundle v2 (единственият формат) ----
 function buildBundle() {
+  // Ensure all arrays exist before bundling
+  const stateCopy = { ...st };
+  if (!Array.isArray(stateCopy.aliases)) stateCopy.aliases = [];
+  if (!Array.isArray(stateCopy.familiars)) stateCopy.familiars = [];
+  if (!Array.isArray(stateCopy.languages)) stateCopy.languages = [];
+  if (!Array.isArray(stateCopy.tools)) stateCopy.tools = [];
+  if (!Array.isArray(stateCopy.inventory)) stateCopy.inventory = [];
+  
   return {
     version: 2,
-    state: { ...st },   // всичко вътре
-    // ако искаме да пазим aliases/familiars извън state,
-    // добавяме ТУК, НО без да ги дублираме вътре
+    state: stateCopy,   // всичко вътре, включително aliases, familiars, languages, tools, inventory
+    sessionNotes: st.sessionNotes || ""  // sessionNotes се пази отделно
   };
 }
 
@@ -1089,8 +1090,7 @@ async function cloudPull() {
     if (data && data.state) next = { ...defaultState, ...data.state };
     else next = { ...defaultState, ...data };
 
-    if (Array.isArray(data?.aliases) && typeof saveAliases === 'function') saveAliases(data.aliases);
-    if (Array.isArray(data?.familiars) && typeof saveFamiliars === 'function') saveFamiliars(data.familiars);
+    // aliases и familiars вече са в st, няма нужда от отделни функции
 
     st = next;
     save();
@@ -1471,58 +1471,7 @@ document.getElementById('aliasModal')?.addEventListener('click', (e) => {
   }
 });
 
-let __pcModalType = null;     // 'lang' | 'tool'
-let __pcModalIndex = null;    // null => add, number => edit
-
-function openPcModal(type, index = null) {
-  __pcModalType = type;
-  __pcModalIndex = (typeof index === 'number') ? index : null;
-
-  const m = document.getElementById('pcModal');
-  const title = document.getElementById('pcModalTitle');
-  const label = document.getElementById('pcModalLabel');
-  const name = document.getElementById('pcModalName');
-
-  const isLang = type === 'lang';
-  title.textContent = (__pcModalIndex === null) ? (isLang ? 'Add language' : 'Add tool')
-    : (isLang ? 'Edit language' : 'Edit tool');
-  label.textContent = isLang ? 'Language' : 'Tool';
-
-  const list = isLang ? st.languages : st.tools;
-  name.value = (__pcModalIndex !== null && list[__pcModalIndex]) ? (list[__pcModalIndex].name || '') : '';
-
-  m.classList.remove('hidden');
-  name.focus();
-}
-
-function closePcModal() {
-  const m = document.getElementById('pcModal');
-  if (m) m.classList.add('hidden');
-  __pcModalType = null; __pcModalIndex = null;
-}
-
-(function attachPcModal() {
-  const cancel = document.getElementById('pcModalCancel');
-  const saveBtn = document.getElementById('pcModalSave');
-  const name = document.getElementById('pcModalName');
-
-  cancel && cancel.addEventListener('click', closePcModal);
-  saveBtn && saveBtn.addEventListener('click', () => {
-    if (!__pcModalType) return;
-    const val = (name.value || '').trim();
-    if (!val) { alert('Името е задължително.'); return; }
-
-    if (__pcModalType === 'lang') {
-      if (__pcModalIndex === null) st.languages.push({ name: val });
-      else st.languages[__pcModalIndex] = { name: val };
-    } else {
-      if (__pcModalIndex === null) st.tools.push({ name: val });
-      else st.tools[__pcModalIndex] = { name: val };
-    }
-    closePcModal();
-    save(); // ще извика renderAll()
-  });
-})();
+// PC Modal functions moved to modules/pcchar.js
 
 // attach
 function attachAliasLog() {
@@ -1632,16 +1581,26 @@ async function renderFeaturesAccordion(level) {
     }).join('');
 
     enhanceFeatureAccordions();
+    // Attach collapse button after accordion is rendered
+    attachCollapseBtn();
   } catch (e) {
     console.error(e);
     host.innerHTML = '<small style="color:#f66">Грешка при зареждане на features.</small>';
   }
 }
 
-document.getElementById('collapseAllBtn')?.addEventListener('click', () => {
-  document.querySelectorAll('#featuresAccordion details[open]')
-    .forEach(el => el.removeAttribute('open'));
-});
+// Attach collapse button handler - will be re-attached after tab loads
+function attachCollapseBtn() {
+  const btn = document.getElementById('collapseAllBtn');
+  if (!btn) return;
+  // Remove existing listeners by cloning
+  const newBtn = btn.cloneNode(true);
+  btn.replaceWith(newBtn);
+  newBtn.addEventListener('click', () => {
+    document.querySelectorAll('#featuresAccordion details[open]')
+      .forEach(el => el.removeAttribute('open'));
+  });
+}
 
 document.addEventListener("click", (e) => {
   const tabBtn = e.target.closest("[data-tab]");
@@ -1870,7 +1829,7 @@ el("btnCloudLink") && el("btnCloudLink").addEventListener("click", async () => {
   // ако има handle – релинк/смяна
   await cloudPick();
 });
-el("btnCloudPull") && el("btnCloudPull").addEventListener("click", async () => { await cloudPull(); });
+el("btnCloud") && el("btnCloudPull").addEventListener("click", async () => { await cloudPull(); });
 
 // ===== Service Worker (не регистрираме в localhost за dev) =====
 if ("serviceWorker" in navigator && location.hostname !== "localhost") {
@@ -1887,17 +1846,25 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
 });
 
 (function tabsInit() {
-  const btns = Array.from(document.querySelectorAll('.tabs [data-tab]'));
-  const panels = Array.from(document.querySelectorAll('.tab'));
+  const btns = Array.from(document.querySelectorAll('.tab-nav [data-tab]'));
+  // Only select actual tabs, not combat section
+  const panels = Array.from(document.querySelectorAll('.tab')).filter(p => p.id !== 'tab-combat');
 
   function showTab(tabKey) {
+    // Skip 'combat' - it's not a tab, it's always visible above tabs
+    if (tabKey === 'combat') return;
+    
     // 1) бутони
-    document.querySelectorAll('.tabs .tab-btn').forEach(b => {
+    document.querySelectorAll('.tab-nav .tab-btn').forEach(b => {
       b.classList.toggle('active', b.dataset.tab === tabKey);
     });
 
-    // 2) табове
-    document.querySelectorAll('.tab').forEach(t => t.classList.add('hidden'));
+    // 2) табове (скрий всички освен Combat, който е винаги видим)
+    document.querySelectorAll('.tab').forEach(t => {
+      if (t.id !== 'tab-combat') {
+        t.classList.add('hidden');
+      }
+    });
     const tabEl = document.getElementById(`tab-${tabKey}`);
     if (tabEl) tabEl.classList.remove('hidden');
 
@@ -1908,31 +1875,58 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
     }
 
     if (tabKey === 'skills') {
-      // ако имаш друго lazy тук – извикай го
+      // Lazy render features accordion
+      const d = derived();
+      if (!_featuresRendered || _featuresDirty) {
+        renderFeaturesAccordion(d.level);
+        _featuresRendered = true;
+        _featuresDirty = false;
+      }
+      // Attach collapse button after accordion is rendered
+      setTimeout(() => attachCollapseBtn(), 100);
     }
   }
 
 
-  // wire
-  btns.forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+  // wire (skip 'combat' - it's not a tab)
+  btns.forEach(b => {
+    if (b.dataset.tab !== 'combat') {
+      b.addEventListener('click', () => showTab(b.dataset.tab));
+    }
+  });
 
-  // първоначален таб (помни последния; fallback към първия бутон)
-  const initial = localStorage.getItem('activeTab') || (btns[0] && btns[0].dataset.tab);
-  if (initial) showTab(initial);
+  // Първоначален таб (помни последния; fallback към първия бутон)
+  // Combat не е таб - е винаги видим отгоре, не го включваме в таб логиката
+  const initial = localStorage.getItem('activeTab');
+  // Filter out 'combat' from buttons (it's not a tab)
+  const tabBtns = btns.filter(b => b.dataset.tab !== 'combat');
+  if (initial && initial !== 'combat') {
+    showTab(initial);
+  } else if (tabBtns.length > 0) {
+    // Fallback to first non-combat tab
+    showTab(tabBtns[0].dataset.tab);
+  }
 })();
 
 (function tabsInitToggleable() {
-  const btns = Array.from(document.querySelectorAll('.tabs [data-tab]'));
-  const panels = Array.from(document.querySelectorAll('.tab'));
+  const btns = Array.from(document.querySelectorAll('.tab-nav [data-tab]'));
+  // Only select actual tabs, not combat section
+  const panels = Array.from(document.querySelectorAll('.tab')).filter(p => p.id !== 'tab-combat');
   let activeName = null;
 
   function setActive(name) {
+    // Skip 'combat' - it's not a tab, it's always visible above tabs
+    if (name === 'combat') {
+      activeName = null;
+      return;
+    }
+    
     activeName = name;
 
-    // 1) скрий всички табове
+    // 1) скрий всички табове (Combat не е таб, не го докосваме)
     panels.forEach(p => p.classList.add('hidden'));
 
-    // 2) покажи избрания
+    // 2) покажи избрания (ако има такъв)
     if (name) {
       const panel = document.getElementById(`tab-${name}`);
       if (panel) panel.classList.remove('hidden');
@@ -1953,11 +1947,14 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
 
   btns.forEach(b => {
     b.setAttribute('type', 'button');
+    // Skip 'combat' button - it's not a tab
+    if (b.dataset.tab === 'combat') return;
     // поддържаме "collapse all" при повторно кликване
     b.addEventListener('click', () => setActive(activeName === b.dataset.tab ? null : b.dataset.tab));
   });
 
-  setActive(null); // старт без отворен таб (ако искаш определен — подай името му)
+  // Combat табът е винаги видим, не го скриваме
+  // setActive(null); // старт без отворен таб (ако искаш определен — подай името му)
 })();
 
 window.addEventListener('beforeunload', (e) => {
@@ -1969,6 +1966,9 @@ window.addEventListener('beforeunload', (e) => {
 
   // ==== Boot ====
   (async () => {
+    // Load tab HTML fragments first (before attaching event listeners)
+    await loadTabs();
+
     await cloudRestore();
 
     __notesFileCreatedThisRun = false;     // <-- гарантирано нов файл за тази сесия
@@ -1976,12 +1976,19 @@ window.addEventListener('beforeunload', (e) => {
     await notesEnsureNewFile();            // ако има папка → създай *нов* днешен файл
 
     renderAll();
-    attachShenanigans();
-    attachOneLiners();
-    attachExcuses();
-    attachFamiliars();
-    attachAliasLog();
-    attachInventory();
-    attachPCChar();
+    // Module functions are now loaded from separate files (modules/*.js)
+    if (typeof window.attachShenanigans === 'function') attachShenanigans();
+    if (typeof window.attachOneLiners === 'function') attachOneLiners();
+    if (typeof window.attachExcuses === 'function') attachExcuses();
+    if (typeof window.attachFamiliars === 'function') attachFamiliars();
+    if (typeof window.attachAliasLog === 'function') attachAliasLog();
+    if (typeof window.attachInventory === 'function') attachInventory();
+    if (typeof window.attachPCChar === 'function') attachPCChar();
+    
+    // Attach collapse button if skills tab is visible
+    attachCollapseBtn();
+    
+    // Signal that tabs are loaded (for tests)
+    window.__tabsLoaded = true;
   })();
 

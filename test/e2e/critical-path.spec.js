@@ -17,9 +17,13 @@ test.describe('Critical Path - Combat System', () => {
     await page.evaluate(() => localStorage.clear());
     await page.reload();
     
-    // Изчакай app да се зареди НАПЪЛНО
+    // Изчакай app да се зареди НАПЪЛНО (включително динамично заредените табове)
+    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
     // defaultState има hpCurrent: 8 (съвпада с maxHP за Level 1, CON +0)
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
+    // Wait for combat inputs to be visible (Combat tab is always visible)
+    await expect(page.locator('#hpDelta')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#kiDelta')).toBeVisible({ timeout: 5000 });
   });
 
   // ============================================
@@ -256,7 +260,9 @@ test.describe('Critical Path - Death Saves', () => {
     await page.reload();
     
     // Изчакай app да се зареди (HP = 8 от defaultState)
+    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
+    await expect(page.locator('#hpDelta')).toBeVisible({ timeout: 5000 });
     
     // Go to 0 HP за death saves
     await page.locator('#hpDelta').fill('8');
@@ -431,7 +437,10 @@ test.describe('Critical Path - Rest Mechanics', () => {
     await page.reload();
     
     // Изчакай app да се зареди (HP = 8 от defaultState)
+    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
+    await expect(page.locator('#hpDelta')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#kiDelta')).toBeVisible({ timeout: 5000 });
   });
 
   test('[POSITIVE] Short rest restores Ki to max', async ({ page }) => {
@@ -505,7 +514,10 @@ test.describe('Critical Path - Ki System', () => {
     await page.reload();
     
     // Изчакай app да се зареди (HP = 8 от defaultState)
+    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
+    await expect(page.locator('#hpDelta')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#kiDelta')).toBeVisible({ timeout: 5000 });
   });
 
   test('[POSITIVE] Spend Ki decreases current Ki', async ({ page }) => {

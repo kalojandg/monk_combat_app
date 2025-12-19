@@ -60,7 +60,10 @@ test.describe('Rest Mechanics - Long Rest Basic', () => {
     await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
+    // Wait for tabs to load
+    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
+    await expect(page.locator('#hpDelta')).toBeVisible({ timeout: 5000 });
     
     // Take damage
     await page.locator('#hpDelta').fill('5');
@@ -83,7 +86,9 @@ test.describe('Rest Mechanics - Level Progression (1-20)', () => {
       await page.goto('/');
       await page.evaluate(() => localStorage.clear());
       await page.reload();
+      await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
       await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
+      await expect(page.locator('#hpDelta')).toBeVisible({ timeout: 5000 });
       
       // Set XP for this level.
       //
@@ -121,7 +126,7 @@ test.describe('Rest Mechanics - Level Progression (1-20)', () => {
       const expected = EXPECTED_VALUES[level];
       
       // Proficiency Bonus
-      await expect(page.locator('#profSpan')).toHaveText(expected.prof);
+      await expect(page.locator('#profSpan2')).toHaveText(expected.prof);
       
       // Ki (current = max after long rest)
       await expect(page.locator('#kiMaxSpan')).toHaveText(expected.ki);

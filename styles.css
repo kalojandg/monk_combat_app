@@ -40,7 +40,8 @@ a {
   text-decoration: none
 }
 
-.wrap {
+.wrap,
+#app {
   max-width: 1120px;
   margin: 0 auto;
   padding: 16px
@@ -50,7 +51,33 @@ a {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 12px
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.header-left,
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.header h1 {
+  font-weight: 700;
+  font-size: 18px;
+  margin: 0;
 }
 
 .title {
@@ -65,14 +92,16 @@ a {
 
 /* tabs */
 /* TAB STRIP */
-.tabs {
+.tabs,
+.tab-nav {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin: 14px 0;
 }
 
-.tabs button {
+.tabs button,
+.tab-nav .tab-btn {
   background: #1a2235;
   border: 1px solid #2f3b56;
   border-radius: 10px;
@@ -85,14 +114,16 @@ a {
 }
 
 /* hover: малко по-ярко и с фино сияние */
-.tabs button:hover {
+.tabs button:hover,
+.tab-nav .tab-btn:hover {
   background: #283550;
   border-color: #4a5b85;
   box-shadow: 0 0 0 2px rgba(90, 120, 200, .15) inset;
 }
 
 /* active: по-ясен контраст и „подчертаване“ с бордер-шейд */
-.tabs button.active {
+.tabs button.active,
+.tab-nav .tab-btn.active {
   background: #304069;
   border-color: #6d89c8;
   color: #fff;
@@ -100,12 +131,14 @@ a {
 }
 
 /* focus за клавиатура/таблет: видим, но не натрапчив */
-.tabs button:focus-visible {
+.tabs button:focus-visible,
+.tab-nav .tab-btn:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px #6d89c8, 0 0 0 4px rgba(80, 120, 200, .25);
 }
 
-.tabs button.active::after {
+.tabs button.active::after,
+.tab-nav .tab-btn.active::after {
   content: "▾";
   margin-left: .4rem;
   opacity: .8;
@@ -113,9 +146,29 @@ a {
 
 /* мобилно: по 2 в ред, ако станат много */
 @media (max-width: 480px) {
-  .tabs button {
+  .tabs button,
+  .tab-nav .tab-btn {
     flex: 1 1 46%;
     text-align: center;
+  }
+  
+  #app,
+  .wrap {
+    padding: 12px;
+  }
+  
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .header-right {
+    margin-left: 0;
+    width: 100%;
+  }
+  
+  .pillbar {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -126,6 +179,12 @@ a {
 /* явен default */
 .tab.hidden {
   display: none !important;
+}
+
+/* Combat section is always visible, not a tab */
+.combat-section {
+  /* Inherit tab styling but never gets hidden */
+  display: block;
 }
 
 /* по-специфично от .hidden само */
@@ -270,6 +329,28 @@ td.right {
 }
 
 /* подравняване на контролите в мрежа вместо „скачане“ */
+/* Utility classes for spacing */
+.mb-10 { margin-bottom: 10px; }
+.mb-12 { margin-bottom: 12px; }
+.mt-8 { margin-top: 8px; }
+.mt-14 { margin-top: 14px; }
+
+/* Flex utility classes */
+.flex-start { justify-content: flex-start; }
+.flex-center { justify-content: center; }
+.flex-align-center { align-items: center; }
+.gap-small { gap: .5rem; }
+
+/* Textarea styling - standard dark theme */
+textarea.dark-textarea {
+  width: 100%;
+  background: #101323;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px;
+}
+
 .controls {
   display: flex;
   flex-wrap: wrap;
