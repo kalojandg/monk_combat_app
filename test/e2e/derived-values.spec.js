@@ -130,6 +130,78 @@ test.describe('Derived Values - Ability Modifiers', () => {
     await expect(page.locator('#dexModSpan')).toHaveText('-5');
   });
 
+  test('All negative modifiers: -1 to -5', async ({ page }) => {
+    const negativeTests = [
+      { score: 9, expected: '-1' },   // 9 → -1
+      { score: 8, expected: '-1' },   // 8 → -1
+      { score: 7, expected: '-2' },   // 7 → -2
+      { score: 6, expected: '-2' },   // 6 → -2
+      { score: 5, expected: '-3' },   // 5 → -3
+      { score: 4, expected: '-3' },   // 4 → -3
+      { score: 3, expected: '-4' },   // 3 → -4
+      { score: 2, expected: '-4' },   // 2 → -4
+      { score: 1, expected: '-5' },   // 1 → -5
+    ];
+    
+    for (const { score, expected } of negativeTests) {
+      await page.locator('#strInput').fill(score.toString());
+      await page.locator('#strInput').blur();
+      await page.waitForTimeout(100);
+      await expect(page.locator('#strModSpan')).toHaveText(expected);
+    }
+  });
+
+  test('CASCADE: Negative modifier updates save in real-time', async ({ page }) => {
+    // Start with STR 10 (mod +0)
+    await page.locator('#strInput').fill('10');
+    await page.locator('#strInput').blur();
+    await page.waitForTimeout(100);
+    await expect(page.locator('#strModSpan')).toHaveText('+0');
+    await expect(page.locator('#saveStrTotalSpan')).toHaveText('+0');
+    
+    // Change to 8 (mod -1) - should update immediately
+    await page.locator('#strInput').fill('8');
+    await page.locator('#strInput').blur();
+    await page.waitForTimeout(100);
+    await expect(page.locator('#strModSpan')).toHaveText('-1');
+    await expect(page.locator('#saveStrTotalSpan')).toHaveText('-1');
+    
+    // Change to 6 (mod -2)
+    await page.locator('#strInput').fill('6');
+    await page.locator('#strInput').blur();
+    await page.waitForTimeout(100);
+    await expect(page.locator('#strModSpan')).toHaveText('-2');
+    await expect(page.locator('#saveStrTotalSpan')).toHaveText('-2');
+    
+    // Change to 3 (mod -4)
+    await page.locator('#strInput').fill('3');
+    await page.locator('#strInput').blur();
+    await page.waitForTimeout(100);
+    await expect(page.locator('#strModSpan')).toHaveText('-4');
+    await expect(page.locator('#saveStrTotalSpan')).toHaveText('-4');
+  });
+
+  test('CASCADE: Negative modifier with proficiency', async ({ page }) => {
+    // STR 8 (mod -1), enable proficiency
+    await page.locator('#strInput').fill('8');
+    await page.locator('#strInput').blur();
+    await page.waitForTimeout(100);
+    await expect(page.locator('#strModSpan')).toHaveText('-1');
+    await expect(page.locator('#saveStrTotalSpan')).toHaveText('-1');
+    
+    // Enable proficiency: -1 + 2 = +1
+    await page.locator('#saveStrProf').check();
+    await page.waitForTimeout(100);
+    await expect(page.locator('#saveStrTotalSpan')).toHaveText('+1');
+    
+    // Change to 6 (mod -2): -2 + 2 = +0
+    await page.locator('#strInput').fill('6');
+    await page.locator('#strInput').blur();
+    await page.waitForTimeout(100);
+    await expect(page.locator('#strModSpan')).toHaveText('-2');
+    await expect(page.locator('#saveStrTotalSpan')).toHaveText('+0');
+  });
+
   test('Odd vs Even ability scores', async ({ page }) => {
     // 10 and 11 both give +0
     await page.locator('#strInput').fill('10');
