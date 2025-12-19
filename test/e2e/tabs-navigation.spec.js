@@ -32,6 +32,11 @@ test.describe('Tabs - Basic Navigation', () => {
     // Verify PC Char content is visible (has languages, personality, etc)
     const tabContent = page.locator('#tab-pcchar');
     await expect(tabContent).toBeVisible();
+    await expect(page.locator('#btnLangAdd')).toBeVisible();
+    await expect(page.locator('#btnToolAdd')).toBeVisible();
+    await expect(page.locator('#pcPersonality')).toBeVisible();
+    await expect(page.locator('#pcBond')).toBeVisible();
+    await expect(page.locator('#pcFlaw')).toBeVisible();
   });
 
   test('Can click Inventory tab', async ({ page }) => {
@@ -41,6 +46,8 @@ test.describe('Tabs - Basic Navigation', () => {
     // Verify Inventory content is visible
     const tabContent = page.locator('#tab-inventory');
     await expect(tabContent).toBeVisible();
+    await expect(page.locator('#btnInvAdd')).toBeVisible();
+    await expect(page.locator('#invModal')).toBeVisible({ visible: false });
   });
 
   test('Can switch between tabs', async ({ page }) => {
@@ -66,7 +73,8 @@ test.describe('Tabs - Basic Navigation', () => {
       'liners',
       'excuses',
       'familiars',
-      'skills'
+      'skills',
+      'sessionNotes'
     ];
     
     for (const tabName of tabs) {
@@ -74,6 +82,76 @@ test.describe('Tabs - Basic Navigation', () => {
       // Just verify no crash, no need to check content
       await page.waitForTimeout(100);
     }
+  });
+
+});
+
+test.describe('Tabs - Content Smoke Check', () => {
+  
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
+  });
+
+  test('Shenanigans tab shows alias generator controls', async ({ page }) => {
+    await page.locator('button[data-tab="shenanigans"]').click();
+    await expect(page.locator('#tab-shenanigans')).toBeVisible();
+    await expect(page.locator('#fakeNameOutput')).toBeVisible();
+    await expect(page.locator('#btnGetName')).toBeVisible();
+    await expect(page.locator('#btnSaveAlias')).toBeVisible();
+    await expect(page.locator('#aliasLog')).toBeVisible();
+  });
+
+  test('One-Liners tab shows all one-liner categories', async ({ page }) => {
+    await page.locator('button[data-tab="liners"]').click();
+    await expect(page.locator('#tab-liners')).toBeVisible();
+    await expect(page.locator('#olCritMiss')).toBeVisible();
+    await expect(page.locator('#olMissAttack')).toBeVisible();
+    await expect(page.locator('#olCritAttack')).toBeVisible();
+    await expect(page.locator('#olSufferCrit')).toBeVisible();
+    await expect(page.locator('#olTease')).toBeVisible();
+    await expect(page.locator('#olMagic')).toBeVisible();
+    await expect(page.locator('#olQA')).toBeVisible();
+    await expect(page.locator('#olSocial')).toBeVisible();
+    await expect(page.locator('#olCoctailMagic')).toBeVisible();
+  });
+
+  test('Excuses tab shows all excuses categories', async ({ page }) => {
+    await page.locator('button[data-tab="excuses"]').click();
+    await expect(page.locator('#tab-excuses')).toBeVisible();
+    await expect(page.locator('#exLifeWisdom')).toBeVisible();
+    await expect(page.locator('#exGameCheating')).toBeVisible();
+    await expect(page.locator('#exExcuses')).toBeVisible();
+    await expect(page.locator('#exStorytime')).toBeVisible();
+    await expect(page.locator('#exSlipaway')).toBeVisible();
+  });
+
+  test('Familiars tab shows fam groups and log', async ({ page }) => {
+    await page.locator('button[data-tab="familiars"]').click();
+    await expect(page.locator('#tab-familiars')).toBeVisible();
+    await expect(page.locator('#famNameOutput')).toBeVisible();
+    await expect(page.locator('#btnFamSave')).toBeVisible();
+    await expect(page.locator('.fam-groups')).toBeVisible();
+    await expect(page.locator('.fam-btn').first()).toBeVisible();
+    await expect(page.locator('#famLog')).toBeVisible();
+  });
+
+  test('Skills tab shows features accordion root', async ({ page }) => {
+    await page.locator('button[data-tab="skills"]').click();
+    await expect(page.locator('#tab-skills')).toBeVisible();
+    await expect(page.locator('#featuresAccordion')).toBeVisible();
+  });
+
+  test('Session Notes tab shows linking controls and textareas', async ({ page }) => {
+    await page.locator('button[data-tab="sessionNotes"]').click();
+    await expect(page.locator('#tab-sessionNotes')).toBeVisible();
+    await expect(page.locator('#btnNotesLink')).toBeVisible();
+    await expect(page.locator('#notesStatus')).toBeVisible();
+    await expect(page.locator('#notesInput')).toBeVisible();
+    await expect(page.locator('#importNotesFile')).toBeVisible();
+    await expect(page.locator('#notesPreview')).toBeVisible();
   });
 
 });
