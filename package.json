@@ -10,7 +10,7 @@
     "test:ui": "playwright test --ui",
     "test:critical": "playwright test critical-path",
     "test:report": "playwright show-report",
-    "serve": "http-server . -p 8000 -c-1"
+    "serve": "http-server . -p 45278 -c-1"
   },
   "keywords": ["dnd", "monk", "character-sheet"],
   "author": "",

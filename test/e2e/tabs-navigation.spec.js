@@ -151,11 +151,8 @@ test.describe('Tabs - Content Smoke Check', () => {
   test('Session Notes tab shows linking controls and textareas', async ({ page }) => {
     await page.locator('button[data-tab="sessionNotes"]').click();
     await expect(page.locator('#tab-sessionNotes')).toBeVisible();
-    await expect(page.locator('#btnNotesLink')).toBeVisible();
-    await expect(page.locator('#notesStatus')).toBeVisible();
+    // Only notesInput is currently visible (other elements are commented out)
     await expect(page.locator('#notesInput')).toBeVisible();
-    await expect(page.locator('#importNotesFile')).toBeVisible();
-    await expect(page.locator('#notesPreview')).toBeVisible();
   });
 
 });
@@ -176,8 +173,14 @@ test.describe('Tabs - Content Persistence', () => {
     await page.locator('button[data-tab="stats"]').click();
     await page.locator('#xpInput').fill('900');
     await page.locator('#xpInput').blur();
+    await page.waitForTimeout(300);
     
-    // Verify level changed
+    // Level should still be 1 (level up happens on Long Rest)
+    await expect(page.locator('#levelSpan')).toHaveText('1');
+    
+    // Long rest to trigger level up to 3
+    await page.locator('#btnLongRest').click();
+    await page.locator('button[data-tab="stats"]').click();
     await expect(page.locator('#levelSpan')).toHaveText('3');
     
     // Switch to another tab
@@ -186,7 +189,7 @@ test.describe('Tabs - Content Persistence', () => {
     // Switch back to Stats
     await page.locator('button[data-tab="stats"]').click();
     
-    // Verify XP still there
+    // Verify XP still there and level persisted
     const xpValue = await page.locator('#xpInput').inputValue();
     expect(xpValue).toBe('900');
     await expect(page.locator('#levelSpan')).toHaveText('3');

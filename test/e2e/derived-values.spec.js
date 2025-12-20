@@ -36,15 +36,24 @@ test.describe('Derived Values - Interconnected Changes', () => {
 
   test('Level up changes: Prof, Ki, HD, MA die', async ({ page }) => {
     // Level 1 baseline
+    await page.locator('button[data-tab="stats"]').click();
     await expect(page.locator('#profSpan2')).toHaveText('+2');
     await expect(page.locator('#maDieSpan')).toHaveText('d4');
     await expect(page.locator('#kiMaxSpan')).toHaveText('1');
     
-    // Level to 5 (XP 6500)
+    // Set XP to 6500 (enough for level 5)
     await page.locator('#xpInput').fill('6500');
     await page.locator('#xpInput').blur();
+    await page.waitForTimeout(300);
     
-    // All should update
+    // Level should still be 1 (level up happens on Long Rest)
+    await expect(page.locator('#levelSpan')).toHaveText('1');
+    
+    // Long rest to trigger level up
+    await page.locator('#btnLongRest').click();
+    
+    // All should update after long rest
+    await page.locator('button[data-tab="stats"]').click();
     await expect(page.locator('#levelSpan')).toHaveText('5');
     await expect(page.locator('#profSpan2')).toHaveText('+3');
     await expect(page.locator('#maDieSpan')).toHaveText('d6');
@@ -272,9 +281,20 @@ test.describe('Derived Values - Save Throws', () => {
     // Level 1: Prof +2 → save +5
     await expect(page.locator('#saveDexTotalSpan')).toHaveText('+5');
     
-    // Level to 5: Prof +3 → save +6
+    // Set XP to 6500 (enough for level 5)
     await page.locator('#xpInput').fill('6500');
     await page.locator('#xpInput').blur();
+    await page.waitForTimeout(300);
+    
+    // Level should still be 1 (level up happens on Long Rest)
+    await expect(page.locator('#levelSpan')).toHaveText('1');
+    
+    // Long rest to trigger level up
+    await page.locator('#btnLongRest').click();
+    
+    // Level 5: Prof +3 → save +6
+    await page.locator('button[data-tab="stats"]').click();
+    await expect(page.locator('#levelSpan')).toHaveText('5');
     await expect(page.locator('#saveDexTotalSpan')).toHaveText('+6');
   });
 
@@ -378,14 +398,32 @@ test.describe('Derived Values - AC & Speed', () => {
     // Level 1: UM = 0
     await expect(page.locator('#umBonusSpan')).toHaveText('0');
     
-    // Level 2: UM = +10
+    // Set XP to 300 (enough for level 2)
     await page.locator('#xpInput').fill('300');
     await page.locator('#xpInput').blur();
+    await page.waitForTimeout(300);
+    
+    // Level should still be 1 (level up happens on Long Rest)
+    await expect(page.locator('#levelSpan')).toHaveText('1');
+    
+    // Long rest to trigger level up to 2
+    await page.locator('#btnLongRest').click();
+    await page.locator('button[data-tab="stats"]').click();
+    await expect(page.locator('#levelSpan')).toHaveText('2');
     await expect(page.locator('#umBonusSpan')).toHaveText('10');
     
-    // Level 6: UM = +15
+    // Set XP to 14000 (enough for level 6)
     await page.locator('#xpInput').fill('14000');
     await page.locator('#xpInput').blur();
+    await page.waitForTimeout(300);
+    
+    // Level should still be 2
+    await expect(page.locator('#levelSpan')).toHaveText('2');
+    
+    // Long rest to trigger level up to 6
+    await page.locator('#btnLongRest').click();
+    await page.locator('button[data-tab="stats"]').click();
+    await expect(page.locator('#levelSpan')).toHaveText('6');
     await expect(page.locator('#umBonusSpan')).toHaveText('15');
   });
 
@@ -402,9 +440,18 @@ test.describe('Derived Values - Complex HP Interactions', () => {
   });
 
   test('HP = Base + CON + Tough + Homebrew (all stacked)', async ({ page }) => {
-    // Level 5 for clarity
+    // Set XP to 6500 (enough for level 5)
     await page.locator('#xpInput').fill('6500');
     await page.locator('#xpInput').blur();
+    await page.waitForTimeout(300);
+    
+    // Level should still be 1 (level up happens on Long Rest)
+    await expect(page.locator('#levelSpan')).toHaveText('1');
+    
+    // Long rest to trigger level up to 5
+    await page.locator('#btnLongRest').click();
+    await page.locator('button[data-tab="stats"]').click();
+    await expect(page.locator('#levelSpan')).toHaveText('5');
     
     // CON 10 → Base HP (formula: 8 + 0 + 4*5 = 28)
     await expect(page.locator('#maxHpSpan')).toHaveText('28');
@@ -428,9 +475,20 @@ test.describe('Derived Values - Complex HP Interactions', () => {
   });
 
   test('CON change retroactively affects all levels', async ({ page }) => {
-    // Level 5, CON 10
+    // Set XP to 6500 (enough for level 5)
     await page.locator('#xpInput').fill('6500');
     await page.locator('#xpInput').blur();
+    await page.waitForTimeout(300);
+    
+    // Level should still be 1 (level up happens on Long Rest)
+    await expect(page.locator('#levelSpan')).toHaveText('1');
+    
+    // Long rest to trigger level up to 5
+    await page.locator('#btnLongRest').click();
+    await page.locator('button[data-tab="stats"]').click();
+    await expect(page.locator('#levelSpan')).toHaveText('5');
+    
+    // Level 5, CON 10
     const baseHP = parseInt(await page.locator('#maxHpSpan').textContent());
     
     // Change CON to 18 (mod +4)
@@ -606,9 +664,17 @@ test.describe('Derived Values - CASCADE: Level Up', () => {
   });
 
   test('Level 1→2: Prof stays +2, Ki=2, HD=2, UM=+10', async ({ page }) => {
-    // XP 300 → Level 2
+    // Set XP to 300 (enough for level 2)
     await page.locator('#xpInput').fill('300');
     await page.locator('#xpInput').blur();
+    await page.waitForTimeout(300);
+    
+    // Level should still be 1 (level up happens on Long Rest)
+    await expect(page.locator('#levelSpan')).toHaveText('1');
+    
+    // Long rest to trigger level up to 2
+    await page.locator('#btnLongRest').click();
+    await page.locator('button[data-tab="stats"]').click();
     
     await expect(page.locator('#levelSpan')).toHaveText('2');
     await expect(page.locator('#profSpan2')).toHaveText('+2');
@@ -618,9 +684,17 @@ test.describe('Derived Values - CASCADE: Level Up', () => {
   });
 
   test('Level 1→5: Prof→+3, Ki=5, HD=5, MA=d6, UM=+10', async ({ page }) => {
-    // XP 6500 → Level 5
+    // Set XP to 6500 (enough for level 5)
     await page.locator('#xpInput').fill('6500');
     await page.locator('#xpInput').blur();
+    await page.waitForTimeout(300);
+    
+    // Level should still be 1 (level up happens on Long Rest)
+    await expect(page.locator('#levelSpan')).toHaveText('1');
+    
+    // Long rest to trigger level up to 5
+    await page.locator('#btnLongRest').click();
+    await page.locator('button[data-tab="stats"]').click();
     
     await expect(page.locator('#levelSpan')).toHaveText('5');
     await expect(page.locator('#profSpan2')).toHaveText('+3');
@@ -631,9 +705,25 @@ test.describe('Derived Values - CASCADE: Level Up', () => {
   });
 
   test('Level 5→11: Prof→+4, Ki=11, HD=11, MA=d8, UM=+20', async ({ page }) => {
-    // XP 85000 → Level 11
+    // First, get to level 5
+    await page.locator('#xpInput').fill('6500');
+    await page.locator('#xpInput').blur();
+    await page.waitForTimeout(300);
+    await page.locator('#btnLongRest').click();
+    await page.locator('button[data-tab="stats"]').click();
+    await expect(page.locator('#levelSpan')).toHaveText('5');
+    
+    // Set XP to 85000 (enough for level 11)
     await page.locator('#xpInput').fill('85000');
     await page.locator('#xpInput').blur();
+    await page.waitForTimeout(300);
+    
+    // Level should still be 5 (level up happens on Long Rest)
+    await expect(page.locator('#levelSpan')).toHaveText('5');
+    
+    // Long rest to trigger level up to 11
+    await page.locator('#btnLongRest').click();
+    await page.locator('button[data-tab="stats"]').click();
     
     await expect(page.locator('#levelSpan')).toHaveText('11');
     await expect(page.locator('#profSpan2')).toHaveText('+4');
@@ -654,10 +744,20 @@ test.describe('Derived Values - CASCADE: Level Up', () => {
     // Melee: +3 mod +2 prof = +5
     await expect(page.locator('#meleeAtkSpan')).toHaveText('+5');
     
-    // Level to 5: Prof +3
+    // Set XP to 6500 (enough for level 5)
     await page.locator('#xpInput').fill('6500');
     await page.locator('#xpInput').blur();
+    await page.waitForTimeout(300);
     
+    // Level should still be 1 (level up happens on Long Rest)
+    await expect(page.locator('#levelSpan')).toHaveText('1');
+    
+    // Long rest to trigger level up to 5
+    await page.locator('#btnLongRest').click();
+    await page.locator('button[data-tab="stats"]').click();
+    await expect(page.locator('#levelSpan')).toHaveText('5');
+    
+    // Level 5: Prof +3
     // DEX save: +3 mod +3 prof = +6
     await expect(page.locator('#saveDexTotalSpan')).toHaveText('+6');
     // Melee: +3 mod +3 prof = +6
@@ -700,9 +800,20 @@ test.describe('Derived Values - CASCADE: Multiple Changes', () => {
     await page.locator('#conInput').blur();
     await expect(page.locator('#maxHpSpan')).toHaveText('11');
     
-    // Level 5 → HP increases (8 base + 4*5 avg + 5*3 con = 8+20+15 = 43)
+    // Set XP to 6500 (enough for level 5)
     await page.locator('#xpInput').fill('6500');
     await page.locator('#xpInput').blur();
+    await page.waitForTimeout(300);
+    
+    // Level should still be 1 (level up happens on Long Rest)
+    await expect(page.locator('#levelSpan')).toHaveText('1');
+    
+    // Long rest to trigger level up to 5
+    await page.locator('#btnLongRest').click();
+    await page.locator('button[data-tab="stats"]').click();
+    await expect(page.locator('#levelSpan')).toHaveText('5');
+    
+    // Level 5 → HP increases (8 base + 4*5 avg + 5*3 con = 8+20+15 = 43)
     const hpAfterLevel = parseInt(await page.locator('#maxHpSpan').textContent());
     expect(hpAfterLevel).toBeGreaterThan(11);
     
@@ -718,9 +829,20 @@ test.describe('Derived Values - CASCADE: Multiple Changes', () => {
     await page.locator('#dexInput').blur();
     await expect(page.locator('#meleeAtkSpan')).toHaveText('+4');
     
-    // Level 5: Prof +3 → +2 mod +3 prof = +5
+    // Set XP to 6500 (enough for level 5)
     await page.locator('#xpInput').fill('6500');
     await page.locator('#xpInput').blur();
+    await page.waitForTimeout(300);
+    
+    // Level should still be 1 (level up happens on Long Rest)
+    await expect(page.locator('#levelSpan')).toHaveText('1');
+    
+    // Long rest to trigger level up to 5
+    await page.locator('#btnLongRest').click();
+    await page.locator('button[data-tab="stats"]').click();
+    await expect(page.locator('#levelSpan')).toHaveText('5');
+    
+    // Level 5: Prof +3 → +2 mod +3 prof = +5
     await expect(page.locator('#meleeAtkSpan')).toHaveText('+5');
     
     // DEX 18 (mod +4): +4 mod +3 prof = +7
@@ -789,9 +911,17 @@ test.describe('Derived Values - Edge Cases & Boundaries', () => {
   });
 
   test('Level 20 (max)', async ({ page }) => {
-    // XP 355000 → Level 20
+    // Set XP to 355000 (enough for level 20)
     await page.locator('#xpInput').fill('355000');
     await page.locator('#xpInput').blur();
+    await page.waitForTimeout(300);
+    
+    // Level should still be 1 (level up happens on Long Rest)
+    await expect(page.locator('#levelSpan')).toHaveText('1');
+    
+    // Long rest to trigger level up to 20
+    await page.locator('#btnLongRest').click();
+    await page.locator('button[data-tab="stats"]').click();
     
     await expect(page.locator('#levelSpan')).toHaveText('20');
     await expect(page.locator('#profSpan2')).toHaveText('+6');

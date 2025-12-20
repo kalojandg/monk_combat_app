@@ -25,7 +25,7 @@ export default defineConfig({
   
   use: {
     // Base URL
-    baseURL: 'http://localhost:8000',
+    baseURL: 'http://localhost:45278',
     
     // Screenshot само при fail
     screenshot: 'only-on-failure',
@@ -44,7 +44,7 @@ export default defineConfig({
   // Web server (автоматично стартира за тестовете)
   webServer: {
     command: 'npm run serve',
-    port: 8000,
+    port: 45278,
     reuseExistingServer: true,
     timeout: 10000,
   },

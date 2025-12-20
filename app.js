@@ -95,6 +95,7 @@ const defaultState = {
   name: "Пийс Ошит",
   notes: "",
   xp: 0,
+  level: 1,  // Level is now stored in state, not calculated from XP
   meleeMagic: 0,
   rangedMagic: 0,
   str: 10, dex: 10, con: 10, int_: 10, wis: 10, cha: 10,
@@ -149,6 +150,11 @@ function load() {
       }
     } catch { }
 
+    // --- миграция: ако level не съществува, го инициализираме от XP (за стари данни)
+    if (typeof obj.level === 'undefined' || obj.level === null) {
+      obj.level = levelFromXP(obj.xp || 0);
+    }
+
     return obj;
   } catch {
     return { ...defaultState };
@@ -176,7 +182,8 @@ function levelFromXP(xp) {
   return lvl;
 }
 function derived() {
-  const level = levelFromXP(st.xp);
+  // Use st.level instead of calculating from XP (level up happens on Long Rest)
+  const level = st.level || 1;
   const mods = {
     str: modFrom(st.str), dex: modFrom(st.dex), con: modFrom(st.con), int_: modFrom(st.int_), wis: modFrom(st.wis), cha: modFrom(st.cha)
   };
@@ -563,6 +570,16 @@ el("btnShortRest") && el("btnShortRest").addEventListener("click", () => {
 
 // Long Rest
 el("btnLongRest") && el("btnLongRest").addEventListener("click", () => {
+  // Check if level should increase based on XP
+  const newLevel = levelFromXP(st.xp);
+  if (newLevel > st.level) {
+    st.level = newLevel;
+    // When level increases, add the difference to available hit dice
+    const oldHdMax = st.level - 1; // previous level's max HD
+    const newHdMax = st.level;     // new level's max HD
+    st.hdAvail = Math.min(newHdMax, st.hdAvail + (newHdMax - oldHdMax));
+  }
+  
   const d = derived();
   const recover = Math.ceil(d.hdMax / 2);
   st.hdAvail = Math.min(d.hdMax, st.hdAvail + recover);
@@ -635,6 +652,11 @@ function applyBundle(data) {
   if (!Array.isArray(st.languages)) st.languages = [];
   if (!Array.isArray(st.tools)) st.tools = [];
   if (!Array.isArray(st.inventory)) st.inventory = [];
+  
+  // Migrate: if level doesn't exist, initialize from XP (for old imports)
+  if (typeof st.level === 'undefined' || st.level === null) {
+    st.level = levelFromXP(st.xp || 0);
+  }
   
   save();
   renderAll();

@@ -90,38 +90,31 @@ test.describe('Rest Mechanics - Level Progression (1-20)', () => {
       await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
       await expect(page.locator('#hpDelta')).toBeVisible({ timeout: 5000 });
       
-      // Set XP for this level.
-      //
-      // ВАЖНО: В момента апът вдига level веднага при промяна на XP
-      // (чрез derived() в xpInput listener-а), а Long Rest само прилага
-      // ефектите на новото ниво (Ki, Max HP, Hit Dice и т.н.).
-      //
-      // По правилата на кампанията level up трябва да се случва ПРИ
-      // дългата почивка, а не веднага при въвеждане на XP – това е
-      // известен бъг/дълг и ще се променя на по-късен етап. Тестът тук
-      // отразява текущото имплементирано поведение, за да имаме
-      // стабилен regression suite до бъдещия refactor.
+      // Set XP for this level
       const xp = XP_FOR_LEVEL[level];
       await page.locator('button[data-tab="stats"]').click();
       await page.locator('#xpInput').fill(xp.toString());
       await page.locator('#xpInput').blur();
       
-      // Wait for derived values to update
+      // Wait for input to process
       await page.waitForTimeout(300);
       
-      // Verify level
-      await expect(page.locator('#levelSpan')).toHaveText(level.toString());
+      // Level should still be 1 (level up happens on Long Rest, not on XP change)
+      await expect(page.locator('#levelSpan')).toHaveText('1');
       
       // Take damage (so long rest has something to restore)
       // HP контролите са винаги видими - няма Combat таб
       await page.locator('#hpDelta').fill('1');
       await page.locator('#btnDamage').click();
       
-      // Long rest
+      // Long rest - this is when level up happens
       await page.locator('#btnLongRest').click();
       
-      // Verify all derived values after long rest
+      // Verify level increased after long rest
       await page.locator('button[data-tab="stats"]').click();
+      await expect(page.locator('#levelSpan')).toHaveText(level.toString());
+      
+      // Verify all derived values after long rest
       
       const expected = EXPECTED_VALUES[level];
       
@@ -142,5 +135,94 @@ test.describe('Rest Mechanics - Level Progression (1-20)', () => {
       await expect(page.locator('#hdMaxSpan')).toHaveText(expected.hd);
     });
   }
+
+});
+
+test.describe('Level Up Bug Fix - TDD Tests', () => {
+  
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
+    await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
+  });
+
+  test('XP change should NOT increase level immediately', async ({ page }) => {
+    // Start at level 1
+    await page.locator('button[data-tab="stats"]').click();
+    await expect(page.locator('#levelSpan')).toHaveText('1');
+    
+    // Set XP to 300 (enough for level 2)
+    await page.locator('#xpInput').fill('300');
+    await page.locator('#xpInput').blur();
+    await page.waitForTimeout(300);
+    
+    // Level should still be 1 (not 2)
+    await expect(page.locator('#levelSpan')).toHaveText('1');
+    
+    // Derived values should still be for level 1
+    await expect(page.locator('#profSpan2')).toHaveText('+2');
+    await expect(page.locator('#kiMaxSpan')).toHaveText('1');
+    await expect(page.locator('#maDieSpan')).toHaveText('d4');
+  });
+
+  test('Long Rest should increase level when XP threshold is reached', async ({ page }) => {
+    // Start at level 1
+    await page.locator('button[data-tab="stats"]').click();
+    await expect(page.locator('#levelSpan')).toHaveText('1');
+    
+    // Set XP to 300 (enough for level 2)
+    await page.locator('#xpInput').fill('300');
+    await page.locator('#xpInput').blur();
+    await page.waitForTimeout(300);
+    
+    // Level should still be 1
+    await expect(page.locator('#levelSpan')).toHaveText('1');
+    
+    // Long rest
+    await page.locator('#btnLongRest').click();
+    
+    // Level should now be 2
+    await page.locator('button[data-tab="stats"]').click();
+    await expect(page.locator('#levelSpan')).toHaveText('2');
+    
+    // Verify derived values updated for level 2
+    await expect(page.locator('#profSpan2')).toHaveText('+2');
+    await expect(page.locator('#kiMaxSpan')).toHaveText('2');
+    await expect(page.locator('#kiCurrentSpan')).toHaveText('2');
+    await expect(page.locator('#maDieSpan')).toHaveText('d4');
+    await expect(page.locator('#umBonusSpan')).toHaveText('10');
+    await expect(page.locator('#hdMaxSpan')).toHaveText('2');
+  });
+
+  test('Long Rest should handle multiple level ups correctly', async ({ page }) => {
+    // Start at level 1
+    await page.locator('button[data-tab="stats"]').click();
+    await expect(page.locator('#levelSpan')).toHaveText('1');
+    
+    // Set XP to 6500 (enough for level 5)
+    await page.locator('#xpInput').fill('6500');
+    await page.locator('#xpInput').blur();
+    await page.waitForTimeout(300);
+    
+    // Level should still be 1
+    await expect(page.locator('#levelSpan')).toHaveText('1');
+    
+    // Long rest
+    await page.locator('#btnLongRest').click();
+    
+    // Level should now be 5
+    await page.locator('button[data-tab="stats"]').click();
+    await expect(page.locator('#levelSpan')).toHaveText('5');
+    
+    // Verify derived values for level 5
+    await expect(page.locator('#profSpan2')).toHaveText('+3');
+    await expect(page.locator('#kiMaxSpan')).toHaveText('5');
+    await expect(page.locator('#kiCurrentSpan')).toHaveText('5');
+    await expect(page.locator('#maDieSpan')).toHaveText('d6');
+    await expect(page.locator('#umBonusSpan')).toHaveText('10');
+    await expect(page.locator('#hdMaxSpan')).toHaveText('5');
+  });
 
 });

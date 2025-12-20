@@ -90,12 +90,19 @@ test.describe('Attack Bonuses - Calculations', () => {
     // Open Stats tab
     await page.locator('button[data-tab="stats"]').click();
     
-    // Level up to 5 (Prof +3)
+    // Set XP to 6500 (enough for level 5)
     await page.locator('#xpInput').fill('6500');
     await page.locator('#xpInput').blur();
     await page.waitForTimeout(300);
     
-    // Verify level and prof
+    // Level should still be 1 (level up happens on Long Rest)
+    await expect(page.locator('#levelSpan')).toHaveText('1');
+    
+    // Long rest to trigger level up
+    await page.locator('#btnLongRest').click();
+    
+    // Verify level and prof after long rest
+    await page.locator('button[data-tab="stats"]').click();
     await expect(page.locator('#levelSpan')).toHaveText('5');
     await expect(page.locator('#profSpan2')).toHaveText('+3');
     

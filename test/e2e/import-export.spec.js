@@ -34,6 +34,16 @@ test.describe('Import / Export - Bundle v2', () => {
     await page.locator('#charName').fill('Тестов Монах');
     await page.locator('#xpInput').fill('6500'); // ниво 5
     await page.locator('#xpInput').blur();
+    await page.waitForTimeout(300);
+    
+    // Level should still be 1 (level up happens on Long Rest)
+    await expect(page.locator('#levelSpan')).toHaveText('1');
+    
+    // Long rest to trigger level up to 5
+    await page.locator('#btnLongRest').click();
+    await page.locator('button[data-tab="stats"]').click();
+    await expect(page.locator('#levelSpan')).toHaveText('5');
+    
     await page.locator('#dexInput').fill('16');
     await page.locator('#dexInput').blur();
 
@@ -99,8 +109,18 @@ test.describe('Import / Export - Bundle v2', () => {
     // Stats таб
     await page.locator('button[data-tab="stats"]').click();
     await page.locator('#charName').fill('Roundtrip Монах');
-    await page.locator('#xpInput').fill('9000'); // ниво 6
+    await page.locator('#xpInput').fill('14000'); // ниво 6 (9000 е за level 5)
     await page.locator('#xpInput').blur();
+    await page.waitForTimeout(300);
+    
+    // Level should still be 1 (level up happens on Long Rest)
+    await expect(page.locator('#levelSpan')).toHaveText('1');
+    
+    // Long rest to trigger level up to 6
+    await page.locator('#btnLongRest').click();
+    await page.locator('button[data-tab="stats"]').click();
+    await expect(page.locator('#levelSpan')).toHaveText('6');
+    
     await page.locator('#wisInput').fill('18');
     await page.locator('#wisInput').blur();
 
@@ -122,6 +142,12 @@ test.describe('Import / Export - Bundle v2', () => {
       }
       return null;
     });
+    
+    // Verify bundle contains level (should be 6 after Long Rest)
+    expect(bundle).toBeTruthy();
+    expect(bundle.state).toBeTruthy();
+    expect(bundle.state.level).toBe(6); // Level should be preserved in bundle
+    expect(bundle.state.xp).toBe(14000);
 
     // 3) "Забравяме" текущото състояние – чист localStorage и reload
     await page.evaluate(() => localStorage.clear());
@@ -139,20 +165,21 @@ test.describe('Import / Export - Bundle v2', () => {
       window.applyBundle(b);
     }, bundle);
 
-    // Изчакваме renderAll да мине
-    await page.waitForTimeout(300);
+    // Изчакваме renderAll да мине и tabs да се заредят
+    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
+    await page.waitForTimeout(500);
 
     // 5) Проверяваме, че UI е възстановен от bundle-а
 
     // Stats
     await page.locator('button[data-tab="stats"]').click();
     await expect(page.locator('#charName')).toHaveValue('Roundtrip Монах');
-    await expect(page.locator('#xpInput')).toHaveValue('9000');
+    await expect(page.locator('#xpInput')).toHaveValue('14000');
     await expect(page.locator('#wisInput')).toHaveValue('18');
 
-    // Ниво и Ki/HD трябва да съответстват на XP от bundle-а (вече се тестват подробно
-    // в rest-mechanics.spec.js), тук само проверяваме, че не са default.
-    await expect(page.locator('#levelSpan')).not.toHaveText('1');
+    // Ниво трябва да съответства на XP от bundle-а (level се пази в bundle-а след Long Rest)
+    // Bundle-а е генериран след Long Rest, така че level трябва да е 6
+    await expect(page.locator('#levelSpan')).toHaveText('6');
 
     // PC Characteristics
     await page.locator('button[data-tab="pcchar"]').click();
