@@ -11,7 +11,7 @@
   <div class="field"><label>Martial Arts Die</label><span class="value-pill" id="maDieSpan">d4</span></div>
 </div>
 
-<!-- Row 2 -->
+<!-- Row 2: Max HP, Homebrew HP, Max Hit Dice, Available Hit Dice -->
 <div class="row-grid">
   <div class="field"><label>Max HP</label><span class="value-pill" id="maxHpSpan">10</span></div>
   <div class="field"><label>Homebrew HP</label><input type="number" id="homebrewHp" value="0"></div>
@@ -19,14 +19,20 @@
   <div class="field"><label>Available Hit Dice</label><span class="value-pill" id="hdAvailSpan">1</span></div>
 </div>
 
-<!-- Row 3 -->
+<!-- Row 3: Max Ki, Ki Save DC, Magic Item Bonus (Ki Save DC) -->
 <div class="row-grid">
   <div class="field"><label>Max Ki</label><span class="value-pill" id="kiMaxSpan">1</span></div>
+  <div class="field"><label>Ki Save DC</label><span class="value-pill" id="kiSaveDcSpan2">10</span></div>
+  <div class="field"><label>Magic Item Bonus (Ki Save DC)</label><input id="kiSaveDcMagicInput" type="number" step="1"></div>
+</div>
+
+<!-- Row 4: AC (Unarmored), Magic Item Bonus (AC) -->
+<div class="row-grid">
   <div class="field"><label>AC (Unarmored)</label><span class="value-pill" id="acSpan2">10</span></div>
   <div class="field"><label>Magic Item Bonus (AC)</label><input id="acMagicInput" type="number" step="1"></div>
 </div>
 
-<!-- Row 4 -->
+<!-- Row 5: Attack Bonuses -->
 <div class="row-grid">
   <div class="field">
     <label>Unarmed Magic Item Attack Bonus</label>
@@ -42,7 +48,7 @@
   </div>
 </div>
 
-<!-- Row 5 -->
+<!-- Row 6 -->
 <div class="row-grid">
   <div class="field"><label>Unarmored Movement (+ft)</label><span class="value-pill" id="umBonusSpan">0</span>
   </div>
