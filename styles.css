@@ -170,6 +170,14 @@ a {
   .pillbar {
     grid-template-columns: 1fr;
   }
+  
+  .pillbar-main {
+    grid-template-columns: 1fr;
+  }
+  
+  .pillbar-main .pill {
+    grid-column: span 1 !important;
+  }
 }
 
 .tab {
@@ -311,6 +319,20 @@ td.right {
   gap: 14px;
   margin-bottom: 14px;
 }
+
+/* Main pillbar with 5 stats on one row using 12-column grid */
+.pillbar-main {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 10px;
+}
+
+/* Each pill takes 2-3 columns for even distribution: 2+2+3+2+3 = 12 */
+.pillbar-main .pill:nth-child(1) { grid-column: span 2; } /* HP: 2 columns */
+.pillbar-main .pill:nth-child(2) { grid-column: span 2; } /* Ki: 2 columns */
+.pillbar-main .pill:nth-child(3) { grid-column: span 3; } /* Ki Save DC: 3 columns (longer text) */
+.pillbar-main .pill:nth-child(4) { grid-column: span 2; } /* AC: 2 columns */
+.pillbar-main .pill:nth-child(5) { grid-column: span 3; } /* Prof: 3 columns */
 
 .pill {
   padding: 10px 12px;

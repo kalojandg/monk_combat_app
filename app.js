@@ -125,7 +125,8 @@ const defaultState = {
   acMagic: 0,
   baseSpeed: 30,
   tough: false,
-  hpAdjust: 0
+  hpAdjust: 0,
+  kiSaveDcMagic: 0
 };
 
 // --- bundle helpers ---
@@ -234,7 +235,10 @@ function derived() {
   const meleeWeaponAtk = mods.dex + prof + Number(st.meleeWeaponMagic || 0);  // Melee weapon attack
   const rangedAtk = mods.dex + prof + Number(st.rangedMagic || 0);
 
-  return { level, mods, prof, ma, kiMax, hdMax, maxHP, ac, um, totalSpeed, savesBase, savesTotal, meleeAtk, meleeWeaponAtk, rangedAtk };
+  // Ki Save DC = 8 + WIS mod + Prof + Magic bonus
+  const kiSaveDC = 8 + mods.wis + prof + Number(st.kiSaveDcMagic || 0);
+
+  return { level, mods, prof, ma, kiMax, hdMax, maxHP, ac, um, totalSpeed, savesBase, savesTotal, meleeAtk, meleeWeaponAtk, rangedAtk, kiSaveDC };
 }
 
 // ===== Skills =====
@@ -358,6 +362,7 @@ function renderAll() {
   el("kiMaxSpan2") && (el("kiMaxSpan2").textContent = d.kiMax);
   el("acSpan") && (el("acSpan").textContent = d.ac);
   el("profSpan") && (el("profSpan").textContent = `+${d.prof}`);
+  el("kiSaveDcSpan") && (el("kiSaveDcSpan").textContent = d.kiSaveDC);
 
   // Combat – attack pills
   el("meleeAtkSpan") && (el("meleeAtkSpan").textContent = (d.meleeAtk >= 0 ? "+" : "") + d.meleeAtk);
@@ -369,6 +374,7 @@ function renderAll() {
   el("unarmedMagicInput") && (el("unarmedMagicInput").value = st.unarmedMagic ?? 0);
   el("meleeWeaponMagicInput") && (el("meleeWeaponMagicInput").value = st.meleeWeaponMagic ?? 0);
   el("rangedMagicInput") && (el("rangedMagicInput").value = st.rangedMagic ?? 0);
+  el("kiSaveDcMagicInput") && (el("kiSaveDcMagicInput").value = st.kiSaveDcMagic ?? 0);
 
   // Basics (Stats)
   el("charName") && (el("charName").value = st.name || "");
@@ -383,6 +389,7 @@ function renderAll() {
   el("hdAvailSpan") && (el("hdAvailSpan").textContent = st.hdAvail);
   el("kiMaxSpan") && (el("kiMaxSpan").textContent = d.kiMax);
   el("acSpan2") && (el("acSpan2").textContent = d.ac);
+  el("kiSaveDcSpan2") && (el("kiSaveDcSpan2").textContent = d.kiSaveDC);
   el("umBonusSpan") && (el("umBonusSpan").textContent = d.um);
   el("passPercSpan") && (el("passPercSpan").textContent = 10 + skillBonusTotal("Perception", d.mods, d.prof));
   el("passInvSpan") && (el("passInvSpan").textContent = 10 + skillBonusTotal("Investigation", d.mods, d.prof));
@@ -473,6 +480,7 @@ el("toughChk") && el("toughChk").addEventListener("change", () => {
 });
 
 el("acMagicInput") && el("acMagicInput").addEventListener("input", () => { st.acMagic = Math.floor(Number(el("acMagicInput").value || 0)); save(); });
+el("kiSaveDcMagicInput") && el("kiSaveDcMagicInput").addEventListener("input", () => { st.kiSaveDcMagic = Math.floor(Number(el("kiSaveDcMagicInput").value || 0)); save(); });
 
 el("saveAllBonusInput") && el("saveAllBonusInput").addEventListener("input", () => {
   let v = Math.floor(Number(el("saveAllBonusInput").value || 0));
@@ -2054,6 +2062,10 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
       const acMagicEl = document.getElementById('acMagicInput');
       if (acMagicEl) {
         acMagicEl.addEventListener('input', () => { st.acMagic = Math.floor(Number(acMagicEl.value || 0)); save(); });
+      }
+      const kiSaveDcMagicEl = document.getElementById('kiSaveDcMagicInput');
+      if (kiSaveDcMagicEl) {
+        kiSaveDcMagicEl.addEventListener('input', () => { st.kiSaveDcMagic = Math.floor(Number(kiSaveDcMagicEl.value || 0)); save(); });
       }
       const unarmedMagicEl = document.getElementById('unarmedMagicInput');
       if (unarmedMagicEl) {

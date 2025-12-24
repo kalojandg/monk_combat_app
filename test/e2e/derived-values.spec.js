@@ -1228,3 +1228,137 @@ test.describe('Derived Values - Edge Cases & Boundaries', () => {
 
 });
 
+test.describe('Derived Values - Ki Save DC', () => {
+  
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
+    await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
+  });
+
+  test('Ki Save DC = 8 + WIS mod + Prof (base formula)', async ({ page }) => {
+    // Default: WIS 10 (mod +0), Prof +2, Level 1 → DC = 8 + 0 + 2 = 10
+    // Check in global block (first row, first position)
+    await expect(page.locator('#kiSaveDcSpan')).toHaveText('10');
+    
+    // Check in Basic Info sub-tab (second row, second position)
+    await page.locator('button[data-tab="stats"]').click();
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    await expect(page.locator('#subtab-basicinfo #kiSaveDcSpan2')).toHaveText('10');
+    
+    // WIS 16 (mod +3) → DC = 8 + 3 + 2 = 13
+    await page.locator('button[data-subtab="stats"]').click();
+    await page.waitForTimeout(200);
+    await page.locator('#subtab-stats #wisInput').fill('16');
+    await page.locator('#subtab-stats #wisInput').blur();
+    
+    // Check in global block
+    await expect(page.locator('#kiSaveDcSpan')).toHaveText('13');
+    
+    // Check in Basic Info sub-tab
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    await expect(page.locator('#subtab-basicinfo #kiSaveDcSpan2')).toHaveText('13');
+  });
+
+  test('Ki Save DC scales with level (proficiency increase)', async ({ page }) => {
+    // Level 1: WIS 10 (mod +0), Prof +2 → DC = 10
+    await expect(page.locator('#kiSaveDcSpan')).toHaveText('10');
+    
+    // Set XP to 6500 (enough for level 5) - open Basic Info sub-tab
+    await page.locator('button[data-tab="stats"]').click();
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    await page.locator('#subtab-basicinfo #xpInput').fill('6500');
+    await page.locator('#subtab-basicinfo #xpInput').blur();
+    await page.waitForTimeout(300);
+    
+    // Level should still be 1 (level up happens on Long Rest)
+    await expect(page.locator('#subtab-basicinfo #levelSpan')).toHaveText('1');
+    
+    // Long rest to trigger level up to 5
+    await page.locator('#btnLongRest').click();
+    await page.locator('button[data-tab="stats"]').click();
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    await expect(page.locator('#subtab-basicinfo #levelSpan')).toHaveText('5');
+    
+    // Level 5: WIS 10 (mod +0), Prof +3 → DC = 8 + 0 + 3 = 11
+    await expect(page.locator('#kiSaveDcSpan')).toHaveText('11');
+    await expect(page.locator('#subtab-basicinfo #kiSaveDcSpan2')).toHaveText('11');
+  });
+
+  test('Ki Save DC magic item bonus adds to formula', async ({ page }) => {
+    // Base: WIS 10 (mod +0), Prof +2 → DC = 10
+    await expect(page.locator('#kiSaveDcSpan')).toHaveText('10');
+    
+    // Open Basic Info sub-tab and set magic bonus to +2
+    await page.locator('button[data-tab="stats"]').click();
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    await page.locator('#subtab-basicinfo #kiSaveDcMagicInput').fill('2');
+    await page.locator('#subtab-basicinfo #kiSaveDcMagicInput').blur();
+    await page.waitForTimeout(200);
+    
+    // DC = 8 + 0 + 2 + 2 = 12
+    await expect(page.locator('#kiSaveDcSpan')).toHaveText('12');
+    await expect(page.locator('#subtab-basicinfo #kiSaveDcSpan2')).toHaveText('12');
+    
+    // Negative bonus
+    await page.locator('#subtab-basicinfo #kiSaveDcMagicInput').fill('-1');
+    await page.locator('#subtab-basicinfo #kiSaveDcMagicInput').blur();
+    await page.waitForTimeout(200);
+    
+    // DC = 8 + 0 + 2 - 1 = 9
+    await expect(page.locator('#kiSaveDcSpan')).toHaveText('9');
+    await expect(page.locator('#subtab-basicinfo #kiSaveDcSpan2')).toHaveText('9');
+  });
+
+  test('CASCADE: WIS change updates Ki Save DC', async ({ page }) => {
+    // WIS 10 (mod +0) → DC = 10
+    await expect(page.locator('#kiSaveDcSpan')).toHaveText('10');
+    
+    // WIS 18 (mod +4) → DC = 8 + 4 + 2 = 14
+    await page.locator('button[data-tab="stats"]').click();
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="stats"]').click();
+    await page.waitForTimeout(200);
+    await page.locator('#subtab-stats #wisInput').fill('18');
+    await page.locator('#subtab-stats #wisInput').blur();
+    
+    await expect(page.locator('#kiSaveDcSpan')).toHaveText('14');
+    
+    // Check in Basic Info sub-tab
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    await expect(page.locator('#subtab-basicinfo #kiSaveDcSpan2')).toHaveText('14');
+  });
+
+  test('Ki Save DC combines WIS mod + Prof + Magic bonus correctly', async ({ page }) => {
+    // WIS 16 (mod +3), Prof +2, Magic +1 → DC = 8 + 3 + 2 + 1 = 14
+    await page.locator('button[data-tab="stats"]').click();
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="stats"]').click();
+    await page.waitForTimeout(200);
+    await page.locator('#subtab-stats #wisInput').fill('16');
+    await page.locator('#subtab-stats #wisInput').blur();
+    
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    await page.locator('#subtab-basicinfo #kiSaveDcMagicInput').fill('1');
+    await page.locator('#subtab-basicinfo #kiSaveDcMagicInput').blur();
+    await page.waitForTimeout(200);
+    
+    await expect(page.locator('#kiSaveDcSpan')).toHaveText('14');
+    await expect(page.locator('#subtab-basicinfo #kiSaveDcSpan2')).toHaveText('14');
+  });
+
+});
+
