@@ -97,7 +97,8 @@ const defaultState = {
   notes: "",
   xp: 0,
   level: 1,  // Level is now stored in state, not calculated from XP
-  meleeMagic: 0,
+  unarmedMagic: 0,  // Magic bonus for unarmed attacks
+  meleeWeaponMagic: 0,  // Magic bonus for melee weapon attacks
   rangedMagic: 0,
   str: 10, dex: 10, con: 10, int_: 10, wis: 10, cha: 10,
   saveStrProf: false, saveDexProf: true, saveConProf: false, saveIntProf: false, saveWisProf: true, saveChaProf: false,
@@ -154,6 +155,16 @@ function load() {
     // --- миграция: ако level не съществува, го инициализираме от XP (за стари данни)
     if (typeof obj.level === 'undefined' || obj.level === null) {
       obj.level = levelFromXP(obj.xp || 0);
+    }
+
+    // --- миграция: meleeMagic -> unarmedMagic (за стари данни)
+    if (typeof obj.meleeMagic !== 'undefined' && typeof obj.unarmedMagic === 'undefined') {
+      obj.unarmedMagic = obj.meleeMagic || 0;
+      delete obj.meleeMagic;
+    }
+    // Инициализираме meleeWeaponMagic ако не съществува
+    if (typeof obj.meleeWeaponMagic === 'undefined') {
+      obj.meleeWeaponMagic = 0;
     }
 
     return obj;
@@ -219,10 +230,11 @@ function derived() {
     cha: savesBase.cha + allBonus,
   };
 
-  const meleeAtk = mods.dex + prof + Number(st.meleeMagic || 0);
+  const meleeAtk = mods.dex + prof + Number(st.unarmedMagic || 0);  // Unarmed attack uses unarmedMagic
+  const meleeWeaponAtk = mods.dex + prof + Number(st.meleeWeaponMagic || 0);  // Melee weapon attack
   const rangedAtk = mods.dex + prof + Number(st.rangedMagic || 0);
 
-  return { level, mods, prof, ma, kiMax, hdMax, maxHP, ac, um, totalSpeed, savesBase, savesTotal, meleeAtk, rangedAtk };
+  return { level, mods, prof, ma, kiMax, hdMax, maxHP, ac, um, totalSpeed, savesBase, savesTotal, meleeAtk, meleeWeaponAtk, rangedAtk };
 }
 
 // ===== Skills =====
@@ -350,9 +362,12 @@ function renderAll() {
   // Combat – attack pills
   el("meleeAtkSpan") && (el("meleeAtkSpan").textContent = (d.meleeAtk >= 0 ? "+" : "") + d.meleeAtk);
   el("rangedAtkSpan") && (el("rangedAtkSpan").textContent = (d.rangedAtk >= 0 ? "+" : "") + d.rangedAtk);
+  // Melee Weapon Atk Bonus (DEX mod + Prof + Melee Weapon Magic)
+  el("meleeWeaponMagicAtkSpan") && (el("meleeWeaponMagicAtkSpan").textContent = (d.meleeWeaponAtk >= 0 ? "+" : "") + d.meleeWeaponAtk);
 
   // Stats – inputs for magic atk bonuses
-  el("meleeMagicInput") && (el("meleeMagicInput").value = st.meleeMagic ?? 0);
+  el("unarmedMagicInput") && (el("unarmedMagicInput").value = st.unarmedMagic ?? 0);
+  el("meleeWeaponMagicInput") && (el("meleeWeaponMagicInput").value = st.meleeWeaponMagic ?? 0);
   el("rangedMagicInput") && (el("rangedMagicInput").value = st.rangedMagic ?? 0);
 
   // Basics (Stats)
@@ -615,9 +630,13 @@ el("btnLongRest") && el("btnLongRest").addEventListener("click", () => {
 });
 
 // ---- Attack Bonuses ----
-el("meleeMagicInput") && el("meleeMagicInput").addEventListener("input", () => {
-  st.meleeMagic = Math.floor(Number(el("meleeMagicInput").value || 0));
+el("unarmedMagicInput") && el("unarmedMagicInput").addEventListener("input", () => {
+  st.unarmedMagic = Math.floor(Number(el("unarmedMagicInput").value || 0));
   save(); // ще преизчисли и ще обнови спановете
+});
+el("meleeWeaponMagicInput") && el("meleeWeaponMagicInput").addEventListener("input", () => {
+  st.meleeWeaponMagic = Math.floor(Number(el("meleeWeaponMagicInput").value || 0));
+  save();
 });
 el("rangedMagicInput") && el("rangedMagicInput").addEventListener("input", () => {
   st.rangedMagic = Math.floor(Number(el("rangedMagicInput").value || 0));
@@ -2000,7 +2019,7 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
   // Attach event listeners for dynamically loaded sub-tab content
   function attachSubTabEventListeners(subTabKey) {
     if (subTabKey === 'basicinfo') {
-      // charName, notes, xpInput, homebrewHp, acMagicInput, meleeMagicInput, rangedMagicInput
+      // charName, notes, xpInput, homebrewHp, acMagicInput, unarmedMagicInput, meleeWeaponMagicInput, rangedMagicInput
       const charNameEl = document.getElementById('charName');
       if (charNameEl) {
         charNameEl.addEventListener('input', () => { st.name = charNameEl.value; save(); });
@@ -2036,10 +2055,17 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
       if (acMagicEl) {
         acMagicEl.addEventListener('input', () => { st.acMagic = Math.floor(Number(acMagicEl.value || 0)); save(); });
       }
-      const meleeMagicEl = document.getElementById('meleeMagicInput');
-      if (meleeMagicEl) {
-        meleeMagicEl.addEventListener('input', () => {
-          st.meleeMagic = Math.floor(Number(meleeMagicEl.value || 0));
+      const unarmedMagicEl = document.getElementById('unarmedMagicInput');
+      if (unarmedMagicEl) {
+        unarmedMagicEl.addEventListener('input', () => {
+          st.unarmedMagic = Math.floor(Number(unarmedMagicEl.value || 0));
+          save();
+        });
+      }
+      const meleeWeaponMagicEl = document.getElementById('meleeWeaponMagicInput');
+      if (meleeWeaponMagicEl) {
+        meleeWeaponMagicEl.addEventListener('input', () => {
+          st.meleeWeaponMagic = Math.floor(Number(meleeWeaponMagicEl.value || 0));
           save();
         });
       }

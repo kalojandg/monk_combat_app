@@ -8,7 +8,7 @@ import { test, expect } from '@playwright/test';
 
 // Helper: автоматично отваря правилния подтаб според елемента
 async function ensureSubTab(page, elementId) {
-  const basicInfoElements = ['xpInput', 'charName', 'notes', 'levelSpan', 'profSpan2', 'maDieSpan', 'maxHpSpan', 'homebrewHp', 'hdMaxSpan', 'hdAvailSpan', 'kiMaxSpan', 'acSpan2', 'acMagicInput', 'meleeMagicInput', 'rangedMagicInput', 'umBonusSpan', 'passPercSpan', 'passInvSpan', 'passInsSpan'];
+  const basicInfoElements = ['xpInput', 'charName', 'notes', 'levelSpan', 'profSpan2', 'maDieSpan', 'maxHpSpan', 'homebrewHp', 'hdMaxSpan', 'hdAvailSpan', 'kiMaxSpan', 'acSpan2', 'acMagicInput', 'unarmedMagicInput', 'meleeWeaponMagicInput', 'rangedMagicInput', 'umBonusSpan', 'passPercSpan', 'passInvSpan', 'passInsSpan'];
   const statsElements = ['strInput', 'dexInput', 'conInput', 'intInput', 'wisInput', 'chaInput', 'saveAllBonusInput', 'saveStrProf', 'saveDexProf', 'saveConProf', 'saveIntProf', 'saveWisProf', 'saveChaProf', 'toughChk', 'strModSpan', 'dexModSpan', 'conModSpan', 'intModSpan', 'wisModSpan', 'chaModSpan', 'saveStrTotalSpan', 'saveDexTotalSpan', 'saveConTotalSpan', 'saveIntTotalSpan', 'saveWisTotalSpan', 'saveChaTotalSpan'];
   
   const id = elementId.replace('#', '');
@@ -406,11 +406,11 @@ test.describe('Derived Values - Attack Bonuses', () => {
     await page.locator('#subtab-stats #dexInput').blur();
     await expect(page.locator('#meleeAtkSpan')).toHaveText('+4');
     
-    // Add +2 magic bonus → +6 - open Basic Info sub-tab
+    // Add +2 magic bonus to unarmed → +6 - open Basic Info sub-tab
     await page.locator('button[data-subtab="basicinfo"]').click();
     await page.waitForTimeout(200);
-    await page.locator('#subtab-basicinfo #meleeMagicInput').fill('2');
-    await page.locator('#subtab-basicinfo #meleeMagicInput').blur();
+    await page.locator('#subtab-basicinfo #unarmedMagicInput').fill('2');
+    await page.locator('#subtab-basicinfo #unarmedMagicInput').blur();
     await expect(page.locator('#meleeAtkSpan')).toHaveText('+6');
   });
 
@@ -422,11 +422,11 @@ test.describe('Derived Values - Attack Bonuses', () => {
     await expect(page.locator('#meleeAtkSpan')).toHaveText('+5');
     await expect(page.locator('#rangedAtkSpan')).toHaveText('+5');
     
-    // +1 melee, +2 ranged - open Basic Info sub-tab
+    // +1 unarmed, +2 ranged - open Basic Info sub-tab
     await page.locator('button[data-subtab="basicinfo"]').click();
     await page.waitForTimeout(200);
-    await page.locator('#subtab-basicinfo #meleeMagicInput').fill('1');
-    await page.locator('#subtab-basicinfo #meleeMagicInput').blur();
+    await page.locator('#subtab-basicinfo #unarmedMagicInput').fill('1');
+    await page.locator('#subtab-basicinfo #unarmedMagicInput').blur();
     await page.locator('#subtab-basicinfo #rangedMagicInput').fill('2');
     await page.locator('#subtab-basicinfo #rangedMagicInput').blur();
     

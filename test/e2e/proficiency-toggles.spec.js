@@ -491,7 +491,9 @@ test.describe('Proficiency scaling with level', () => {
       await page.goto('/');
       await page.evaluate(() => localStorage.clear());
       await page.reload();
+      await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
       await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
+      await expect(page.locator('#hpDelta')).toBeVisible({ timeout: 5000 });
 
       // Статове 10, за да е mod = +0 и да виждаме чисто prof - open Stats tab and Stats sub-tab
       await page.locator('button[data-tab="stats"]').click();

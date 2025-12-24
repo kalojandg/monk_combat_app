@@ -233,6 +233,18 @@ test.describe('Import / Export - Bundle v2', () => {
     await page.locator('#subtab-basicinfo #notes').fill('Големият тест за import/export.');
     await page.locator('#subtab-basicinfo #xpInput').fill('48000'); // ниво 9
     await page.locator('#subtab-basicinfo #xpInput').blur();
+    await page.waitForTimeout(300);
+    
+    // Level should still be 1 (level up happens on Long Rest)
+    await expect(page.locator('#subtab-basicinfo #levelSpan')).toHaveText('1');
+    
+    // Long rest to trigger level up to 9
+    await page.locator('#btnLongRest').click();
+    await page.locator('button[data-tab="stats"]').click();
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    await expect(page.locator('#subtab-basicinfo #levelSpan')).toHaveText('9');
 
     // Open Stats sub-tab for ability scores
     await page.locator('button[data-subtab="stats"]').click();
@@ -254,7 +266,8 @@ test.describe('Import / Export - Bundle v2', () => {
     // Combat-related numeric fields - back to Basic Info
     await page.locator('button[data-subtab="basicinfo"]').click();
     await page.waitForTimeout(200);
-    await page.locator('#subtab-basicinfo #meleeMagicInput').fill('1');
+    await page.locator('#subtab-basicinfo #unarmedMagicInput').fill('1');
+    await page.locator('#subtab-basicinfo #meleeWeaponMagicInput').fill('3');
     await page.locator('#subtab-basicinfo #rangedMagicInput').fill('2');
     await page.locator('#subtab-basicinfo #homebrewHp').fill('5');
     await page.locator('#subtab-basicinfo #acMagicInput').fill('1');
@@ -277,7 +290,7 @@ test.describe('Import / Export - Bundle v2', () => {
 
     // Ki / HP / HD – малко действие, за да са различни от default
     await page.locator('#hpDelta').fill('3');
-    await page.locator('#btnDamage').click();          // HP 8 → 5
+    await page.locator('#btnDamage').click();          // HP 66 → 63 (след tough на level 9)
     await page.locator('#kiDelta').fill('1');
     await page.locator('#btnSpendKi').click();         // kiCurrent намаля
 
@@ -350,6 +363,10 @@ test.describe('Import / Export - Bundle v2', () => {
       return null;
     });
     expect(bundle).toBeTruthy();
+    
+    // Verify hpCurrent is in bundle
+    expect(bundle.state).toBeTruthy();
+    expect(bundle.state.hpCurrent).toBe(63); // Should be 63 after damage (66 - 3, where 66 = 48 + 18 from tough at level 9, and 48 is from Long Rest with CON 10)
 
     // 4) Забравяме state-а и прилагаме bundle през applyBundle()
     await page.evaluate(() => localStorage.clear());
@@ -375,6 +392,24 @@ test.describe('Import / Export - Bundle v2', () => {
       return copy;
     };
     expect(stripSessionNotes(after)).toEqual(stripSessionNotes(before));
+    
+    // 6) Проверяваме специфично новите полета за magic attack bonuses
+    await page.reload();
+    // HP трябва да е 63 (запазено в bundle-а след damage на ред 295)
+    await expect(page.locator('#hpCurrentSpan')).toHaveText('63', { timeout: 10000 });
+    await page.locator('button[data-tab="stats"]').click();
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    
+    // Проверяваме стойностите на полетата
+    const unarmedValue = await page.locator('#subtab-basicinfo #unarmedMagicInput').inputValue();
+    const weaponValue = await page.locator('#subtab-basicinfo #meleeWeaponMagicInput').inputValue();
+    const rangedValue = await page.locator('#subtab-basicinfo #rangedMagicInput').inputValue();
+    
+    expect(unarmedValue).toBe('1');
+    expect(weaponValue).toBe('3');
+    expect(rangedValue).toBe('2');
   });
 
 });

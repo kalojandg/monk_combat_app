@@ -63,12 +63,12 @@ test.describe('Attack Bonuses - Calculations', () => {
     await page.locator('button[data-subtab="basicinfo"]').click();
     await page.waitForTimeout(200);
     
-    // Add +2 magic item bonus to melee
-    await page.locator('#subtab-basicinfo #meleeMagicInput').fill('2');
-    await page.locator('#subtab-basicinfo #meleeMagicInput').blur();
+    // Add +2 magic item bonus to unarmed
+    await page.locator('#subtab-basicinfo #unarmedMagicInput').fill('2');
+    await page.locator('#subtab-basicinfo #unarmedMagicInput').blur();
     await page.waitForTimeout(200);
     
-    // Melee Atk should be +4 (DEX +0, Prof +2, Magic +2)
+    // Melee Atk (unarmed) should be +4 (DEX +0, Prof +2, Magic +2)
     await expect(page.locator('#meleeAtkSpan')).toHaveText('+4');
     
     // Ranged should remain +2
@@ -153,12 +153,12 @@ test.describe('Attack Bonuses - Calculations', () => {
     await page.locator('button[data-subtab="basicinfo"]').click();
     await page.waitForTimeout(200);
     
-    // Add cursed item (-2 to melee)
-    await page.locator('#subtab-basicinfo #meleeMagicInput').fill('-2');
-    await page.locator('#subtab-basicinfo #meleeMagicInput').blur();
+    // Add cursed item (-2 to unarmed)
+    await page.locator('#subtab-basicinfo #unarmedMagicInput').fill('-2');
+    await page.locator('#subtab-basicinfo #unarmedMagicInput').blur();
     await page.waitForTimeout(200);
     
-    // Melee Atk should be +0 (DEX +0, Prof +2, Magic -2)
+    // Melee Atk (unarmed) should be +0 (DEX +0, Prof +2, Magic -2)
     await expect(page.locator('#meleeAtkSpan')).toHaveText('+0');
   });
 
@@ -177,11 +177,11 @@ test.describe('Attack Bonuses - Calculations', () => {
     // Open Basic Info sub-tab for Magic
     await page.locator('button[data-subtab="basicinfo"]').click();
     await page.waitForTimeout(200);
-    await page.locator('#subtab-basicinfo #meleeMagicInput').fill('1');
-    await page.locator('#subtab-basicinfo #meleeMagicInput').blur();
+    await page.locator('#subtab-basicinfo #unarmedMagicInput').fill('1');
+    await page.locator('#subtab-basicinfo #unarmedMagicInput').blur();
     await page.waitForTimeout(200);
     
-    // Melee should be +5 (DEX +2, Prof +2, Magic +1)
+    // Melee (unarmed) should be +5 (DEX +2, Prof +2, Magic +1)
     await expect(page.locator('#meleeAtkSpan')).toHaveText('+5');
     
     // Reload
@@ -190,6 +190,89 @@ test.describe('Attack Bonuses - Calculations', () => {
     
     // Attack bonus persists
     await expect(page.locator('#meleeAtkSpan')).toHaveText('+5');
+  });
+
+  test('Unarmed and Melee Weapon magic bonuses are independent', async ({ page }) => {
+    // Open Stats tab and Basic Info sub-tab
+    await page.locator('button[data-tab="stats"]').click();
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    
+    // Set unarmed magic bonus to +2
+    await page.locator('#subtab-basicinfo #unarmedMagicInput').fill('2');
+    await page.locator('#subtab-basicinfo #unarmedMagicInput').blur();
+    await page.waitForTimeout(200);
+    
+    // Melee Atk (unarmed) should be +4 (DEX +0, Prof +2, Unarmed Magic +2)
+    await expect(page.locator('#meleeAtkSpan')).toHaveText('+4');
+    
+    // Set melee weapon magic bonus to +3 (should not affect unarmed attack)
+    await page.locator('#subtab-basicinfo #meleeWeaponMagicInput').fill('3');
+    await page.locator('#subtab-basicinfo #meleeWeaponMagicInput').blur();
+    await page.waitForTimeout(200);
+    
+    // Melee Atk (unarmed) should still be +4 (unarmed uses unarmedMagic, not meleeWeaponMagic)
+    await expect(page.locator('#meleeAtkSpan')).toHaveText('+4');
+    
+    // Verify both values are stored correctly
+    const unarmedValue = await page.locator('#subtab-basicinfo #unarmedMagicInput').inputValue();
+    const weaponValue = await page.locator('#subtab-basicinfo #meleeWeaponMagicInput').inputValue();
+    expect(unarmedValue).toBe('2');
+    expect(weaponValue).toBe('3');
+  });
+
+  test('Global Melee Weapon Magic Atk Bonus displays correctly (includes proficiency)', async ({ page }) => {
+    // Default: DEX 10 (mod +0), Prof +2, meleeWeaponMagic +0 → Total +2
+    await expect(page.locator('#meleeWeaponMagicAtkSpan')).toBeVisible();
+    await expect(page.locator('#meleeWeaponMagicAtkSpan')).toHaveText('+2');
+    
+    // Open Stats tab and Basic Info sub-tab
+    await page.locator('button[data-tab="stats"]').click();
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    
+    // Set melee weapon magic bonus to +3
+    await page.locator('#subtab-basicinfo #meleeWeaponMagicInput').fill('3');
+    await page.locator('#subtab-basicinfo #meleeWeaponMagicInput').blur();
+    await page.waitForTimeout(200);
+    
+    // Global field should display +5 (DEX +0, Prof +2, Magic +3)
+    await expect(page.locator('#meleeWeaponMagicAtkSpan')).toHaveText('+5');
+    
+    // Change to -1 (cursed item)
+    await page.locator('#subtab-basicinfo #meleeWeaponMagicInput').fill('-1');
+    await page.locator('#subtab-basicinfo #meleeWeaponMagicInput').blur();
+    await page.waitForTimeout(200);
+    
+    // Global field should display +1 (DEX +0, Prof +2, Magic -1)
+    await expect(page.locator('#meleeWeaponMagicAtkSpan')).toHaveText('+1');
+    
+    // Change back to 0
+    await page.locator('#subtab-basicinfo #meleeWeaponMagicInput').fill('0');
+    await page.locator('#subtab-basicinfo #meleeWeaponMagicInput').blur();
+    await page.waitForTimeout(200);
+    
+    // Global field should display +2 (DEX +0, Prof +2, Magic +0)
+    await expect(page.locator('#meleeWeaponMagicAtkSpan')).toHaveText('+2');
+    
+    // Test with higher DEX
+    await page.locator('button[data-subtab="stats"]').click();
+    await page.waitForTimeout(200);
+    await page.locator('#subtab-stats #dexInput').fill('16');
+    await page.locator('#subtab-stats #dexInput').blur();
+    await page.waitForTimeout(200);
+    
+    // Back to Basic Info to set magic bonus
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    await page.locator('#subtab-basicinfo #meleeWeaponMagicInput').fill('2');
+    await page.locator('#subtab-basicinfo #meleeWeaponMagicInput').blur();
+    await page.waitForTimeout(200);
+    
+    // Global field should display +7 (DEX +3, Prof +2, Magic +2)
+    await expect(page.locator('#meleeWeaponMagicAtkSpan')).toHaveText('+7');
   });
 
 });
