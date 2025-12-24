@@ -1047,3 +1047,34 @@ details.feat[open] .feature-card {
   }
 }
 
+/* Sub-tabs navigation (second level) */
+.sub-tab-nav {
+  margin-top: 6px;
+  margin-bottom: 6px;
+  padding-left: 6px;
+  border-left: 2px solid rgba(106, 132, 196, 0.55);
+}
+
+/* Second level pills – по-дребни и по-приглушени от основните табове */
+.sub-tab-nav .tab-btn.sub-tab-btn {
+  background: #141827;
+  border-color: #29334c;
+  font-size: 0.85rem;
+  padding: 4px 10px;
+}
+
+.sub-tab-nav .tab-btn.sub-tab-btn.active {
+  background: #222f54;
+  border-color: #7e9be0;
+  box-shadow: 0 0 0 1px rgba(140, 170, 255, 0.25) inset;
+}
+
+/* Без стрелка „▾“ при активни подтабове */
+.sub-tab-nav .tab-btn.sub-tab-btn.active::after {
+  content: '';
+}
+
+.sub-tab-content.hidden {
+  display: none;
+}
+

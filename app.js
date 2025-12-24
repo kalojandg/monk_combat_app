@@ -2,6 +2,7 @@
 // Зарежда HTML табове от отделни файлове
 async function loadTabs() {
   const tabMap = {
+    'stats': 'tabs/stats.html',
     'pcchar': 'tabs/pcchar.html',
     'inventory': 'tabs/inventory.html',
     'shenanigans': 'tabs/shenanigans.html',
@@ -261,8 +262,32 @@ function skillBonusTotal(name, mods, prof) {
   const abil = entry[1];
   return (mods[abil] || 0) + (st.skillProfs[name] ? prof : 0);
 }
+// Main skills table in Stats tab
 function renderSkills(mods, prof) {
   const body = el("skillsBody");
+  if (!body) return;
+  body.innerHTML = "";
+  SKILLS.forEach(([name, abil]) => {
+    const profChecked = !!st.skillProfs[name];
+    const bonus = (mods[abil] || 0) + (profChecked ? prof : 0);
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${name}</td>
+      <td>${abil.toUpperCase()}</td>
+      <td><input type="checkbox" ${profChecked ? "checked" : ""} data-skill="${name}"></td>
+      <td class="right">${bonus >= 0 ? "+" : ""}${bonus}</td>`;
+    body.appendChild(tr);
+  });
+  body.querySelectorAll("input[type=checkbox]").forEach(chk => {
+    chk.addEventListener("change", (e) => {
+      const sk = e.target.getAttribute("data-skill");
+      st.skillProfs[sk] = e.target.checked;
+      save();
+    });
+  });
+}
+// Secondary skills table in Stats tab → Passive Skills sub-tab
+function renderSkillsInSubtab(mods, prof) {
+  const body = document.querySelector('#subtab-passiveskills #skillsBody');
   if (!body) return;
   body.innerHTML = "";
   SKILLS.forEach(([name, abil]) => {
@@ -1896,7 +1921,13 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
       renderFeaturesAccordion(d.level);
     }
 
-    if (tabKey === 'skills') {
+    if (tabKey === 'stats') {
+      // Show first sub-tab by default if none is active
+      const activeSubTab = document.querySelector('.sub-tab-btn.active');
+      if (!activeSubTab) {
+        showSubTab('basicinfo');
+      }
+      
       // Lazy render features accordion
       const d = derived();
       if (!_featuresRendered || _featuresDirty) {
@@ -1906,8 +1937,197 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
       }
       // Attach collapse button after accordion is rendered
       setTimeout(() => attachCollapseBtn(), 100);
+    } else {
+      // Hide all sub-tabs when switching away from Stats tab
+      hideAllSubTabs();
     }
   }
+  
+  // Track which sub-tabs have been loaded
+  const __subTabsLoaded = {};
+  
+  // Sub-tab HTML mapping
+  const subTabHtmlMap = {
+    'basicinfo': 'tabs/stats-basicinfo.html',
+    'stats': 'tabs/stats-stats.html',
+    'passiveskills': 'tabs/stats-passiveskills.html'
+  };
+  
+  // Helper function to show a sub-tab (loads HTML dynamically on first click)
+  async function showSubTab(subTabKey) {
+    // Hide all sub-tab contents
+    document.querySelectorAll('.sub-tab-content').forEach(el => {
+      el.classList.add('hidden');
+    });
+    
+    // Show selected sub-tab content
+    const subTabEl = document.getElementById(`subtab-${subTabKey}`);
+    if (subTabEl) {
+      // Load HTML if not already loaded
+      if (!__subTabsLoaded[subTabKey] && subTabHtmlMap[subTabKey]) {
+        try {
+          const response = await fetch(subTabHtmlMap[subTabKey]);
+          if (response.ok) {
+            subTabEl.innerHTML = await response.text();
+            __subTabsLoaded[subTabKey] = true;
+            
+            // Re-attach event listeners after loading HTML
+            attachSubTabEventListeners(subTabKey);
+            
+            // Render current values
+            renderAll();
+          }
+        } catch (e) {
+          console.error(`Error loading sub-tab ${subTabKey}:`, e);
+        }
+      }
+      
+      subTabEl.classList.remove('hidden');
+      
+      // Render skills table if passive skills sub-tab is shown
+      if (subTabKey === 'passiveskills') {
+        const d = derived();
+        renderSkillsInSubtab(d.mods, d.prof);
+      }
+    }
+    
+    // Update sub-tab buttons
+    document.querySelectorAll('.sub-tab-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.subtab === subTabKey);
+    });
+  }
+  
+  // Attach event listeners for dynamically loaded sub-tab content
+  function attachSubTabEventListeners(subTabKey) {
+    if (subTabKey === 'basicinfo') {
+      // charName, notes, xpInput, homebrewHp, acMagicInput, meleeMagicInput, rangedMagicInput
+      const charNameEl = document.getElementById('charName');
+      if (charNameEl) {
+        charNameEl.addEventListener('input', () => { st.name = charNameEl.value; save(); });
+      }
+      const notesEl = document.getElementById('notes');
+      if (notesEl) {
+        notesEl.addEventListener('input', () => { st.notes = notesEl.value; save(); });
+      }
+      const xpInputEl = document.getElementById('xpInput');
+      if (xpInputEl) {
+        xpInputEl.addEventListener('input', () => {
+          st.xp = Math.max(0, Math.floor(Number(xpInputEl.value || 0)));
+          const d = derived();
+          st.hdAvail = clamp(st.hdAvail, 0, d.hdMax);
+          st.kiCurrent = clamp(st.kiCurrent, 0, d.kiMax);
+          _featuresDirty = true;
+          save();
+        });
+      }
+      const hbInput = document.getElementById('homebrewHp');
+      if (hbInput) {
+        hbInput.addEventListener('input', () => {
+          const raw = hbInput.value.trim();
+          let v = (raw === "" ? 0 : Math.floor(Number(raw)));
+          if (Number.isNaN(v)) v = 0;
+          st.hpHomebrew = v;
+          const d2 = derived();
+          st.hpCurrent = clamp(st.hpCurrent, 0, d2.maxHP);
+          save();
+        });
+      }
+      const acMagicEl = document.getElementById('acMagicInput');
+      if (acMagicEl) {
+        acMagicEl.addEventListener('input', () => { st.acMagic = Math.floor(Number(acMagicEl.value || 0)); save(); });
+      }
+      const meleeMagicEl = document.getElementById('meleeMagicInput');
+      if (meleeMagicEl) {
+        meleeMagicEl.addEventListener('input', () => {
+          st.meleeMagic = Math.floor(Number(meleeMagicEl.value || 0));
+          save();
+        });
+      }
+      const rangedMagicEl = document.getElementById('rangedMagicInput');
+      if (rangedMagicEl) {
+        rangedMagicEl.addEventListener('input', () => {
+          st.rangedMagic = Math.floor(Number(rangedMagicEl.value || 0));
+          save();
+        });
+      }
+    }
+    
+    if (subTabKey === 'stats') {
+      // Ability inputs
+      ["str", "dex", "con", "int_", "wis", "cha"].forEach(key => {
+        const mapId = { str: "strInput", dex: "dexInput", con: "conInput", int_: "intInput", wis: "wisInput", cha: "chaInput" };
+        const inputEl = document.getElementById(mapId[key]);
+        if (inputEl) {
+          inputEl.addEventListener('input', () => {
+            let v = Math.floor(Number(inputEl.value || 0));
+            st[key] = v; save();
+          });
+        }
+      });
+      
+      // Save proficiency checkboxes
+      ["Str", "Dex", "Con", "Int", "Wis", "Cha"].forEach(S => {
+        const id = "save" + S + "Prof";
+        const chk = document.getElementById(id);
+        if (chk) chk.addEventListener("change", () => { st[id] = chk.checked; save(); });
+      });
+      
+      // Tough checkbox
+      const toughChkEl = document.getElementById('toughChk');
+      if (toughChkEl) {
+        toughChkEl.addEventListener('change', () => {
+          const before = derived().maxHP;
+          st.tough = toughChkEl.checked;
+          const after = derived().maxHP;
+          const delta = after - before;
+          st.hpCurrent = clamp(st.hpCurrent + delta, 0, after);
+          save();
+        });
+      }
+      
+      // All saves bonus
+      const saveAllBonusEl = document.getElementById('saveAllBonusInput');
+      if (saveAllBonusEl) {
+        saveAllBonusEl.addEventListener('input', () => {
+          let v = Math.floor(Number(saveAllBonusEl.value || 0));
+          v = Math.max(-5, Math.min(10, v)); st.saveAllBonus = v; save();
+        });
+      }
+    }
+  }
+  
+  // Helper function to hide all sub-tabs
+  function hideAllSubTabs() {
+    document.querySelectorAll('.sub-tab-content').forEach(el => {
+      el.classList.add('hidden');
+    });
+    document.querySelectorAll('.sub-tab-btn').forEach(btn => {
+      btn.classList.remove('active');
+    });
+  }
+  
+  // Initialize Stats sub-tabs navigation
+  function initStatsSubTabs() {
+    const subTabBtns = document.querySelectorAll('.sub-tab-btn');
+    subTabBtns.forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const subTabKey = btn.dataset.subtab;
+        if (subTabKey) {
+          await showSubTab(subTabKey);
+        }
+      });
+    });
+    
+    // Show first sub-tab by default
+    if (subTabBtns.length > 0) {
+      showSubTab('basicinfo');
+    }
+  }
+  
+  // Make functions available globally for initialization
+  window.showSubTab = showSubTab;
+  window.hideAllSubTabs = hideAllSubTabs;
+  window.initStatsSubTabs = initStatsSubTabs;
 
 
   // wire (skip 'combat' - it's not a tab)
@@ -1958,7 +2178,21 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
     btns.forEach(b => b.classList.toggle('active', !!name && b.dataset.tab === name));
 
     // 4) лениво зареждане на съдържание
-    if (name === 'skills') {            // ако таб-ключът ти е "skills"
+    if (name === 'stats') {            // второ ниво навигация под Stats
+      // Show first sub-tab by default if none is active
+      const activeSubTab = document.querySelector('.sub-tab-btn.active');
+      if (!activeSubTab && typeof window.showSubTab === 'function') {
+        window.showSubTab('basicinfo');
+      }
+      // при Stats не чертаем акордеона
+    } else {
+      // Hide all sub-tabs when switching away from Stats tab
+      if (typeof window.hideAllSubTabs === 'function') {
+        window.hideAllSubTabs();
+      }
+    }
+    // Skills табът все още чертае features акордеона
+    if (name === 'skills') {
       const d = derived();
       renderFeaturesAccordion(d.level); // чертай акордеона тук
     }
@@ -1990,6 +2224,9 @@ window.addEventListener('beforeunload', (e) => {
   (async () => {
     // Load tab HTML fragments first (before attaching event listeners)
     await loadTabs();
+    
+    // Initialize Stats sub-tabs navigation after tabs are loaded
+    if (typeof window.initStatsSubTabs === 'function') window.initStatsSubTabs();
 
     await cloudRestore();
 

@@ -30,9 +30,12 @@ test.describe('Short Rest - Ki only', () => {
     await page.reload();
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
 
-    // Отиваме на Stats да видим ki
+    // Отиваме на Stats да видим ki - open Basic Info sub-tab
     await page.locator('button[data-tab="stats"]').click();
-    const kiMax = await page.locator('#kiMaxSpan').textContent();
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    const kiMax = await page.locator('#subtab-basicinfo #kiMaxSpan').textContent();
 
     // Зануляваме текущото Ki през localStorage (st не е global)
     await page.evaluate(() => {
@@ -53,6 +56,9 @@ test.describe('Short Rest - Ki only', () => {
 
     // Ki трябва да е равно на Ki Max
     await page.locator('button[data-tab="stats"]').click();
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
     await expect(page.locator('#kiCurrentSpan')).toHaveText(kiMax || '');
   });
 
@@ -63,7 +69,10 @@ test.describe('Short Rest - Ki only', () => {
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
 
     await page.locator('button[data-tab="stats"]').click();
-    const kiMax = await page.locator('#kiMaxSpan').textContent();
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    const kiMax = await page.locator('#subtab-basicinfo #kiMaxSpan').textContent();
 
     // Зануляваме Ki и Hit Dice през localStorage
     await page.evaluate(() => {
@@ -75,15 +84,21 @@ test.describe('Short Rest - Ki only', () => {
     });
     await page.reload();
     await page.locator('button[data-tab="stats"]').click();
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
     await expect(page.locator('#kiCurrentSpan')).toHaveText('0');
-    await expect(page.locator('#hdAvailSpan')).toHaveText('0');
+    await expect(page.locator('#subtab-basicinfo #hdAvailSpan')).toHaveText('0');
 
     // Short Rest – не трябва да има prompt за HD, но Ki се пълни
     await page.locator('#btnShortRest').click();
 
     await page.locator('button[data-tab="stats"]').click();
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
     await expect(page.locator('#kiCurrentSpan')).toHaveText(kiMax || '');
-    await expect(page.locator('#hdAvailSpan')).toHaveText('0');
+    await expect(page.locator('#subtab-basicinfo #hdAvailSpan')).toHaveText('0');
   });
 });
 
@@ -105,9 +120,12 @@ test.describe('Short Rest - Hit Dice prompts', () => {
     await page.reload();
     await expect(page.locator('#hpCurrentSpan')).toHaveText('3');
 
-    // Четем CON мод за формулата
+    // Четем CON мод за формулата - open Stats tab and Stats sub-tab
     await page.locator('button[data-tab="stats"]').click();
-    const conModText = await page.locator('#conModSpan').textContent();
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="stats"]').click();
+    await page.waitForTimeout(200);
+    const conModText = await page.locator('#subtab-stats #conModSpan').textContent();
     const conMod = Number(conModText);
 
     // Ще използваме 2 Hit Dice и ще върнем 7 от зарове
@@ -115,12 +133,15 @@ test.describe('Short Rest - Hit Dice prompts', () => {
 
     await page.locator('#btnShortRest').click();
 
-    // Очакваме hdAvail да е намаляло с 2
+    // Очакваме hdAvail да е намаляло с 2 - open Basic Info sub-tab
     await page.locator('button[data-tab="stats"]').click();
-    await expect(page.locator('#hdAvailSpan')).toHaveText('1');
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    await expect(page.locator('#subtab-basicinfo #hdAvailSpan')).toHaveText('1');
 
     // HP трябва да е 3 + (7 + conMod*2), clamp-нато до maxHP
-    const maxHpText = await page.locator('#maxHpSpan').textContent();
+    const maxHpText = await page.locator('#subtab-basicinfo #maxHpSpan').textContent();
     const maxHP = Number(maxHpText);
     const expectedHeal = 7 + conMod * 2;
     const expectedHp = Math.min(maxHP, 3 + expectedHeal);
@@ -174,9 +195,12 @@ test.describe('Short Rest - Hit Dice prompts', () => {
       });
       await page.locator('#btnShortRest').click();
 
-      // hdAvail и HP не трябва да се променят (use ≤ 0)
+      // hdAvail и HP не трябва да се променят (use ≤ 0) - open Basic Info sub-tab
       await page.locator('button[data-tab="stats"]').click();
-      await expect(page.locator('#hdAvailSpan')).toHaveText('3');
+      await page.waitForTimeout(300);
+      await page.locator('button[data-subtab="basicinfo"]').click();
+      await page.waitForTimeout(200);
+      await expect(page.locator('#subtab-basicinfo #hdAvailSpan')).toHaveText('3');
       await expect(page.locator('#hpCurrentSpan')).toHaveText('5');
     }
   });
@@ -200,7 +224,10 @@ test.describe('Short Rest - Hit Dice prompts', () => {
     await page.locator('#btnShortRest').click();
 
     await page.locator('button[data-tab="stats"]').click();
-    await expect(page.locator('#hdAvailSpan')).toHaveText('3');
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    await expect(page.locator('#subtab-basicinfo #hdAvailSpan')).toHaveText('3');
     await expect(page.locator('#hpCurrentSpan')).toHaveText('5');
   });
 
@@ -224,7 +251,10 @@ test.describe('Short Rest - Hit Dice prompts', () => {
     await page.locator('#btnShortRest').click();
 
     await page.locator('button[data-tab="stats"]').click();
-    await expect(page.locator('#hdAvailSpan')).toHaveText('3');
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    await expect(page.locator('#subtab-basicinfo #hdAvailSpan')).toHaveText('3');
     await expect(page.locator('#hpCurrentSpan')).toHaveText('5');
   });
 });
@@ -236,12 +266,15 @@ test.describe('Short Rest - negative CON modifier effects', () => {
     await page.reload();
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
 
-    // Set CON така, че модификаторът да е -1 (примерно CON 8)
+    // Set CON така, че модификаторът да е -1 (примерно CON 8) - open Stats sub-tab
     await page.locator('button[data-tab="stats"]').click();
-    await page.locator('#conInput').fill('8');
-    await page.locator('#conInput').blur();
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="stats"]').click();
     await page.waitForTimeout(200);
-    const conModText = await page.locator('#conModSpan').textContent();
+    await page.locator('#subtab-stats #conInput').fill('8');
+    await page.locator('#subtab-stats #conInput').blur();
+    await page.waitForTimeout(200);
+    const conModText = await page.locator('#subtab-stats #conModSpan').textContent();
     const conMod = Number(conModText);
     expect(conMod).toBe(-1);
 
@@ -260,13 +293,16 @@ test.describe('Short Rest - negative CON modifier effects', () => {
     await page.locator('#btnShortRest').click();
 
     await page.locator('button[data-tab="stats"]').click();
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
 
     // hdAvail трябва да намалее с 2
-    await expect(page.locator('#hdAvailSpan')).toHaveText('1');
+    await expect(page.locator('#subtab-basicinfo #hdAvailSpan')).toHaveText('1');
 
     // HP трябва да е clamp-нато >= 0 и <= maxHP
     const hpText = await page.locator('#hpCurrentSpan').textContent();
-    const maxHpText = await page.locator('#maxHpSpan').textContent();
+    const maxHpText = await page.locator('#subtab-basicinfo #maxHpSpan').textContent();
     const hp = Number(hpText);
     const maxHP = Number(maxHpText);
     expect(hp).toBeGreaterThanOrEqual(0);

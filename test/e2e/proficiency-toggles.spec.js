@@ -15,57 +15,63 @@ test.describe('Saving Throws - Proficiency Toggles', () => {
     await page.reload();
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
     await page.locator('button[data-tab="stats"]').click();
+    await page.waitForTimeout(300);
+    // Open Stats sub-tab by default
+    await page.locator('button[data-subtab="stats"]').click();
+    await page.waitForTimeout(200);
+    // Wait for Stats sub-tab content to be visible
+    await expect(page.locator('#subtab-stats #strInput')).toBeVisible({ timeout: 5000 });
   });
 
   test('STR Save: Toggle proficiency adds/removes prof bonus', async ({ page }) => {
     // Default: STR 10 (mod +0), no prof → Save +0
-    await expect(page.locator('#saveStrTotalSpan')).toHaveText('+0');
+    await expect(page.locator('#subtab-stats #saveStrTotalSpan')).toHaveText('+0');
     
     // Enable proficiency
-    await page.locator('#saveStrProf').check();
+    await page.locator('#subtab-stats #saveStrProf').check();
     await page.waitForTimeout(200);
     
     // Should be +2 (mod +0, prof +2)
-    await expect(page.locator('#saveStrTotalSpan')).toHaveText('+2');
+    await expect(page.locator('#subtab-stats #saveStrTotalSpan')).toHaveText('+2');
     
     // Disable proficiency
-    await page.locator('#saveStrProf').uncheck();
+    await page.locator('#subtab-stats #saveStrProf').uncheck();
     await page.waitForTimeout(200);
     
     // Back to +0
-    await expect(page.locator('#saveStrTotalSpan')).toHaveText('+0');
+    await expect(page.locator('#subtab-stats #saveStrTotalSpan')).toHaveText('+0');
   });
 
   test('DEX Save: Toggle proficiency with high ability score', async ({ page }) => {
     // DEX has default proficiency, so uncheck first
-    await page.locator('#saveDexProf').uncheck();
+    await page.locator('#subtab-stats #saveDexProf').uncheck();
     await page.waitForTimeout(200);
     
     // Set DEX to 16 (mod +3)
-    await page.locator('#dexInput').fill('16');
-    await page.locator('#dexInput').blur();
+    await page.locator('#subtab-stats #dexInput').fill('16');
+    await page.locator('#subtab-stats #dexInput').blur();
     await page.waitForTimeout(200);
     
     // Without prof: +3
-    await expect(page.locator('#saveDexTotalSpan')).toHaveText('+3');
+    await expect(page.locator('#subtab-stats #saveDexTotalSpan')).toHaveText('+3');
     
     // With prof: +3 +2 = +5
-    await page.locator('#saveDexProf').check();
+    await page.locator('#subtab-stats #saveDexProf').check();
     await page.waitForTimeout(200);
-    await expect(page.locator('#saveDexTotalSpan')).toHaveText('+5');
+    await expect(page.locator('#subtab-stats #saveDexTotalSpan')).toHaveText('+5');
   });
 
   test('All 6 Saving Throws: Toggle proficiency works', async ({ page }) => {
     // First, uncheck all proficiencies (DEX and WIS have default prof)
-    await page.locator('#saveDexProf').uncheck();
-    await page.locator('#saveWisProf').uncheck();
+    await page.locator('#subtab-stats #saveDexProf').uncheck();
+    await page.locator('#subtab-stats #saveWisProf').uncheck();
     await page.waitForTimeout(200);
     
     const saves = ['Str', 'Dex', 'Con', 'Int', 'Wis', 'Cha'];
     
     for (const save of saves) {
-      const checkboxId = `#save${save}Prof`;
-      const spanId = `#save${save}TotalSpan`;
+      const checkboxId = `#subtab-stats #save${save}Prof`;
+      const spanId = `#subtab-stats #save${save}TotalSpan`;
       
       // Check initial value (should be +0 for all with default stats)
       await expect(page.locator(spanId)).toHaveText('+0');
@@ -88,39 +94,42 @@ test.describe('Saving Throws - Proficiency Toggles', () => {
 
   test('CASCADE: Ability score change updates save when proficiency enabled', async ({ page }) => {
     // Enable WIS proficiency
-    await page.locator('#saveWisProf').check();
+    await page.locator('#subtab-stats #saveWisProf').check();
     await page.waitForTimeout(100);
     
     // WIS 10 (mod +0) + prof +2 = +2
-    await expect(page.locator('#saveWisTotalSpan')).toHaveText('+2');
+    await expect(page.locator('#subtab-stats #saveWisTotalSpan')).toHaveText('+2');
     
     // Increase WIS to 14 (mod +2)
-    await page.locator('#wisInput').fill('14');
-    await page.locator('#wisInput').blur();
+    await page.locator('#subtab-stats #wisInput').fill('14');
+    await page.locator('#subtab-stats #wisInput').blur();
     await page.waitForTimeout(200);
     
     // Should be +4 (mod +2, prof +2)
-    await expect(page.locator('#saveWisTotalSpan')).toHaveText('+4');
+    await expect(page.locator('#subtab-stats #saveWisTotalSpan')).toHaveText('+4');
   });
 
   test('Saving Throws persist after reload', async ({ page }) => {
     // Enable DEX and WIS proficiency
-    await page.locator('#saveDexProf').check();
-    await page.locator('#saveWisProf').check();
+    await page.locator('#subtab-stats #saveDexProf').check();
+    await page.locator('#subtab-stats #saveWisProf').check();
     await page.waitForTimeout(200);
     
     // Reload
     await page.reload();
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
     await page.locator('button[data-tab="stats"]').click();
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="stats"]').click();
+    await page.waitForTimeout(200);
     
     // Checkboxes should still be checked
-    await expect(page.locator('#saveDexProf')).toBeChecked();
-    await expect(page.locator('#saveWisProf')).toBeChecked();
+    await expect(page.locator('#subtab-stats #saveDexProf')).toBeChecked();
+    await expect(page.locator('#subtab-stats #saveWisProf')).toBeChecked();
     
     // Values should still be +2
-    await expect(page.locator('#saveDexTotalSpan')).toHaveText('+2');
-    await expect(page.locator('#saveWisTotalSpan')).toHaveText('+2');
+    await expect(page.locator('#subtab-stats #saveDexTotalSpan')).toHaveText('+2');
+    await expect(page.locator('#subtab-stats #saveWisTotalSpan')).toHaveText('+2');
   });
 
 });
@@ -132,22 +141,25 @@ test.describe('Skills - Proficiency Toggles', () => {
     await page.evaluate(() => localStorage.clear());
     await page.reload();
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
-    await page.locator('button[data-tab="skills"]').click();
+    // Open Stats tab and Passive Skills sub-tab (where skillsBody is located)
+    await page.locator('button[data-tab="stats"]').click();
     await page.waitForTimeout(300);
-    // Verify tab is open (not hidden)
-    await expect(page.locator('#tab-skills')).not.toHaveClass(/hidden/);
+    await page.locator('button[data-subtab="passiveskills"]').click();
+    await page.waitForTimeout(200);
+    // Wait for skills table to be visible
+    await expect(page.locator('#subtab-passiveskills #skillsBody')).toBeVisible({ timeout: 5000 });
   });
 
   test('Acrobatics (DEX): Toggle proficiency adds/removes prof bonus', async ({ page }) => {
     // Wait for skills table to render and be visible
     await page.waitForFunction(() => {
-      const tab = document.querySelector('#tab-skills');
-      const rows = document.querySelectorAll('#skillsBody tr');
-      return tab && !tab.classList.contains('hidden') && rows.length > 0;
+      const body = document.querySelector('#subtab-passiveskills #skillsBody');
+      const rows = body ? body.querySelectorAll('tr') : [];
+      return body && rows.length > 0;
     }, { timeout: 5000 });
     
     // Find Acrobatics row
-    const acrobaticsRow = page.locator('#skillsBody tr').filter({ hasText: 'Acrobatics' });
+    const acrobaticsRow = page.locator('#subtab-passiveskills #skillsBody tr').filter({ hasText: 'Acrobatics' });
     const checkbox = acrobaticsRow.locator('input[type="checkbox"]');
     const bonusCell = acrobaticsRow.locator('td.right');
     
@@ -182,24 +194,28 @@ test.describe('Skills - Proficiency Toggles', () => {
   });
 
   test('Athletics (STR): Toggle proficiency with high ability score', async ({ page }) => {
-    // Set STR to 16 (mod +3)
+    // Set STR to 16 (mod +3) - open Stats tab and Stats sub-tab
     await page.locator('button[data-tab="stats"]').click();
-    await page.locator('#strInput').fill('16');
-    await page.locator('#strInput').blur();
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="stats"]').click();
+    await page.waitForTimeout(200);
+    await page.locator('#subtab-stats #strInput').fill('16');
+    await page.locator('#subtab-stats #strInput').blur();
     await page.waitForTimeout(200);
     
-    // Go back to Skills tab
-    await page.locator('button[data-tab="skills"]').click();
+    // Go back to Stats tab and Passive Skills sub-tab
+    await page.locator('button[data-tab="stats"]').click();
     await page.waitForTimeout(300);
-    await expect(page.locator('#tab-skills')).not.toHaveClass(/hidden/);
+    await page.locator('button[data-subtab="passiveskills"]').click();
+    await page.waitForTimeout(200);
     await page.waitForFunction(() => {
-      const tab = document.querySelector('#tab-skills');
-      const rows = document.querySelectorAll('#skillsBody tr');
-      return tab && !tab.classList.contains('hidden') && rows.length > 0;
+      const body = document.querySelector('#subtab-passiveskills #skillsBody');
+      const rows = body ? body.querySelectorAll('tr') : [];
+      return body && rows.length > 0;
     }, { timeout: 5000 });
     
     // Find Athletics row
-    const athleticsRow = page.locator('#skillsBody tr').filter({ hasText: 'Athletics' });
+    const athleticsRow = page.locator('#subtab-passiveskills #skillsBody tr').filter({ hasText: 'Athletics' });
     const checkbox = athleticsRow.locator('input[type="checkbox"]');
     const bonusCell = athleticsRow.locator('td.right');
     
@@ -220,21 +236,29 @@ test.describe('Skills - Proficiency Toggles', () => {
 
   test('Perception (WIS): Toggle proficiency updates passive Perception', async ({ page }) => {
     await page.waitForFunction(() => {
-      const tab = document.querySelector('#tab-skills');
-      const rows = document.querySelectorAll('#skillsBody tr');
-      return tab && !tab.classList.contains('hidden') && rows.length > 0;
+      const body = document.querySelector('#subtab-passiveskills #skillsBody');
+      const rows = body ? body.querySelectorAll('tr') : [];
+      return body && rows.length > 0;
     }, { timeout: 5000 });
     
     // Find Perception row
-    const perceptionRow = page.locator('#skillsBody tr').filter({ hasText: 'Perception' });
+    const perceptionRow = page.locator('#subtab-passiveskills #skillsBody tr').filter({ hasText: 'Perception' });
     const checkbox = perceptionRow.locator('input[type="checkbox"]');
     const bonusCell = perceptionRow.locator('td.right');
     
-    // Default: WIS 10 (mod +0), no prof → +0, Passive = 10
+    // Default: WIS 10 (mod +0), no prof → +0, Passive = 10 - check in Basic Info sub-tab
     await expect(bonusCell).toHaveText('+0');
-    await expect(page.locator('#passPercSpan')).toHaveText('10');
+    await page.locator('button[data-tab="stats"]').click();
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    await expect(page.locator('#subtab-basicinfo #passPercSpan')).toHaveText('10');
     
-    // Enable proficiency
+    // Enable proficiency - back to Stats tab and Passive Skills sub-tab
+    await page.locator('button[data-tab="stats"]').click();
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="passiveskills"]').click();
+    await page.waitForTimeout(200);
     await page.evaluate(() => {
       const checkbox = document.querySelector('input[data-skill="Perception"]');
       if (checkbox) {
@@ -247,20 +271,24 @@ test.describe('Skills - Proficiency Toggles', () => {
     // Skill should be +2
     await expect(bonusCell).toHaveText('+2');
     
-    // Passive Perception should be 12 (10 + 2)
-    await expect(page.locator('#passPercSpan')).toHaveText('12');
+    // Passive Perception should be 12 (10 + 2) - check in Basic Info sub-tab
+    await page.locator('button[data-tab="stats"]').click();
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    await expect(page.locator('#subtab-basicinfo #passPercSpan')).toHaveText('12');
   });
 
   test('Multiple Skills: Toggle proficiency independently', async ({ page }) => {
     await page.waitForFunction(() => {
-      const tab = document.querySelector('#tab-skills');
-      const rows = document.querySelectorAll('#skillsBody tr');
-      return tab && !tab.classList.contains('hidden') && rows.length > 0;
+      const body = document.querySelector('#subtab-passiveskills #skillsBody');
+      const rows = body ? body.querySelectorAll('tr') : [];
+      return body && rows.length > 0;
     }, { timeout: 5000 });
     
     // Enable Acrobatics and Stealth (both DEX)
-    const acrobaticsRow = page.locator('#skillsBody tr').filter({ hasText: 'Acrobatics' });
-    const stealthRow = page.locator('#skillsBody tr').filter({ hasText: 'Stealth' });
+    const acrobaticsRow = page.locator('#subtab-passiveskills #skillsBody tr').filter({ hasText: 'Acrobatics' });
+    const stealthRow = page.locator('#subtab-passiveskills #skillsBody tr').filter({ hasText: 'Stealth' });
     
     await page.evaluate(() => {
       const acro = document.querySelector('input[data-skill="Acrobatics"]');
@@ -288,13 +316,13 @@ test.describe('Skills - Proficiency Toggles', () => {
 
   test('CASCADE: Ability score change updates skill when proficiency enabled', async ({ page }) => {
     await page.waitForFunction(() => {
-      const tab = document.querySelector('#tab-skills');
-      const rows = document.querySelectorAll('#skillsBody tr');
-      return tab && !tab.classList.contains('hidden') && rows.length > 0;
+      const body = document.querySelector('#subtab-passiveskills #skillsBody');
+      const rows = body ? body.querySelectorAll('tr') : [];
+      return body && rows.length > 0;
     }, { timeout: 5000 });
     
     // Enable Insight (WIS)
-    const insightRow = page.locator('#skillsBody tr').filter({ hasText: 'Insight' });
+    const insightRow = page.locator('#subtab-passiveskills #skillsBody tr').filter({ hasText: 'Insight' });
     await page.evaluate(() => {
       const checkbox = document.querySelector('input[data-skill="Insight"]');
       if (checkbox) {
@@ -307,37 +335,41 @@ test.describe('Skills - Proficiency Toggles', () => {
     // WIS 10 (mod +0) + prof +2 = +2
     await expect(insightRow.locator('td.right')).toHaveText('+2');
     
-    // Increase WIS to 14 (mod +2)
+    // Increase WIS to 14 (mod +2) - open Stats tab and Stats sub-tab
     await page.locator('button[data-tab="stats"]').click();
-    await page.locator('#wisInput').fill('14');
-    await page.locator('#wisInput').blur();
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="stats"]').click();
+    await page.waitForTimeout(200);
+    await page.locator('#subtab-stats #wisInput').fill('14');
+    await page.locator('#subtab-stats #wisInput').blur();
     await page.waitForTimeout(200);
     
-    // Go back to Skills
-    await page.locator('button[data-tab="skills"]').click();
+    // Go back to Stats tab and Passive Skills sub-tab
+    await page.locator('button[data-tab="stats"]').click();
     await page.waitForTimeout(300);
-    await expect(page.locator('#tab-skills')).not.toHaveClass(/hidden/);
+    await page.locator('button[data-subtab="passiveskills"]').click();
+    await page.waitForTimeout(200);
     await page.waitForFunction(() => {
-      const tab = document.querySelector('#tab-skills');
-      const rows = document.querySelectorAll('#skillsBody tr');
-      return tab && !tab.classList.contains('hidden') && rows.length > 0;
+      const body = document.querySelector('#subtab-passiveskills #skillsBody');
+      const rows = body ? body.querySelectorAll('tr') : [];
+      return body && rows.length > 0;
     }, { timeout: 5000 });
     
     // Should be +4 (mod +2, prof +2)
-    const insightRowAfter = page.locator('#skillsBody tr').filter({ hasText: 'Insight' });
+    const insightRowAfter = page.locator('#subtab-passiveskills #skillsBody tr').filter({ hasText: 'Insight' });
     await expect(insightRowAfter.locator('td.right')).toHaveText('+4');
   });
 
   test('Skills persist after reload', async ({ page }) => {
     await page.waitForFunction(() => {
-      const tab = document.querySelector('#tab-skills');
-      const rows = document.querySelectorAll('#skillsBody tr');
-      return tab && !tab.classList.contains('hidden') && rows.length > 0;
+      const body = document.querySelector('#subtab-passiveskills #skillsBody');
+      const rows = body ? body.querySelectorAll('tr') : [];
+      return body && rows.length > 0;
     }, { timeout: 5000 });
     
     // Enable Acrobatics and Investigation
-    const acrobaticsRow = page.locator('#skillsBody tr').filter({ hasText: 'Acrobatics' });
-    const investigationRow = page.locator('#skillsBody tr').filter({ hasText: 'Investigation' });
+    const acrobaticsRow = page.locator('#subtab-passiveskills #skillsBody tr').filter({ hasText: 'Acrobatics' });
+    const investigationRow = page.locator('#subtab-passiveskills #skillsBody tr').filter({ hasText: 'Investigation' });
     
     await page.evaluate(() => {
       const acro = document.querySelector('input[data-skill="Acrobatics"]');
@@ -350,16 +382,19 @@ test.describe('Skills - Proficiency Toggles', () => {
     // Reload
     await page.reload();
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
-    await page.locator('button[data-tab="skills"]').click();
+    await page.locator('button[data-tab="stats"]').click();
     await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="passiveskills"]').click();
+    await page.waitForTimeout(200);
     await page.waitForFunction(() => {
-      const rows = document.querySelectorAll('#skillsBody tr');
-      return rows.length > 0;
+      const body = document.querySelector('#subtab-passiveskills #skillsBody');
+      const rows = body ? body.querySelectorAll('tr') : [];
+      return body && rows.length > 0;
     }, { timeout: 5000 });
     
     // Checkboxes should still be checked
-    const acrobaticsRowAfter = page.locator('#skillsBody tr').filter({ hasText: 'Acrobatics' });
-    const investigationRowAfter = page.locator('#skillsBody tr').filter({ hasText: 'Investigation' });
+    const acrobaticsRowAfter = page.locator('#subtab-passiveskills #skillsBody tr').filter({ hasText: 'Acrobatics' });
+    const investigationRowAfter = page.locator('#subtab-passiveskills #skillsBody tr').filter({ hasText: 'Investigation' });
     await expect(acrobaticsRowAfter.locator('input[type="checkbox"]')).toBeChecked();
     await expect(investigationRowAfter.locator('input[type="checkbox"]')).toBeChecked();
     
@@ -379,24 +414,30 @@ test.describe('Skills - Proficiency Toggles', () => {
     ];
     
     for (const { name, abilityId } of skillTests) {
-      // Set ability to 16 (mod +3)
+      // Set ability to 16 (mod +3) - open Stats tab and Stats sub-tab
       await page.locator('button[data-tab="stats"]').click();
-      await page.locator(abilityId).fill('16');
-      await page.locator(abilityId).blur();
+      await page.waitForTimeout(300);
+      await page.locator('button[data-subtab="stats"]').click();
+      await page.waitForTimeout(200);
+      // Update abilityId to include sub-tab context
+      const abilityIdWithContext = abilityId.replace('#', '#subtab-stats #');
+      await page.locator(abilityIdWithContext).fill('16');
+      await page.locator(abilityIdWithContext).blur();
       await page.waitForTimeout(200);
       
-      // Go to Skills
-      await page.locator('button[data-tab="skills"]').click();
+      // Go to Stats tab and Passive Skills sub-tab
+      await page.locator('button[data-tab="stats"]').click();
       await page.waitForTimeout(300);
-      await expect(page.locator('#tab-skills')).not.toHaveClass(/hidden/);
+      await page.locator('button[data-subtab="passiveskills"]').click();
+      await page.waitForTimeout(200);
       await page.waitForFunction(() => {
-        const tab = document.querySelector('#tab-skills');
-        const rows = document.querySelectorAll('#skillsBody tr');
-        return tab && !tab.classList.contains('hidden') && rows.length > 0;
+        const body = document.querySelector('#subtab-passiveskills #skillsBody');
+        const rows = body ? body.querySelectorAll('tr') : [];
+        return body && rows.length > 0;
       }, { timeout: 5000 });
       
       // Find skill row
-      const skillRow = page.locator('#skillsBody tr').filter({ hasText: name });
+      const skillRow = page.locator('#subtab-passiveskills #skillsBody tr').filter({ hasText: name });
       const bonusCell = skillRow.locator('td.right');
       
       // Without prof: +3
@@ -413,10 +454,13 @@ test.describe('Skills - Proficiency Toggles', () => {
       await page.waitForTimeout(200);
       await expect(bonusCell).toHaveText('+5');
       
-      // Reset ability
+      // Reset ability - back to Stats tab and Stats sub-tab
       await page.locator('button[data-tab="stats"]').click();
-      await page.locator(abilityId).fill('10');
-      await page.locator(abilityId).blur();
+      await page.waitForTimeout(300);
+      await page.locator('button[data-subtab="stats"]').click();
+      await page.waitForTimeout(200);
+      await page.locator(abilityIdWithContext).fill('10');
+      await page.locator(abilityIdWithContext).blur();
       await page.waitForTimeout(200);
     }
   });
@@ -449,43 +493,54 @@ test.describe('Proficiency scaling with level', () => {
       await page.reload();
       await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
 
-      // Статове 10, за да е mod = +0 и да виждаме чисто prof
+      // Статове 10, за да е mod = +0 и да виждаме чисто prof - open Stats tab and Stats sub-tab
       await page.locator('button[data-tab="stats"]').click();
-      await page.locator('#strInput').fill('10');
-      await page.locator('#strInput').blur();
-      await page.locator('#dexInput').fill('10');
-      await page.locator('#dexInput').blur();
-      await page.locator('#wisInput').fill('10');
-      await page.locator('#wisInput').blur();
+      await page.waitForTimeout(300);
+      await page.locator('button[data-subtab="stats"]').click();
+      await page.waitForTimeout(200);
+      await page.locator('#subtab-stats #strInput').fill('10');
+      await page.locator('#subtab-stats #strInput').blur();
+      await page.locator('#subtab-stats #dexInput').fill('10');
+      await page.locator('#subtab-stats #dexInput').blur();
+      await page.locator('#subtab-stats #wisInput').fill('10');
+      await page.locator('#subtab-stats #wisInput').blur();
 
-      // Задаваме XP за това ниво
-      await page.locator('#xpInput').fill(xp.toString());
-      await page.locator('#xpInput').blur();
+      // Задаваме XP за това ниво - open Basic Info sub-tab
+      await page.locator('button[data-subtab="basicinfo"]').click();
+      await page.waitForTimeout(200);
+      await page.locator('#subtab-basicinfo #xpInput').fill(xp.toString());
+      await page.locator('#subtab-basicinfo #xpInput').blur();
       await page.waitForTimeout(300);
 
       // Long Rest за да се изпълни пълната логика и renderAll()
       await page.locator('#btnLongRest').click();
 
-      // Връщаме се в Stats и проверяваме level + proficiency бонуса
+      // Връщаме се в Stats и проверяваме level + proficiency бонуса - open Basic Info sub-tab
       await page.locator('button[data-tab="stats"]').click();
-      await expect(page.locator('#levelSpan')).toHaveText(level.toString());
-      await expect(page.locator('#profSpan2')).toHaveText(expectedProf);
+      await page.waitForTimeout(300);
+      await page.locator('button[data-subtab="basicinfo"]').click();
+      await page.waitForTimeout(200);
+      await expect(page.locator('#subtab-basicinfo #levelSpan')).toHaveText(level.toString());
+      await expect(page.locator('#subtab-basicinfo #profSpan2')).toHaveText(expectedProf);
 
-      // Включваме STR save proficiency (за да е мод = prof)
-      await page.locator('#saveStrProf').check();
+      // Включваме STR save proficiency (за да е мод = prof) - open Stats sub-tab
+      await page.locator('button[data-subtab="stats"]').click();
+      await page.waitForTimeout(200);
+      await page.locator('#subtab-stats #saveStrProf').check();
       await page.waitForTimeout(100);
 
       // STR мод = +0, значи total трябва да е равен на prof
-      await expect(page.locator('#saveStrTotalSpan')).toHaveText(expectedProf);
+      await expect(page.locator('#subtab-stats #saveStrTotalSpan')).toHaveText(expectedProf);
 
-      // Отиваме на Skills и включваме Acrobatics proficiency
-      await page.locator('button[data-tab="skills"]').click();
+      // Отиваме на Stats tab и Passive Skills sub-tab и включваме Acrobatics proficiency
+      await page.locator('button[data-tab="stats"]').click();
       await page.waitForTimeout(300);
-      await expect(page.locator('#tab-skills')).not.toHaveClass(/hidden/);
+      await page.locator('button[data-subtab="passiveskills"]').click();
+      await page.waitForTimeout(200);
       await page.waitForFunction(() => {
-        const tab = document.querySelector('#tab-skills');
-        const rows = document.querySelectorAll('#skillsBody tr');
-        return tab && !tab.classList.contains('hidden') && rows.length > 0;
+        const body = document.querySelector('#subtab-passiveskills #skillsBody');
+        const rows = body ? body.querySelectorAll('tr') : [];
+        return body && rows.length > 0;
       }, { timeout: 5000 });
 
       // Активираме proficiency за Acrobatics през JS (както в останалите тестове)
@@ -499,7 +554,7 @@ test.describe('Proficiency scaling with level', () => {
       await page.waitForTimeout(200);
 
       // Намираме реда за Acrobatics и очакваме бонусът да е равен на prof
-      const acrobaticsRow = page.locator('#skillsBody tr').filter({ hasText: 'Acrobatics' });
+      const acrobaticsRow = page.locator('#subtab-passiveskills #skillsBody tr').filter({ hasText: 'Acrobatics' });
       const acrobaticsBonus = acrobaticsRow.locator('td.right');
       await expect(acrobaticsBonus).toHaveText(expectedProf);
     });

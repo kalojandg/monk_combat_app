@@ -286,21 +286,27 @@ test.describe('Data Loading - Skills & Features', () => {
   });
 
   test('skills-and-features.json loads for Level 5', async ({ page }) => {
-    // Set XP to 6500 (enough for level 5)
+    // Set XP to 6500 (enough for level 5) - open Stats tab and Basic Info sub-tab
     await page.locator('button[data-tab="stats"]').click();
-    await page.locator('#xpInput').fill('6500');
-    await page.locator('#xpInput').blur();
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    await page.locator('#subtab-basicinfo #xpInput').fill('6500');
+    await page.locator('#subtab-basicinfo #xpInput').blur();
     await page.waitForTimeout(300);
     
     // Level should still be 1 (level up happens on Long Rest)
-    await expect(page.locator('#levelSpan')).toHaveText('1');
+    await expect(page.locator('#subtab-basicinfo #levelSpan')).toHaveText('1');
     
     // Long rest to trigger level up
     await page.locator('#btnLongRest').click();
     
     // Verify level is now 5
     await page.locator('button[data-tab="stats"]').click();
-    await expect(page.locator('#levelSpan')).toHaveText('5');
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    await expect(page.locator('#subtab-basicinfo #levelSpan')).toHaveText('5');
     
     // Open Skills tab
     await page.locator('button[data-tab="skills"]').click();
@@ -405,9 +411,12 @@ test.describe('Data Loading - Error Handling', () => {
     // App loads
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
     
-    // Can still navigate tabs
+    // Can still navigate tabs - open Stats tab and Basic Info sub-tab
     await page.locator('button[data-tab="stats"]').click();
-    await expect(page.locator('#xpInput')).toBeVisible();
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    await expect(page.locator('#subtab-basicinfo #xpInput')).toBeVisible();
   });
 
 });

@@ -47,6 +47,90 @@ test.describe('Styles - Tabs & Navigation', () => {
   });
 });
 
+test.describe('Styles - Stats sub-tabs (second level)', () => {
+  test('All [data-subtab] buttons share the same sub-tab look (per group)', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
+
+    // Отваряме Stats, за да се появят подтабовете
+    await page.locator('button[data-tab="stats"]').click();
+
+    const subTabButtons = await page.$$('[data-subtab]');
+    expect(subTabButtons.length).toBeGreaterThan(0);
+
+    // Групиране по subtab key – за всеки key стилът трябва да е консистентен
+    const byKey = new Map();
+    for (const btn of subTabButtons) {
+      const key = await btn.getAttribute('data-subtab');
+      if (!byKey.has(key)) byKey.set(key, []);
+      byKey.get(key).push(btn);
+    }
+
+    for (const [key, buttons] of byKey.entries()) {
+      const base = await buttons[0].evaluate(el => {
+        const s = getComputedStyle(el);
+        return {
+          bg: s.backgroundColor,
+          color: s.color,
+          radius: s.borderRadius,
+          fontSize: s.fontSize,
+          padding: s.padding,
+        };
+      });
+
+      for (const btn of buttons) {
+        const s = await btn.evaluate(el => {
+          const cs = getComputedStyle(el);
+          return {
+            bg: cs.backgroundColor,
+            color: cs.color,
+            radius: cs.borderRadius,
+            fontSize: cs.fontSize,
+            padding: cs.padding,
+          };
+        });
+        expect(s).toEqual(base);
+      }
+    }
+  });
+
+  test('Sub-tabs are visually smaller and different from first-level tabs', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
+
+    // Първо ниво – взимаме Stats бутона като представител
+    const mainStatsBtn = page.locator('button[data-tab="stats"]').first();
+    const mainStyles = await mainStatsBtn.evaluate(el => {
+      const s = getComputedStyle(el);
+      return {
+        bg: s.backgroundColor,
+        fontSize: parseFloat(s.fontSize),
+        paddingTop: parseFloat(s.paddingTop),
+        paddingBottom: parseFloat(s.paddingBottom),
+      };
+    });
+
+    // Второ ниво – Basic Info подтаб
+    await mainStatsBtn.click();
+    const basicInfoBtn = page.locator('button[data-subtab="basicinfo"]').first();
+    const subStyles = await basicInfoBtn.evaluate(el => {
+      const s = getComputedStyle(el);
+      return {
+        bg: s.backgroundColor,
+        fontSize: parseFloat(s.fontSize),
+        paddingTop: parseFloat(s.paddingTop),
+        paddingBottom: parseFloat(s.paddingBottom),
+      };
+    });
+
+    // Проверяваме, че подтабовете са с по-малък фон/шрифт и по-тънка височина
+    expect(subStyles.bg).not.toBe(mainStyles.bg);
+    expect(subStyles.fontSize).toBeLessThan(mainStyles.fontSize);
+    expect(subStyles.paddingTop).toBeLessThanOrEqual(mainStyles.paddingTop);
+    expect(subStyles.paddingBottom).toBeLessThanOrEqual(mainStyles.paddingBottom);
+  });
+});
+
 test.describe('Styles - Buttons', () => {
   test('Primary buttons have consistent background, color and radius', async ({ page }) => {
     await page.goto('/');

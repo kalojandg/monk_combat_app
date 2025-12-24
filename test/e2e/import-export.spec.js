@@ -31,21 +31,31 @@ test.describe('Import / Export - Bundle v2', () => {
 
     // Име + XP + DEX на Stats таб
     await page.locator('button[data-tab="stats"]').click();
-    await page.locator('#charName').fill('Тестов Монах');
-    await page.locator('#xpInput').fill('6500'); // ниво 5
-    await page.locator('#xpInput').blur();
+    await page.waitForTimeout(300);
+    // Open Basic Info sub-tab
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    await page.locator('#subtab-basicinfo #charName').fill('Тестов Монах');
+    await page.locator('#subtab-basicinfo #xpInput').fill('6500'); // ниво 5
+    await page.locator('#subtab-basicinfo #xpInput').blur();
     await page.waitForTimeout(300);
     
     // Level should still be 1 (level up happens on Long Rest)
-    await expect(page.locator('#levelSpan')).toHaveText('1');
+    await expect(page.locator('#subtab-basicinfo #levelSpan')).toHaveText('1');
     
     // Long rest to trigger level up to 5
     await page.locator('#btnLongRest').click();
     await page.locator('button[data-tab="stats"]').click();
-    await expect(page.locator('#levelSpan')).toHaveText('5');
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    await expect(page.locator('#subtab-basicinfo #levelSpan')).toHaveText('5');
     
-    await page.locator('#dexInput').fill('16');
-    await page.locator('#dexInput').blur();
+    // Open Stats sub-tab for DEX
+    await page.locator('button[data-subtab="stats"]').click();
+    await page.waitForTimeout(200);
+    await page.locator('#subtab-stats #dexInput').fill('16');
+    await page.locator('#subtab-stats #dexInput').blur();
 
     // PC Characteristics таб
     await page.locator('button[data-tab="pcchar"]').click();
@@ -53,9 +63,12 @@ test.describe('Import / Export - Bundle v2', () => {
     await page.locator('#pcBond').fill('Заклел се е да пази манастира.');
     await page.locator('#pcFlaw').fill('Натрапчиво пресмята всичко в бой.');
 
-    // Notes (глобално поле)
+    // Notes (глобално поле) - в Basic Info sub-tab
     await page.locator('button[data-tab="stats"]').click();
-    await page.locator('#notes').fill('Бележка за теста на import/export.');
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    await page.locator('#subtab-basicinfo #notes').fill('Бележка за теста на import/export.');
 
     // Inventory – добавяме един прост запис през вече тестваните бутони
     await page.locator('button[data-tab="inventory"]').click();
@@ -108,21 +121,31 @@ test.describe('Import / Export - Bundle v2', () => {
 
     // Stats таб
     await page.locator('button[data-tab="stats"]').click();
-    await page.locator('#charName').fill('Roundtrip Монах');
-    await page.locator('#xpInput').fill('14000'); // ниво 6 (9000 е за level 5)
-    await page.locator('#xpInput').blur();
+    await page.waitForTimeout(300);
+    // Open Basic Info sub-tab
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    await page.locator('#subtab-basicinfo #charName').fill('Roundtrip Монах');
+    await page.locator('#subtab-basicinfo #xpInput').fill('14000'); // ниво 6 (9000 е за level 5)
+    await page.locator('#subtab-basicinfo #xpInput').blur();
     await page.waitForTimeout(300);
     
     // Level should still be 1 (level up happens on Long Rest)
-    await expect(page.locator('#levelSpan')).toHaveText('1');
+    await expect(page.locator('#subtab-basicinfo #levelSpan')).toHaveText('1');
     
     // Long rest to trigger level up to 6
     await page.locator('#btnLongRest').click();
     await page.locator('button[data-tab="stats"]').click();
-    await expect(page.locator('#levelSpan')).toHaveText('6');
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    await expect(page.locator('#subtab-basicinfo #levelSpan')).toHaveText('6');
     
-    await page.locator('#wisInput').fill('18');
-    await page.locator('#wisInput').blur();
+    // Open Stats sub-tab for WIS
+    await page.locator('button[data-subtab="stats"]').click();
+    await page.waitForTimeout(200);
+    await page.locator('#subtab-stats #wisInput').fill('18');
+    await page.locator('#subtab-stats #wisInput').blur();
 
     // Skills таб - просто да се уверим, че features accordion ще се рендерира по-късно
     await page.locator('button[data-tab="skills"]').click();
@@ -156,7 +179,10 @@ test.describe('Import / Export - Bundle v2', () => {
 
     // Уверяваме се, че името е в default стойността от defaultState
     await page.locator('button[data-tab="stats"]').click();
-    await expect(page.locator('#charName')).toHaveValue('Пийс Ошит');
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    await expect(page.locator('#subtab-basicinfo #charName')).toHaveValue('Пийс Ошит');
 
     // 4) Импортираме bundle чрез applyBundle(bundle)
     await page.evaluate(b => {
@@ -173,13 +199,22 @@ test.describe('Import / Export - Bundle v2', () => {
 
     // Stats
     await page.locator('button[data-tab="stats"]').click();
-    await expect(page.locator('#charName')).toHaveValue('Roundtrip Монах');
-    await expect(page.locator('#xpInput')).toHaveValue('14000');
-    await expect(page.locator('#wisInput')).toHaveValue('18');
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    await expect(page.locator('#subtab-basicinfo #charName')).toHaveValue('Roundtrip Монах');
+    await expect(page.locator('#subtab-basicinfo #xpInput')).toHaveValue('14000');
+    
+    // Open Stats sub-tab for WIS
+    await page.locator('button[data-subtab="stats"]').click();
+    await page.waitForTimeout(200);
+    await expect(page.locator('#subtab-stats #wisInput')).toHaveValue('18');
 
     // Ниво трябва да съответства на XP от bundle-а (level се пази в bundle-а след Long Rest)
     // Bundle-а е генериран след Long Rest, така че level трябва да е 6
-    await expect(page.locator('#levelSpan')).toHaveText('6');
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    await expect(page.locator('#subtab-basicinfo #levelSpan')).toHaveText('6');
 
     // PC Characteristics
     await page.locator('button[data-tab="pcchar"]').click();
@@ -190,42 +225,55 @@ test.describe('Import / Export - Bundle v2', () => {
     // 1) Попълваме ВЪЗМОЖНО НАЙ-МНОГО полета през UI, за да не остават default стойности
     // Stats
     await page.locator('button[data-tab="stats"]').click();
-    await page.locator('#charName').fill('Full Roundtrip Монах');
-    await page.locator('#notes').fill('Големият тест за import/export.');
-    await page.locator('#xpInput').fill('48000'); // ниво 9
-    await page.locator('#xpInput').blur();
+    await page.waitForTimeout(300);
+    // Open Basic Info sub-tab
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    await page.locator('#subtab-basicinfo #charName').fill('Full Roundtrip Монах');
+    await page.locator('#subtab-basicinfo #notes').fill('Големият тест за import/export.');
+    await page.locator('#subtab-basicinfo #xpInput').fill('48000'); // ниво 9
+    await page.locator('#subtab-basicinfo #xpInput').blur();
 
+    // Open Stats sub-tab for ability scores
+    await page.locator('button[data-subtab="stats"]').click();
+    await page.waitForTimeout(200);
     // Ability scores
-    await page.locator('#strInput').fill('15');
-    await page.locator('#strInput').blur();
-    await page.locator('#dexInput').fill('17');
-    await page.locator('#dexInput').blur();
-    await page.locator('#conInput').fill('14');
-    await page.locator('#conInput').blur();
-    await page.locator('#intInput').fill('12');
-    await page.locator('#intInput').blur();
-    await page.locator('#wisInput').fill('16');
-    await page.locator('#wisInput').blur();
-    await page.locator('#chaInput').fill('11');
-    await page.locator('#chaInput').blur();
+    await page.locator('#subtab-stats #strInput').fill('15');
+    await page.locator('#subtab-stats #strInput').blur();
+    await page.locator('#subtab-stats #dexInput').fill('17');
+    await page.locator('#subtab-stats #dexInput').blur();
+    await page.locator('#subtab-stats #conInput').fill('14');
+    await page.locator('#subtab-stats #conInput').blur();
+    await page.locator('#subtab-stats #intInput').fill('12');
+    await page.locator('#subtab-stats #intInput').blur();
+    await page.locator('#subtab-stats #wisInput').fill('16');
+    await page.locator('#subtab-stats #wisInput').blur();
+    await page.locator('#subtab-stats #chaInput').fill('11');
+    await page.locator('#subtab-stats #chaInput').blur();
 
-    // Combat-related numeric fields
-    await page.locator('#meleeMagicInput').fill('1');
-    await page.locator('#rangedMagicInput').fill('2');
-    await page.locator('#homebrewHp').fill('5');
-    await page.locator('#acMagicInput').fill('1');
-    await page.locator('#saveAllBonusInput').fill('1');
+    // Combat-related numeric fields - back to Basic Info
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    await page.locator('#subtab-basicinfo #meleeMagicInput').fill('1');
+    await page.locator('#subtab-basicinfo #rangedMagicInput').fill('2');
+    await page.locator('#subtab-basicinfo #homebrewHp').fill('5');
+    await page.locator('#subtab-basicinfo #acMagicInput').fill('1');
+    
+    // Back to Stats sub-tab for saves
+    await page.locator('button[data-subtab="stats"]').click();
+    await page.waitForTimeout(200);
+    await page.locator('#subtab-stats #saveAllBonusInput').fill('1');
 
     // Tough feat
-    await page.locator('#toughChk').check();
+    await page.locator('#subtab-stats #toughChk').check();
 
     // Saving throw proficiencies – включваме всички, за да запълним st.save* флаговете
-    await page.locator('#saveStrProf').check();
-    await page.locator('#saveDexProf').check();
-    await page.locator('#saveConProf').check();
-    await page.locator('#saveIntProf').check();
-    await page.locator('#saveWisProf').check();
-    await page.locator('#saveChaProf').check();
+    await page.locator('#subtab-stats #saveStrProf').check();
+    await page.locator('#subtab-stats #saveDexProf').check();
+    await page.locator('#subtab-stats #saveConProf').check();
+    await page.locator('#subtab-stats #saveIntProf').check();
+    await page.locator('#subtab-stats #saveWisProf').check();
+    await page.locator('#subtab-stats #saveChaProf').check();
 
     // Ki / HP / HD – малко действие, за да са различни от default
     await page.locator('#hpDelta').fill('3');

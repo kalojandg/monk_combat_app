@@ -123,42 +123,51 @@ test.describe('Text Fields - Notes', () => {
     await page.reload();
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
     
-    // Open Stats tab (where notes field is)
+    // Open Stats tab (where notes field is) and Basic Info sub-tab
     await page.locator('button[data-tab="stats"]').click();
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
   });
 
   test('Can enter and save Notes text', async ({ page }) => {
     const text = 'Quest: Find the lost artifact\nNPCs: Mayor Goodwin, Blacksmith Thorn';
     
-    await page.locator('#notes').fill(text);
+    await page.locator('#subtab-basicinfo #notes').fill(text);
     
     // Reload
     await page.reload();
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
     await page.locator('button[data-tab="stats"]').click();
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
     
     // Text persists
-    await expect(page.locator('#notes')).toHaveValue(text);
+    await expect(page.locator('#subtab-basicinfo #notes')).toHaveValue(text);
   });
 
   test('Can enter very long text in Notes', async ({ page }) => {
     const longText = 'A'.repeat(500);
     
-    await page.locator('#notes').fill(longText);
+    await page.locator('#subtab-basicinfo #notes').fill(longText);
     
     // Reload
     await page.reload();
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
     await page.locator('button[data-tab="stats"]').click();
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
     
     // Long text persists
-    const saved = await page.locator('#notes').inputValue();
+    const saved = await page.locator('#subtab-basicinfo #notes').inputValue();
     expect(saved.length).toBe(500);
   });
 
   test('Notes persist independently from PC characteristics', async ({ page }) => {
     // Fill notes
-    await page.locator('#notes').fill('Campaign notes');
+    await page.locator('#subtab-basicinfo #notes').fill('Campaign notes');
     
     // Go to PC tab and fill personality
     await page.locator('button[data-tab="pcchar"]').click();
@@ -170,7 +179,10 @@ test.describe('Text Fields - Notes', () => {
     
     // Check both fields persist independently
     await page.locator('button[data-tab="stats"]').click();
-    await expect(page.locator('#notes')).toHaveValue('Campaign notes');
+    await page.waitForTimeout(300);
+    await page.locator('button[data-subtab="basicinfo"]').click();
+    await page.waitForTimeout(200);
+    await expect(page.locator('#subtab-basicinfo #notes')).toHaveValue('Campaign notes');
     
     await page.locator('button[data-tab="pcchar"]').click();
     await expect(page.locator('#pcPersonality')).toHaveValue('Character personality');
