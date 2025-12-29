@@ -1,5 +1,50 @@
 <div class="section-title">Inventory</div>
 
+<!-- Gold Section -->
+<div class="gold-section mb-10">
+  <!-- Row 1: Gold display spans with icons -->
+  <div class="row-grid mb-4">
+    <div class="field">
+      <label class="coin-platinum">🪙 Platinum</label>
+      <span class="value-pill coin-pill-platinum" id="goldPlatinumSpan">0</span>
+    </div>
+    <div class="field">
+      <label class="coin-gold">🪙 Gold</label>
+      <span class="value-pill coin-pill-gold" id="goldGoldSpan">0</span>
+    </div>
+    <div class="field">
+      <label class="coin-silver">🪙 Silver</label>
+      <span class="value-pill coin-pill-silver" id="goldSilverSpan">0</span>
+    </div>
+    <div class="field">
+      <label class="coin-copper">🪙 Copper</label>
+      <span class="value-pill coin-pill-copper" id="goldCopperSpan">0</span>
+    </div>
+  </div>
+  
+  <!-- Row 2: Inputs and buttons -->
+  <div class="row-grid">
+    <div class="field">
+      <input id="goldPlatinumInput" type="number" step="1" min="0" placeholder="0">
+    </div>
+    <div class="field">
+      <input id="goldGoldInput" type="number" step="1" min="0" placeholder="0">
+    </div>
+    <div class="field">
+      <input id="goldSilverInput" type="number" step="1" min="0" placeholder="0">
+    </div>
+    <div class="field">
+      <input id="goldCopperInput" type="number" step="1" min="0" placeholder="0">
+    </div>
+    <div class="field">
+      <button id="goldGainBtn" class="primary" onclick="if(window.handleGoldGain) window.handleGoldGain(); else console.warn('handleGoldGain not available'); return false;">Gain</button>
+    </div>
+    <div class="field">
+      <button id="goldSpendBtn" onclick="if(window.handleGoldSpend) window.handleGoldSpend(); else console.warn('handleGoldSpend not available'); return false;">Spend</button>
+    </div>
+  </div>
+</div>
+
 <div class="controls flex-center mb-10">
   <button id="btnInvAdd" class="primary">+ Add item</button>
 </div>

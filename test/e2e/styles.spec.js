@@ -223,7 +223,8 @@ test.describe('Styles - Value pills & derived fields', () => {
     await page.goto('/');
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
 
-    const pills = await page.$$('.value-pill');
+    // Get all value-pill elements, but exclude coin-pill-* (they have special colors)
+    const pills = await page.$$('.value-pill:not(.coin-pill-platinum):not(.coin-pill-gold):not(.coin-pill-silver):not(.coin-pill-copper)');
     expect(pills.length).toBeGreaterThan(0);
 
     const base = await pills[0].evaluate(el => {

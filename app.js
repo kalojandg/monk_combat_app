@@ -112,6 +112,10 @@ const defaultState = {
   flaw: "",
 
   inventory: [],
+  goldPlatinum: 0,
+  goldGold: 0,
+  goldSilver: 0,
+  goldCopper: 0,
   hpCurrent: 8,
   hpHomebrew: null,      // добавка към формулната Max HP (може отрицателна)
   kiCurrent: 1,
@@ -442,6 +446,7 @@ function renderAll() {
   renderSkills(d.mods, d.prof);
   renderDeathSaves();
   window.renderInventoryTable?.();
+  window.renderGold?.();
   // renderFeaturesAccordion(d.level);
 }
 
@@ -709,6 +714,12 @@ function applyBundle(data) {
   if (typeof st.level === 'undefined' || st.level === null) {
     st.level = levelFromXP(st.xp || 0);
   }
+  
+  // Migrate: initialize gold fields if missing (for old imports)
+  if (typeof st.goldPlatinum === 'undefined' || st.goldPlatinum === null) st.goldPlatinum = 0;
+  if (typeof st.goldGold === 'undefined' || st.goldGold === null) st.goldGold = 0;
+  if (typeof st.goldSilver === 'undefined' || st.goldSilver === null) st.goldSilver = 0;
+  if (typeof st.goldCopper === 'undefined' || st.goldCopper === null) st.goldCopper = 0;
   
   save();
   renderAll();
@@ -1124,9 +1135,15 @@ function buildBundle() {
   if (!Array.isArray(stateCopy.tools)) stateCopy.tools = [];
   if (!Array.isArray(stateCopy.inventory)) stateCopy.inventory = [];
   
+  // Ensure gold fields exist (should already be in st, but ensure for safety)
+  if (typeof stateCopy.goldPlatinum === 'undefined' || stateCopy.goldPlatinum === null) stateCopy.goldPlatinum = 0;
+  if (typeof stateCopy.goldGold === 'undefined' || stateCopy.goldGold === null) stateCopy.goldGold = 0;
+  if (typeof stateCopy.goldSilver === 'undefined' || stateCopy.goldSilver === null) stateCopy.goldSilver = 0;
+  if (typeof stateCopy.goldCopper === 'undefined' || stateCopy.goldCopper === null) stateCopy.goldCopper = 0;
+  
   return {
     version: 2,
-    state: stateCopy,   // всичко вътре, включително aliases, familiars, languages, tools, inventory
+    state: stateCopy,   // всичко вътре, включително aliases, familiars, languages, tools, inventory, gold
     sessionNotes: st.sessionNotes || ""  // sessionNotes се пази отделно
   };
 }
@@ -1948,6 +1965,19 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
       renderFeaturesAccordion(d.level);
     }
 
+    // Re-attach inventory event listeners when inventory tab is shown
+    if (tabKey === 'inventory') {
+      // Wait for HTML to be fully rendered and elements to be available
+      setTimeout(() => {
+        if (typeof window.attachInventory === 'function') {
+          window.attachInventory();
+        }
+        if (typeof window.renderGold === 'function') {
+          window.renderGold();
+        }
+      }, 100);
+    }
+
     if (tabKey === 'stats') {
       // Show first sub-tab by default if none is active
       const activeSubTab = document.querySelector('.sub-tab-btn.active');
@@ -2279,7 +2309,7 @@ window.addEventListener('beforeunload', (e) => {
     if (typeof window.attachExcuses === 'function') attachExcuses();
     if (typeof window.attachFamiliars === 'function') attachFamiliars();
     if (typeof window.attachAliasLog === 'function') attachAliasLog();
-    if (typeof window.attachInventory === 'function') attachInventory();
+    // attachInventory will be called when inventory tab is shown (in showTab function)
     if (typeof window.attachPCChar === 'function') attachPCChar();
     
     // Attach collapse button if skills tab is visible
@@ -2287,5 +2317,10 @@ window.addEventListener('beforeunload', (e) => {
     
     // Signal that tabs are loaded (for tests)
     window.__tabsLoaded = true;
+    
+    // Export bundle functions for tests
+    window.buildBundle = buildBundle;
+    window.applyBundle = applyBundle;
+    window.getBundle = getBundle;
   })();
 

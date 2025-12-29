@@ -72,11 +72,14 @@ test.describe('Import / Export - Bundle v2', () => {
 
     // Inventory – добавяме един прост запис през вече тестваните бутони
     await page.locator('button[data-tab="inventory"]').click();
+    await page.waitForTimeout(300); // Wait for tab HTML to load and event listeners to attach
     await page.locator('#btnInvAdd').click();
+    await page.waitForTimeout(100); // Wait for modal to open
     await page.locator('#invName').fill('Тестов кинжал');
     await page.locator('#invQty').fill('2');
     await page.locator('#invNote').fill('От тестовия bundle.');
     await page.locator('#invSave').click();
+    await page.waitForTimeout(200); // Wait for save to complete
 
     // Изчакваме save/render
     await page.waitForTimeout(300);
@@ -315,17 +318,22 @@ test.describe('Import / Export - Bundle v2', () => {
 
     // Inventory – 2 предмета
     await page.locator('button[data-tab="inventory"]').click();
+    await page.waitForTimeout(300); // Wait for tab HTML to load and event listeners to attach
     await page.locator('#btnInvAdd').click();
+    await page.waitForTimeout(100); // Wait for modal to open
     await page.locator('#invName').fill('Rope');
     await page.locator('#invQty').fill('1');
     await page.locator('#invNote').fill('50-ft hempen rope.');
     await page.locator('#invSave').click();
+    await page.waitForTimeout(200); // Wait for save to complete
 
     await page.locator('#btnInvAdd').click();
+    await page.waitForTimeout(100); // Wait for modal to open
     await page.locator('#invName').fill('Healing Potion');
     await page.locator('#invQty').fill('3');
     await page.locator('#invNote').fill('Закупени от местния алхимик.');
     await page.locator('#invSave').click();
+    await page.waitForTimeout(200); // Wait for save to complete
 
     // Aliases – един запис
     await page.locator('button[data-tab="shenanigans"]').click();
