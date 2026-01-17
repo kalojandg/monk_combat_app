@@ -181,6 +181,10 @@ function load() {
 }
 
 function save() {
+  // Sync st from window.st to ensure module changes are captured
+  if (window.st) {
+    st = window.st;
+  }
   localStorage.setItem("monkSheet_v3", JSON.stringify(st));
   renderAll();
   window.renderAliasTable?.();      // ← безопасно, ще се изпълни ако функцията съществува
@@ -711,6 +715,7 @@ function applyBundle(data) {
   if (!Array.isArray(st.languages)) st.languages = [];
   if (!Array.isArray(st.tools)) st.tools = [];
   if (!Array.isArray(st.inventory)) st.inventory = [];
+  if (!Array.isArray(st.quests)) st.quests = [];
   
   // Migrate: if level doesn't exist, initialize from XP (for old imports)
   if (typeof st.level === 'undefined' || st.level === null) {
@@ -722,7 +727,10 @@ function applyBundle(data) {
   if (typeof st.goldGold === 'undefined' || st.goldGold === null) st.goldGold = 0;
   if (typeof st.goldSilver === 'undefined' || st.goldSilver === null) st.goldSilver = 0;
   if (typeof st.goldCopper === 'undefined' || st.goldCopper === null) st.goldCopper = 0;
-  
+
+  // Sync window.st before saving to ensure the new state is saved
+  window.st = st;
+
   save();
   renderAll();
   
@@ -732,6 +740,7 @@ function applyBundle(data) {
   if (typeof window.renderInventoryTable === 'function') window.renderInventoryTable();
   if (typeof window.renderAliasTable === 'function') window.renderAliasTable();
   if (typeof window.renderFamTable === 'function') window.renderFamTable();
+  if (typeof window.renderQuests === 'function') window.renderQuests();
 }
 
 // ---------- Inventory ----------

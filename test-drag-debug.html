@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Drag and Drop</title>
+    <script>
+        async function testDragSave() {
+            // Simulate creating quests
+            window.st = {
+                quests: [
+                    {id: 'q1', objective: 'Quest A', order: 0},
+                    {id: 'q2', objective: 'Quest B', order: 1},
+                    {id: 'q3', objective: 'Quest C', order: 2}
+                ]
+            };
+
+            console.log('Before drag:', JSON.parse(JSON.stringify(window.st.quests)));
+
+            // Simulate the drag handler logic
+            const sortedQuests = [...window.st.quests].sort((a, b) => (a.order || 0) - (b.order || 0));
+            console.log('Sorted quests:', sortedQuests.map(q => q.objective));
+
+            // Simulate dragging index 2 to index 0
+            const evt = { oldIndex: 2, newIndex: 0 };
+            const movedQuest = sortedQuests.splice(evt.oldIndex, 1)[0];
+            console.log('Moved quest:', movedQuest.objective);
+            console.log('After splice out:', sortedQuests.map(q => q.objective));
+
+            sortedQuests.splice(evt.newIndex, 0, movedQuest);
+            console.log('After splice in:', sortedQuests.map(q => q.objective));
+
+            // Update order
+            sortedQuests.forEach((quest, idx) => {
+                quest.order = idx;
+            });
+            console.log('After order update:', sortedQuests.map(q => `${q.objective}(${q.order})`));
+
+            // Update state in place
+            window.st.quests.splice(0, window.st.quests.length, ...sortedQuests);
+            console.log('After state update:', window.st.quests.map(q => `${q.objective}(${q.order})`));
+
+            // Check if original references were modified
+            console.log('Quest A order:', window.st.quests.find(q => q.objective === 'Quest A').order);
+            console.log('Quest B order:', window.st.quests.find(q => q.objective === 'Quest B').order);
+            console.log('Quest C order:', window.st.quests.find(q => q.objective === 'Quest C').order);
+        }
+
+        testDragSave();
+    </script>
+</head>
+<body>
+    <h1>Check Console</h1>
+</body>
+</html>

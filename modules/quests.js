@@ -154,6 +154,7 @@ function saveQuest() {
 
   closeQuestModal();
   renderQuests();
+  initQuestDragAndDrop();
 }
 
 // Generate unique quest ID
@@ -175,6 +176,7 @@ function fulfillQuest(index) {
   }
 
   renderQuests();
+  initQuestDragAndDrop();
 }
 
 // Reactivate quest (unfulfill)
@@ -191,6 +193,7 @@ function reactivateQuest(index) {
   }
 
   renderQuests();
+  initQuestDragAndDrop();
 }
 
 // Attach event listeners
@@ -261,7 +264,11 @@ let questSortableInstance = null;
 
 // Initialize drag-and-drop (will be implemented after SortableJS is added)
 function initQuestDragAndDrop() {
+  console.log('initQuestDragAndDrop called');
   const tbody = document.getElementById('questTableBody');
+  console.log('tbody:', tbody);
+  console.log('Sortable defined:', typeof Sortable !== 'undefined');
+
   if (!tbody || typeof Sortable === 'undefined') {
     console.warn('Sortable.js not loaded or tbody not found');
     return;
@@ -269,32 +276,42 @@ function initQuestDragAndDrop() {
 
   // Destroy existing instance if any
   if (questSortableInstance) {
+    console.log('Destroying existing instance');
     questSortableInstance.destroy();
   }
 
+  console.log('Creating new Sortable instance');
   questSortableInstance = Sortable.create(tbody, {
     animation: 150,
-    handle: 'tr', // Entire row is draggable
     ghostClass: 'quest-dragging',
     onEnd: function(evt) {
+      console.log('Drag onEnd called:', evt.oldIndex, '->', evt.newIndex);
+
       // Get the current sorted quests (by order field)
       const sortedQuests = [...window.st.quests].sort((a, b) => (a.order || 0) - (b.order || 0));
+      console.log('Sorted quests before reorder:', sortedQuests.map(q => q.objective));
 
       // Reorder based on the drag operation
       const movedQuest = sortedQuests.splice(evt.oldIndex, 1)[0];
+      console.log('Moved quest:', movedQuest?.objective);
       sortedQuests.splice(evt.newIndex, 0, movedQuest);
+      console.log('Sorted quests after reorder:', sortedQuests.map(q => q.objective));
 
       // Update order property for all quests to match new positions
       sortedQuests.forEach((quest, idx) => {
         quest.order = idx;
       });
+      console.log('After order update:', sortedQuests.map(q => `${q.objective}(${q.order})`));
 
       // Update state
       window.st.quests = sortedQuests;
+      console.log('window.st.quests updated:', window.st.quests.map(q => `${q.objective}(${q.order})`));
 
       // Save to localStorage immediately
       if (typeof window.save === 'function') {
+        console.log('Calling save()');
         window.save();
+        console.log('Save() completed');
       }
 
       // Note: We don't need to re-render or re-init drag-and-drop
@@ -312,3 +329,8 @@ window.closeQuestModal = closeQuestModal;
 window.saveQuest = saveQuest;
 window.fulfillQuest = fulfillQuest;
 window.reactivateQuest = reactivateQuest;
+// Export instance for debugging
+Object.defineProperty(window, 'questSortableInstance', {
+  get: () => questSortableInstance,
+  configurable: true
+});
