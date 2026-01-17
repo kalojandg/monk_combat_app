@@ -10,7 +10,8 @@ async function loadTabs() {
     'excuses': 'tabs/excuses.html',
     'familiars': 'tabs/familiars.html',
     'skills': 'tabs/skills.html',
-    'sessionNotes': 'tabs/sessionNotes.html'
+    'sessionNotes': 'tabs/sessionNotes.html',
+    'quests': 'tabs/quests.html'
   };
 
   const loadPromises = Object.entries(tabMap).map(async ([tabId, url]) => {
@@ -125,6 +126,7 @@ const defaultState = {
   sessionNotes: "",
   aliases: [],
   familiars: [],
+  quests: [],
 
   acMagic: 0,
   baseSpeed: 30,
@@ -1134,6 +1136,7 @@ function buildBundle() {
   if (!Array.isArray(stateCopy.languages)) stateCopy.languages = [];
   if (!Array.isArray(stateCopy.tools)) stateCopy.tools = [];
   if (!Array.isArray(stateCopy.inventory)) stateCopy.inventory = [];
+  if (!Array.isArray(stateCopy.quests)) stateCopy.quests = [];
   
   // Ensure gold fields exist (should already be in st, but ensure for safety)
   if (typeof stateCopy.goldPlatinum === 'undefined' || stateCopy.goldPlatinum === null) stateCopy.goldPlatinum = 0;
@@ -1974,6 +1977,21 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
         }
         if (typeof window.renderGold === 'function') {
           window.renderGold();
+        }
+      }, 100);
+    }
+
+    // Re-attach quest event listeners when quests tab is shown
+    if (tabKey === 'quests') {
+      setTimeout(() => {
+        if (typeof window.attachQuestListeners === 'function') {
+          window.attachQuestListeners();
+        }
+        if (typeof window.renderQuests === 'function') {
+          window.renderQuests();
+        }
+        if (typeof window.initQuestDragAndDrop === 'function') {
+          window.initQuestDragAndDrop();
         }
       }, 100);
     }

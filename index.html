@@ -105,6 +105,7 @@
       <button class="tab-btn" data-tab="familiars">Familiars</button>
       <button class="tab-btn" data-tab="skills">Skills</button>
       <button class="tab-btn" data-tab="sessionNotes">Session Notes</button>
+      <button class="tab-btn" data-tab="quests">Quests</button>
     </div>
 
     <!-- Stats tab (loaded dynamically) -->
@@ -128,8 +129,12 @@
     <div id="tab-skills" class="tab hidden"><!-- Loading... --></div>
 
     <div id="tab-sessionNotes" class="tab hidden"><!-- Loading... --></div>
+    <div id="tab-quests" class="tab hidden"><!-- Loading... --></div>
   </div>
 
+
+  <!-- External libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
   <!-- Module scripts (load before app.js) -->
   <script src="modules/aliases.js"></script>
@@ -138,6 +143,7 @@
   <script src="modules/excuses.js"></script>
   <script src="modules/inventory.js"></script>
   <script src="modules/pcchar.js"></script>
+  <script src="modules/quests.js"></script>
   <script src="app.js"></script>
 </body>
 

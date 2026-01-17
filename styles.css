@@ -1141,3 +1141,132 @@ details.feat[open] .feature-card {
   color: #B87333 !important;
 }
 
+/* ===== QUESTS TAB STYLES ===== */
+
+/* Quest Table */
+.quest-table {
+  margin-top: 16px;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.quest-table thead th {
+  background: var(--panel2);
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text);
+  border-bottom: 2px solid var(--border);
+}
+
+.quest-table tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.2s ease;
+  cursor: grab;
+}
+
+.quest-table tbody tr:hover {
+  background: var(--panel2);
+}
+
+.quest-table tbody tr:active {
+  cursor: grabbing;
+}
+
+.quest-table tbody td {
+  padding: 12px;
+  vertical-align: top;
+}
+
+.quest-objective {
+  font-weight: 500;
+  color: var(--text);
+  max-width: 400px;
+}
+
+.quest-location,
+.quest-reward {
+  color: var(--muted);
+}
+
+.quest-actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.quest-actions button {
+  margin-left: 8px;
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+/* Fulfilled Quest Styling */
+.quest-fulfilled {
+  opacity: 0.6;
+}
+
+.quest-fulfilled .quest-objective {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+.quest-fulfilled:hover {
+  opacity: 0.8;
+}
+
+/* Drag and Drop Styles */
+.quest-dragging {
+  opacity: 0.4;
+  background: var(--accent) !important;
+}
+
+.sortable-ghost {
+  opacity: 0.4;
+  background: var(--panel) !important;
+}
+
+/* Quest Edit Button */
+.quest-edit-btn {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.quest-edit-btn:hover {
+  background: #1a2030;
+  border-color: var(--accent);
+}
+
+/* Quest Fulfill Button */
+.quest-fulfill-btn {
+  background: #224a34;
+  border: 1px solid #2d6245;
+  color: #5ae09f;
+}
+
+.quest-fulfill-btn:hover {
+  background: #2d6245;
+  border-color: #5ae09f;
+}
+
+/* Quest Unfulfill/Reactivate Button */
+.quest-unfulfill-btn {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.quest-unfulfill-btn:hover {
+  background: #1a2030;
+  color: var(--text);
+}
+
+/* Empty State */
+#questTableBody td[colspan] {
+  text-align: center;
+  padding: 32px;
+  color: var(--muted);
+  font-style: italic;
+}
+

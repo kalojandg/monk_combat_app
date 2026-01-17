@@ -1,0 +1,49 @@
+<h2>Quests</h2>
+
+<div class="controls">
+  <button id="btnQuestAdd" class="primary">Add Quest</button>
+</div>
+
+<!-- Quest Table -->
+<div id="questTableContainer">
+  <table id="questTable" class="quest-table">
+    <thead>
+      <tr>
+        <th>Objective</th>
+        <th>Location</th>
+        <th>Reward</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="questTableBody">
+      <!-- Quest rows will be rendered here -->
+    </tbody>
+  </table>
+</div>
+
+<!-- Quest Modal -->
+<div id="questModal" class="modal hidden">
+  <div class="modal__card">
+    <div class="modal__title" id="questModalTitle">Add Quest</div>
+
+    <div class="field">
+      <label for="questObjective">Objective <span style="color: var(--accent);">*</span></label>
+      <textarea id="questObjective" rows="3" placeholder="What is the quest goal?" required></textarea>
+    </div>
+
+    <div class="field">
+      <label for="questLocation">Location</label>
+      <textarea id="questLocation" rows="2" placeholder="Where does the quest take place?"></textarea>
+    </div>
+
+    <div class="field">
+      <label for="questReward">Reward</label>
+      <textarea id="questReward" rows="2" placeholder="What do you receive upon completion?"></textarea>
+    </div>
+
+    <div class="modal__actions">
+      <button id="questCancel">Cancel</button>
+      <button id="questSave" class="primary">Save</button>
+    </div>
+  </div>
+</div>
