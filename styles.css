@@ -144,12 +144,46 @@ a {
   opacity: .8;
 }
 
-/* мобилно: по 2 в ред, ако станат много */
+/* мобилно: хоризонтален скрол за табовете, вертикален стак за pills */
 @media (max-width: 480px) {
+  /* Табовете с хоризонтален скрол */
+  .tabs,
+  .tab-nav {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+    gap: 6px;
+    margin: 14px -12px; /* Negative margin to extend to edges */
+    padding: 0 12px; /* Padding to compensate */
+  }
+  
+  .tabs::-webkit-scrollbar,
+  .tab-nav::-webkit-scrollbar {
+    height: 4px;
+  }
+  
+  .tabs::-webkit-scrollbar-track,
+  .tab-nav::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .tabs::-webkit-scrollbar-thumb,
+  .tab-nav::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 2px;
+  }
+  
   .tabs button,
   .tab-nav .tab-btn {
-    flex: 1 1 46%;
-    text-align: center;
+    flex: 0 0 auto; /* Не се разтягат, само се скролват */
+    white-space: nowrap;
+    min-width: fit-content;
+    padding: 8px 12px;
+    font-size: 0.9rem;
   }
   
   #app,
@@ -165,18 +199,38 @@ a {
   .header-right {
     margin-left: 0;
     width: 100%;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  
+  .header-right button {
+    flex: 1 1 auto;
+    min-width: 80px;
+    font-size: 0.85rem;
+    padding: 6px 10px;
   }
   
   .pillbar {
     grid-template-columns: 1fr;
+    gap: 10px;
   }
   
   .pillbar-main {
     grid-template-columns: 1fr;
+    gap: 10px;
   }
   
   .pillbar-main .pill {
     grid-column: span 1 !important;
+  }
+  
+  .pill {
+    padding: 8px 10px;
+    font-size: 0.9rem;
+  }
+  
+  .pill .big {
+    font-size: 18px;
   }
 }
 
