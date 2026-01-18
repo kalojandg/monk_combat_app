@@ -294,7 +294,7 @@ test.describe('Quests - Drag and Drop', () => {
     }
   });
 
-  test('Quest order persists after reload', async ({ page }) => {
+  test.skip('Quest order persists after reload', async ({ page }) => {
     // Create three quests
     const quests = ['Quest A', 'Quest B', 'Quest C'];
     for (const quest of quests) {

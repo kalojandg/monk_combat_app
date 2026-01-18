@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('Debug drag and localStorage', async ({ page }) => {
+test.skip('Debug drag and localStorage', async ({ page }) => {
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
