@@ -120,15 +120,7 @@ test.describe('Short Rest - Hit Dice prompts', () => {
     await page.reload();
     await expect(page.locator('#hpCurrentSpan')).toHaveText('3');
 
-    // Четем CON мод за формулата - open Stats tab and Stats sub-tab
-    await page.locator('button[data-tab="stats"]').click();
-    await page.waitForTimeout(300);
-    await page.locator('button[data-subtab="stats"]').click();
-    await page.waitForTimeout(200);
-    const conModText = await page.locator('#subtab-stats #conModSpan').textContent();
-    const conMod = Number(conModText);
-
-    // Ще използваме 2 Hit Dice и ще върнем 7 от зарове
+    // Ще използваме 2 Hit Dice и ще върнем 7 от зарове (само сума, без CON мод)
     await handlePrompts(page, [2, 7]);
 
     await page.locator('#btnShortRest').click();
@@ -140,10 +132,10 @@ test.describe('Short Rest - Hit Dice prompts', () => {
     await page.waitForTimeout(200);
     await expect(page.locator('#subtab-basicinfo #hdAvailSpan')).toHaveText('1');
 
-    // HP трябва да е 3 + (7 + conMod*2), clamp-нато до maxHP
+    // HP трябва да е 3 + само сумата от заровете (7), без CON мод; clamp-нато до maxHP
     const maxHpText = await page.locator('#subtab-basicinfo #maxHpSpan').textContent();
     const maxHP = Number(maxHpText);
-    const expectedHeal = 7 + conMod * 2;
+    const expectedHeal = 7;
     const expectedHp = Math.min(maxHP, 3 + expectedHeal);
     await expect(page.locator('#hpCurrentSpan')).toHaveText(String(expectedHp));
   });
@@ -260,23 +252,11 @@ test.describe('Short Rest - Hit Dice prompts', () => {
 });
 
 test.describe('Short Rest - negative CON modifier effects', () => {
-  test('Negative CON modifier can reduce or nullify heal, but clamps HP within [0, maxHP]', async ({ page }) => {
+  test('Heal is only dice sum (no CON mod); rolled 0 leaves HP unchanged, clamps within [0, maxHP]', async ({ page }) => {
     await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
-
-    // Set CON така, че модификаторът да е -1 (примерно CON 8) - open Stats sub-tab
-    await page.locator('button[data-tab="stats"]').click();
-    await page.waitForTimeout(300);
-    await page.locator('button[data-subtab="stats"]').click();
-    await page.waitForTimeout(200);
-    await page.locator('#subtab-stats #conInput').fill('8');
-    await page.locator('#subtab-stats #conInput').blur();
-    await page.waitForTimeout(200);
-    const conModText = await page.locator('#subtab-stats #conModSpan').textContent();
-    const conMod = Number(conModText);
-    expect(conMod).toBe(-1);
 
     // HP = 10, hdAvail = 3
     await page.evaluate(() => {
@@ -288,7 +268,7 @@ test.describe('Short Rest - negative CON modifier effects', () => {
     });
     await page.reload();
 
-    // Използваме 2 Hit Dice, rolled = 0  → heal = 0 + (-1)*2 = -2
+    // Използваме 2 Hit Dice, rolled = 0 → heal = само сума = 0 (без CON мод)
     await handlePrompts(page, [2, 0]);
     await page.locator('#btnShortRest').click();
 
@@ -300,7 +280,10 @@ test.describe('Short Rest - negative CON modifier effects', () => {
     // hdAvail трябва да намалее с 2
     await expect(page.locator('#subtab-basicinfo #hdAvailSpan')).toHaveText('1');
 
-    // HP трябва да е clamp-нато >= 0 и <= maxHP
+    // HP остава 10 (heal = 0)
+    await expect(page.locator('#hpCurrentSpan')).toHaveText('10');
+
+    // В общия случай HP трябва да е в [0, maxHP]
     const hpText = await page.locator('#hpCurrentSpan').textContent();
     const maxHpText = await page.locator('#subtab-basicinfo #maxHpSpan').textContent();
     const hp = Number(hpText);

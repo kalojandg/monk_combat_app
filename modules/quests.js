@@ -284,6 +284,8 @@ function initQuestDragAndDrop() {
   questSortableInstance = Sortable.create(tbody, {
     animation: 150,
     ghostClass: 'quest-dragging',
+    // Prevent drag when touching buttons (tablet/touch: tap on Edit/Fulfill/Reactivate should click, not drag)
+    filter: 'button, .quest-actions',
     onEnd: function(evt) {
       console.log('Drag onEnd called:', evt.oldIndex, '->', evt.newIndex);
 

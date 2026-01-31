@@ -615,9 +615,9 @@ el("btnShortRest") && el("btnShortRest").addEventListener("click", () => {
     if (ans !== null) {
       let use = Math.max(0, Math.min(maxDice, Math.floor(Number(ans) || 0)));
       if (use > 0) {
-        const rolled = prompt(`Колко HP върнаха заровете (сума на d8)? Ще добавя + CON мод × ${use}.`, "0");
+        const rolled = prompt(`Колко HP върнаха заровете (сума на d8)?`, "0");
         if (rolled !== null) {
-          const heal = Math.max(0, Math.floor(Number(rolled) || 0)) + d.mods.con * use;
+          const heal = Math.max(0, Math.floor(Number(rolled) || 0));
           st.hdAvail -= use;
           setHP(st.hpCurrent + heal);
         }
