@@ -1324,3 +1324,115 @@ details.feat[open] .feature-card {
   font-style: italic;
 }
 
+/* ===== Taunts Tab ===== */
+
+.taunt-hp-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.taunt-hp-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: .85rem;
+  font-weight: 600;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.taunt-hp-confident {
+  border-color: #2d5a27;
+  background: rgba(45, 90, 39, .25);
+  color: #7ed06f;
+}
+
+.taunt-hp-desperate {
+  border-color: #6b1e1e;
+  background: rgba(107, 30, 30, .25);
+  color: #e06060;
+}
+
+.taunt-key-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.taunt-key-input {
+  flex: 1 1 200px;
+  min-width: 0;
+  background: #151a2c;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-size: .85rem;
+}
+
+.taunt-btn-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.taunt-style-btn {
+  background: #1a2235;
+  border: 1px solid #2f3b56;
+  border-radius: 10px;
+  padding: 14px 12px;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #d0d6e0;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+  text-align: center;
+}
+
+.taunt-style-btn:hover {
+  background: #283550;
+  border-color: #4a5b85;
+}
+
+.taunt-style-btn:active {
+  background: #304069;
+  border-color: #6d89c8;
+  color: #fff;
+}
+
+.taunt-output-card {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.taunt-output {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--feat-accent);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.taunt-output.taunt-loading {
+  color: var(--muted);
+  font-style: italic;
+}
+
+@media (max-width: 480px) {
+  .taunt-btn-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .taunt-style-btn {
+    padding: 12px;
+  }
+}

@@ -1,0 +1,32 @@
+<div class="section-title">Taunts</div>
+
+<!-- Section 1: HP State -->
+<div class="taunt-hp-row mb-12">
+  <span class="small-note">HP State:</span>
+  <span id="tauntHpBadge" class="taunt-hp-badge">…</span>
+</div>
+
+<!-- API Key -->
+<div class="taunt-key-row mb-12">
+  <label class="small-note" for="tauntApiKey">OpenAI Key</label>
+  <input id="tauntApiKey" type="password" class="taunt-key-input" placeholder="sk-…" autocomplete="off">
+  <button id="btnTauntSaveKey" type="button" class="icon-btn">Save</button>
+</div>
+
+<!-- Section 2: Style buttons -->
+<div class="taunt-btn-grid mb-12">
+  <button id="btnTauntDrunken"       type="button" class="taunt-style-btn">🥃 Drunken Wisdom</button>
+  <button id="btnTauntDirect"        type="button" class="taunt-style-btn">🎯 Direct Insult</button>
+  <button id="btnTauntEnlightenment" type="button" class="taunt-style-btn">☯️ Fake Enlightenment</button>
+  <button id="btnTauntRanged"        type="button" class="taunt-style-btn">🏹 Ranged Taunt</button>
+</div>
+
+<!-- Output card -->
+<div class="taunt-output-card mb-12">
+  <div id="tauntOutput" class="taunt-output">–</div>
+</div>
+
+<!-- Reroll -->
+<div class="controls">
+  <button id="btnTauntReroll" type="button" class="icon-btn" title="Reroll same style">🎲 Reroll</button>
+</div>

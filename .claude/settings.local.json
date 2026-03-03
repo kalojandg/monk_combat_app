@@ -3,7 +3,9 @@
     "allow": [
       "Bash(ralph-import:*)",
       "Bash(npm test:*)",
-      "Bash(npx playwright test:*)"
+      "Bash(npx playwright test:*)",
+      "Bash(ls -lh /d/Downloads/monk/monk_combat_app/*.json)",
+      "Bash(node test/taunts.unit.js)"
     ]
   }
 }
