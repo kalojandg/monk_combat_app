@@ -11,7 +11,8 @@ async function loadTabs() {
     'familiars': 'tabs/familiars.html',
     'skills': 'tabs/skills.html',
     'sessionNotes': 'tabs/sessionNotes.html',
-    'quests': 'tabs/quests.html'
+    'quests': 'tabs/quests.html',
+    'taunts': 'tabs/taunts.html'
   };
 
   const loadPromises = Object.entries(tabMap).map(async ([tabId, url]) => {
@@ -189,6 +190,7 @@ function save() {
   renderAll();
   window.renderAliasTable?.();      // ← безопасно, ще се изпълни ако функцията съществува
   window.renderFamTable?.();
+  window.renderTauntUI?.();
 
   cloudSchedule();           // ← остава си
 }
