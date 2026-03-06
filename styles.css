@@ -1279,6 +1279,25 @@ details.feat[open] .feature-card {
   background: var(--panel) !important;
 }
 
+/* Inventory Drag and Drop */
+.inv-drag-handle {
+  cursor: grab;
+  text-align: center;
+  color: var(--muted);
+  user-select: none;
+  width: 28px;
+  font-size: 1.1em;
+}
+
+.inv-drag-handle:active {
+  cursor: grabbing;
+}
+
+.inv-dragging {
+  opacity: 0.4;
+  background: var(--accent) !important;
+}
+
 /* Quest Edit Button */
 .quest-edit-btn {
   background: var(--panel);

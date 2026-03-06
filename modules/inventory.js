@@ -28,6 +28,8 @@
     __invEditIndex = null;
   }
 
+  let __invSortableInstance = null;
+
   function renderInventoryTable() {
     const root = document.getElementById('invTableRoot');
     if (!root) return;
@@ -46,8 +48,8 @@
 
     const rows = list.map((it, i) => {
       const safe = s => String(s || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
-      return `<tr>
-        <td>${i + 1}</td>
+      return `<tr data-inv-idx="${i}">
+        <td class="inv-drag-handle" title="Drag to reorder">☰</td>
         <td>${safe(it.name)}</td>
         <td class="right">${Number(it.qty) || 0}</td>
         <td>${safe(it.note)}</td>
@@ -61,9 +63,9 @@
     root.innerHTML = `
     <table class="alias-table inv-table">
       <thead>
-        <tr><th>#</th><th>Име</th><th class="right">Кол.</th><th>Бележка</th><th></th></tr>
+        <tr><th></th><th>Име</th><th class="right">Кол.</th><th>Бележка</th><th></th></tr>
       </thead>
-      <tbody>${rows}</tbody>
+      <tbody id="invTableBody">${rows}</tbody>
     </table>`;
 
     // wire edit/delete
@@ -82,6 +84,30 @@
         window.st.inventory.splice(idx, 1);
         window.save(); // render + cloud
       });
+    });
+
+    initInventoryDragAndDrop();
+  }
+
+  function initInventoryDragAndDrop() {
+    const tbody = document.getElementById('invTableBody');
+    if (!tbody || typeof Sortable === 'undefined') return;
+
+    if (__invSortableInstance) {
+      __invSortableInstance.destroy();
+    }
+
+    __invSortableInstance = Sortable.create(tbody, {
+      animation: 150,
+      handle: '.inv-drag-handle',
+      ghostClass: 'inv-dragging',
+      filter: 'button, .icon-btn',
+      onEnd: function(evt) {
+        if (evt.oldIndex === evt.newIndex) return;
+        const moved = window.st.inventory.splice(evt.oldIndex, 1)[0];
+        window.st.inventory.splice(evt.newIndex, 0, moved);
+        window.save();
+      }
     });
   }
 
