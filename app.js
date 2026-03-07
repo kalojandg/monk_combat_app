@@ -11,7 +11,8 @@ async function loadTabs() {
     'familiars': 'tabs/familiars.html',
     'skills': 'tabs/skills.html',
     'sessionNotes': 'tabs/sessionNotes.html',
-    'quests': 'tabs/quests.html'
+    'quests': 'tabs/quests.html',
+    'taunts': 'tabs/taunts.html'
   };
 
   const loadPromises = Object.entries(tabMap).map(async ([tabId, url]) => {
@@ -2231,7 +2232,8 @@ window.addEventListener('beforeunload', (e) => {
     if (typeof window.attachAliasLog === 'function') attachAliasLog();
     // attachInventory will be called when inventory tab is shown (in showTab function)
     if (typeof window.attachPCChar === 'function') attachPCChar();
-    
+    if (typeof window.attachTaunts === 'function') attachTaunts();
+
     // Attach collapse button if skills tab is visible
     attachCollapseBtn();
     

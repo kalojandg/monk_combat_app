@@ -1343,3 +1343,117 @@ details.feat[open] .feature-card {
   font-style: italic;
 }
 
+/* ===== Taunts Tab ===== */
+.taunt-settings {
+  margin-bottom: 16px;
+}
+.taunt-settings label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.taunt-settings input.full-width {
+  width: 100%;
+  margin-top: 4px;
+}
+.taunt-model-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+.taunt-model-row label {
+  flex: 1;
+}
+.taunt-model-row select {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.taunt-display {
+  min-height: 100px;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 24px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.taunt-placeholder {
+  color: var(--muted);
+  font-style: italic;
+  margin: 0;
+}
+.taunt-text {
+  color: #f0d080;
+  font-size: 1.15rem;
+  line-height: 1.6;
+  font-style: italic;
+  margin: 0;
+  animation: tauntAppear 0.35s ease-out;
+}
+.taunt-error {
+  color: #e85454;
+  font-size: 0.9rem;
+  margin: 0;
+}
+@keyframes tauntAppear {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.taunt-actions {
+  margin-bottom: 16px;
+}
+.taunt-btn {
+  width: 100%;
+  padding: 12px;
+  font-size: 1rem;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+}
+
+.taunt-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: tauntSpin 0.7s linear infinite;
+}
+@keyframes tauntSpin {
+  to { transform: rotate(360deg); }
+}
+
+.taunt-history.hidden {
+  display: none;
+}
+.taunt-history {
+  margin-top: 16px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+.taunt-history h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.taunt-history ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.taunt-history li {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-style: italic;
+}
+

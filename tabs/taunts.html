@@ -1,0 +1,30 @@
+<h2>Combat Taunts</h2>
+<p class="muted">Vicious Mockery style — provoke enemies to attack you instead of the tank.</p>
+
+<div class="taunt-settings">
+  <label>API Key
+    <input type="password" id="tauntApiKey" placeholder="sk-ant-..." class="full-width">
+  </label>
+  <div class="taunt-model-row">
+    <label>Model
+      <select id="tauntModel">
+        <option value="claude-haiku-4-5-20251001">Haiku 4.5 (cheapest)</option>
+        <option value="claude-sonnet-4-20250514">Sonnet 4</option>
+      </select>
+    </label>
+    <button id="btnSaveApiKey" class="primary">Save Key</button>
+  </div>
+</div>
+
+<div id="tauntDisplay" class="taunt-display">
+  <p class="taunt-placeholder">Waiting for the next turn...</p>
+</div>
+
+<div class="taunt-actions">
+  <button id="btnGenerateTaunt" class="primary taunt-btn">Generate Taunt</button>
+</div>
+
+<div id="tauntHistory" class="taunt-history hidden">
+  <h3>History <button id="btnClearTauntHistory" class="danger small">Clear</button></h3>
+  <ul id="tauntHistoryList"></ul>
+</div>
