@@ -190,6 +190,7 @@ function save() {
   renderAll();
   window.renderAliasTable?.();      // ← безопасно, ще се изпълни ако функцията съществува
   window.renderFamTable?.();
+  window.renderTauntsUI?.();
 
   cloudSchedule();           // ← остава си
 }
@@ -251,6 +252,7 @@ function derived() {
 
   return { level, mods, prof, ma, kiMax, hdMax, maxHP, ac, um, totalSpeed, savesBase, savesTotal, meleeAtk, meleeWeaponAtk, rangedAtk, kiSaveDC };
 }
+window.derived = derived;
 
 // ===== Skills =====
 const SKILLS = [

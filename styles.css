@@ -1370,6 +1370,52 @@ details.feat[open] .feature-card {
   margin-top: 4px;
 }
 
+.taunt-options {
+  margin-bottom: 12px;
+}
+.taunt-fieldset {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin: 0;
+}
+.taunt-fieldset legend {
+  font-size: 12px;
+  color: var(--muted);
+  padding: 0 4px;
+}
+.taunt-fieldset label {
+  margin-right: 16px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.taunt-fieldset input[type="radio"] {
+  margin-right: 4px;
+  accent-color: var(--accent);
+}
+
+.taunt-mood {
+  text-align: center;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  padding: 6px 0;
+  margin-bottom: 8px;
+  border-radius: 4px;
+}
+.taunt-mood-high {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.08);
+}
+.taunt-mood-mid {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.08);
+}
+.taunt-mood-low {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.08);
+}
+
 .taunt-display {
   min-height: 100px;
   background: var(--panel2);

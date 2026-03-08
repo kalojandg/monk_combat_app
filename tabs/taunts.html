@@ -1,5 +1,5 @@
 <h2>Combat Taunts</h2>
-<p class="muted">Vicious Mockery style — provoke enemies to attack you instead of the tank.</p>
+<p class="muted">Vicious Mockery — insult the enemy until the DM gives you advantage.</p>
 
 <div class="taunt-settings">
   <label>API Key
@@ -15,6 +15,17 @@
     <button id="btnSaveApiKey" class="primary">Save Key</button>
   </div>
 </div>
+
+<div class="taunt-options">
+  <fieldset class="taunt-fieldset">
+    <legend>Enemy type</legend>
+    <label><input type="radio" name="enemyType" value="melee" checked> Melee</label>
+    <label><input type="radio" name="enemyType" value="ranged"> Ranged (bow/crossbow)</label>
+    <label><input type="radio" name="enemyType" value="caster"> Caster</label>
+  </fieldset>
+</div>
+
+<div id="tauntMoodIndicator" class="taunt-mood"></div>
 
 <div id="tauntDisplay" class="taunt-display">
   <p class="taunt-placeholder">Waiting for the next turn...</p>
