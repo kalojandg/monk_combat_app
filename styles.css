@@ -36,7 +36,7 @@ body {
   padding: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: system-ui, Segoe UI, Roboto, Arial
+  font-family: system-ui, Segoe UI, Roboto, Arial;
 }
 
 a {
@@ -149,7 +149,7 @@ a {
 }
 
 /* мобилно: решетка вместо хоризонтален скрол */
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .tabs,
   .tab-nav {
     display: grid;
@@ -191,27 +191,38 @@ a {
     padding: 6px 10px;
   }
   
-  .pillbar {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-  
-  .pillbar-main {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-  
+  .pillbar .pill,
   .pillbar-main .pill {
-    grid-column: span 1 !important;
-  }
-  
-  .pill {
+    flex: 1 1 calc(50% - 8px);
     padding: 8px 10px;
     font-size: 0.9rem;
   }
-  
+
   .pill .big {
     font-size: 18px;
+  }
+
+  /* Names tab: stack action row on narrow screens */
+  #tab-npc-names .one-liner-box {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  #tab-npc-names .one-liner-box input[type="text"] {
+    flex: 1 1 100%;
+    border-radius: 6px;
+  }
+  #tab-npc-names .one-liner-box button {
+    flex: 1 1 auto;
+  }
+
+  /* Race fieldset: 2-column grid for labels */
+  .npc-fieldset {
+    width: 100%;
+  }
+  .npc-fieldset label {
+    display: inline-flex;
+    width: calc(50% - 6px);
+    margin-right: 0;
   }
 }
 
@@ -349,25 +360,30 @@ td.right {
 
 /* COMBAT: по-широко, подравнено, по-спокойни бутони */
 .pillbar {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-bottom: 14px;
 }
 
-/* Main pillbar with 5 stats on one row using 12-column grid */
-.pillbar-main {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 10px;
+.pillbar .pill {
+  flex: 1 1 130px;
+  text-align: center;
 }
 
-/* Each pill takes 2-3 columns for even distribution: 2+2+3+2+3 = 12 */
-.pillbar-main .pill:nth-child(1) { grid-column: span 2; } /* HP: 2 columns */
-.pillbar-main .pill:nth-child(2) { grid-column: span 2; } /* Ki: 2 columns */
-.pillbar-main .pill:nth-child(3) { grid-column: span 3; } /* Ki Save DC: 3 columns (longer text) */
-.pillbar-main .pill:nth-child(4) { grid-column: span 2; } /* AC: 2 columns */
-.pillbar-main .pill:nth-child(5) { grid-column: span 3; } /* Prof: 3 columns */
+/* Main pillbar: 5 stats in one row, wrap gracefully on narrow screens */
+.pillbar-main {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.pillbar-main .pill {
+  flex: 1 1 90px;
+  text-align: center;
+  min-width: 0;
+}
 
 .pill {
   padding: 10px 12px;
