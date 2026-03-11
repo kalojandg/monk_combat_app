@@ -26,6 +26,10 @@
   box-sizing: border-box
 }
 
+.hidden {
+  display: none !important;
+}
+
 html,
 body {
   margin: 0;
@@ -144,46 +148,23 @@ a {
   opacity: .8;
 }
 
-/* мобилно: хоризонтален скрол за табовете, вертикален стак за pills */
+/* мобилно: решетка вместо хоризонтален скрол */
 @media (max-width: 480px) {
-  /* Табовете с хоризонтален скрол */
   .tabs,
   .tab-nav {
-    display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border) transparent;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     gap: 6px;
-    margin: 14px -12px; /* Negative margin to extend to edges */
-    padding: 0 12px; /* Padding to compensate */
+    margin: 10px 0;
   }
-  
-  .tabs::-webkit-scrollbar,
-  .tab-nav::-webkit-scrollbar {
-    height: 4px;
-  }
-  
-  .tabs::-webkit-scrollbar-track,
-  .tab-nav::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  
-  .tabs::-webkit-scrollbar-thumb,
-  .tab-nav::-webkit-scrollbar-thumb {
-    background: var(--border);
-    border-radius: 2px;
-  }
-  
+
   .tabs button,
   .tab-nav .tab-btn {
-    flex: 0 0 auto; /* Не се разтягат, само се скролват */
-    white-space: nowrap;
-    min-width: fit-content;
-    padding: 8px 12px;
-    font-size: 0.9rem;
+    padding: 7px 4px;
+    font-size: 0.78rem;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.2;
   }
   
   #app,
@@ -1501,5 +1482,61 @@ details.feat[open] .feature-card {
   color: var(--text);
   font-size: 0.9rem;
   font-style: italic;
+}
+
+/* ===== NPC Names Tab ===== */
+.npc-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.npc-fieldset {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin: 0;
+}
+.npc-fieldset legend {
+  font-size: 12px;
+  color: var(--muted);
+  padding: 0 4px;
+}
+.npc-fieldset label {
+  margin-right: 12px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.npc-fieldset input[type="radio"] {
+  margin-right: 4px;
+  accent-color: var(--accent);
+}
+.npc-names-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  margin-top: 8px;
+}
+.npc-names-table th {
+  text-align: left;
+  color: var(--muted);
+  font-size: 12px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border);
+}
+.npc-names-table td {
+  padding: 7px 8px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.npc-names-table td:first-child {
+  font-weight: 500;
+  white-space: nowrap;
+  color: #f0d080;
+}
+.npc-names-table td:nth-child(2) {
+  color: var(--muted);
+  font-size: 0.85rem;
 }
 

@@ -1,0 +1,39 @@
+<h2>NPC Names</h2>
+
+<div class="npc-options">
+  <fieldset class="npc-fieldset">
+    <legend>Race</legend>
+    <label><input type="radio" name="npcRace" value="human" checked> Human</label>
+    <label><input type="radio" name="npcRace" value="elf"> Elf</label>
+    <label><input type="radio" name="npcRace" value="dwarf"> Dwarf</label>
+    <label><input type="radio" name="npcRace" value="halfling"> Halfling</label>
+    <label><input type="radio" name="npcRace" value="tiefling"> Tiefling</label>
+    <label><input type="radio" name="npcRace" value="orc"> Orc</label>
+    <label><input type="radio" name="npcRace" value="toblin"> Toblin</label>
+  </fieldset>
+
+  <fieldset class="npc-fieldset" id="npcGenderGroup">
+    <legend>Gender</legend>
+    <label><input type="radio" name="npcGender" value="male" checked> Male</label>
+    <label><input type="radio" name="npcGender" value="female"> Female</label>
+  </fieldset>
+</div>
+
+<div class="one-liner-box mb-12">
+  <input id="npcNameOutput" type="text" readonly placeholder="(click Generate)">
+  <button id="btnGenerateName" class="primary">Generate</button>
+  <button id="btnSaveName" disabled>Save</button>
+</div>
+
+<div id="npcNamesLog"></div>
+
+<div id="npcNameModal" class="modal hidden">
+  <div class="modal__card">
+    <div class="modal__title">Who is this?</div>
+    <textarea id="npcNameNote" rows="4" placeholder="Role, location, notes..."></textarea>
+    <div class="modal__actions">
+      <button id="npcNameCancel">Cancel</button>
+      <button id="npcNameConfirm" class="primary">Save</button>
+    </div>
+  </div>
+</div>

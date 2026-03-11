@@ -277,24 +277,16 @@ test.describe('Quests - Drag and Drop', () => {
     await expect(firstRow.locator('.quest-objective')).toContainText('First quest');
     await expect(secondRow.locator('.quest-objective')).toContainText('Second quest');
 
-    // Drag second row to first position
-    const firstRowBox = await firstRow.boundingBox();
-    const secondRowBox = await secondRow.boundingBox();
+    // Drag second row above first row
+    await secondRow.dragTo(firstRow);
+    await page.waitForTimeout(500);
 
-    if (firstRowBox && secondRowBox) {
-      await page.mouse.move(secondRowBox.x + secondRowBox.width / 2, secondRowBox.y + secondRowBox.height / 2);
-      await page.mouse.down();
-      await page.mouse.move(firstRowBox.x + firstRowBox.width / 2, firstRowBox.y + firstRowBox.height / 2, { steps: 10 });
-      await page.mouse.up();
-      await page.waitForTimeout(300);
-
-      // Verify order has changed
-      await expect(page.locator('#questTableBody tr').nth(0).locator('.quest-objective')).toContainText('Second quest');
-      await expect(page.locator('#questTableBody tr').nth(1).locator('.quest-objective')).toContainText('First quest');
-    }
+    // Verify order has changed
+    await expect(page.locator('#questTableBody tr').nth(0).locator('.quest-objective')).toContainText('Second quest');
+    await expect(page.locator('#questTableBody tr').nth(1).locator('.quest-objective')).toContainText('First quest');
   });
 
-  test.skip('Quest order persists after reload', async ({ page }) => {
+  test('Quest order persists after reload', async ({ page }) => {
     // Create three quests
     const quests = ['Quest A', 'Quest B', 'Quest C'];
     for (const quest of quests) {
@@ -309,19 +301,8 @@ test.describe('Quests - Drag and Drop', () => {
     const firstRow = page.locator('#questTableBody tr').nth(0);
     const thirdRow = page.locator('#questTableBody tr').nth(2);
 
-    const firstRowBox = await firstRow.boundingBox();
-    const thirdRowBox = await thirdRow.boundingBox();
-
-    if (firstRowBox && thirdRowBox) {
-      await page.mouse.move(thirdRowBox.x + thirdRowBox.width / 2, thirdRowBox.y + thirdRowBox.height / 2);
-      await page.mouse.down();
-      await page.mouse.move(firstRowBox.x + firstRowBox.width / 2, firstRowBox.y + firstRowBox.height / 2, { steps: 10 });
-      await page.mouse.up();
-      await page.waitForTimeout(500); // Wait for save to complete
-    }
-
-    // Wait a bit more to ensure localStorage write completes
-    await page.waitForTimeout(300);
+    await thirdRow.dragTo(firstRow);
+    await page.waitForTimeout(500);
 
     // Reload page
     await page.reload();

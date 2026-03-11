@@ -307,8 +307,73 @@ test.describe('Inventory - Edge Cases', () => {
     await page.locator('#invNote').fill('Line 1\nLine 2\nLine 3');
     await page.locator('#invSave').click();
     await page.waitForTimeout(200); // Wait for save to complete
-    
+
     await expect(page.locator('text=Scroll')).toBeVisible();
+  });
+
+});
+
+test.describe('Inventory - Drag and Drop', () => {
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
+    await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
+    await page.locator('button[data-tab="inventory"]').click();
+    await page.waitForTimeout(300);
+
+    // Add two items
+    await page.locator('#btnInvAdd').click();
+    await page.waitForTimeout(100);
+    await page.locator('#invName').fill('Sword');
+    await page.locator('#invSave').click();
+    await page.waitForTimeout(200);
+
+    await page.locator('#btnInvAdd').click();
+    await page.waitForTimeout(100);
+    await page.locator('#invName').fill('Shield');
+    await page.locator('#invSave').click();
+    await page.waitForTimeout(200);
+  });
+
+  test('Inventory rows have drag handles', async ({ page }) => {
+    const handles = page.locator('#invTableBody .inv-drag-handle');
+    await expect(handles.first()).toBeVisible();
+    const count = await handles.count();
+    expect(count).toBe(2);
+  });
+
+  test('Dragging a row reorders inventory', async ({ page }) => {
+    // Verify initial order: Sword first, Shield second
+    await expect(page.locator('#invTableBody tr').nth(0)).toContainText('Sword');
+    await expect(page.locator('#invTableBody tr').nth(1)).toContainText('Shield');
+
+    // Drag second row's handle above first row
+    const firstHandle = page.locator('#invTableBody .inv-drag-handle').nth(0);
+    const secondHandle = page.locator('#invTableBody .inv-drag-handle').nth(1);
+    await secondHandle.dragTo(firstHandle);
+    await page.waitForTimeout(500);
+
+    // Order should be reversed
+    await expect(page.locator('#invTableBody tr').nth(0)).toContainText('Shield');
+    await expect(page.locator('#invTableBody tr').nth(1)).toContainText('Sword');
+  });
+
+  test('Reordered inventory persists after reload', async ({ page }) => {
+    const firstHandle = page.locator('#invTableBody .inv-drag-handle').nth(0);
+    const secondHandle = page.locator('#invTableBody .inv-drag-handle').nth(1);
+    await secondHandle.dragTo(firstHandle);
+    await page.waitForTimeout(500);
+
+    await page.reload();
+    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
+    await page.locator('button[data-tab="inventory"]').click();
+    await page.waitForTimeout(300);
+
+    await expect(page.locator('#invTableBody tr').nth(0)).toContainText('Shield');
+    await expect(page.locator('#invTableBody tr').nth(1)).toContainText('Sword');
   });
 
 });

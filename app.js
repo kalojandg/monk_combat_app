@@ -12,7 +12,8 @@ async function loadTabs() {
     'skills': 'tabs/skills.html',
     'sessionNotes': 'tabs/sessionNotes.html',
     'quests': 'tabs/quests.html',
-    'taunts': 'tabs/taunts.html'
+    'taunts': 'tabs/taunts.html',
+    'npc-names': 'tabs/npc-names.html'
   };
 
   const loadPromises = Object.entries(tabMap).map(async ([tabId, url]) => {
@@ -128,6 +129,7 @@ const defaultState = {
   aliases: [],
   familiars: [],
   quests: [],
+  npcNames: [],
 
   acMagic: 0,
   baseSpeed: 30,
@@ -191,6 +193,7 @@ function save() {
   window.renderAliasTable?.();      // ← безопасно, ще се изпълни ако функцията съществува
   window.renderFamTable?.();
   window.renderTauntsUI?.();
+  window.renderNpcNamesUI?.();
 
   cloudSchedule();           // ← остава си
 }
@@ -719,6 +722,7 @@ function applyBundle(data) {
   if (!Array.isArray(st.tools)) st.tools = [];
   if (!Array.isArray(st.inventory)) st.inventory = [];
   if (!Array.isArray(st.quests)) st.quests = [];
+  if (!Array.isArray(st.npcNames)) st.npcNames = [];
   
   // Migrate: if level doesn't exist, initialize from XP (for old imports)
   if (typeof st.level === 'undefined' || st.level === null) {
@@ -1042,7 +1046,8 @@ function buildBundle() {
   if (!Array.isArray(stateCopy.tools)) stateCopy.tools = [];
   if (!Array.isArray(stateCopy.inventory)) stateCopy.inventory = [];
   if (!Array.isArray(stateCopy.quests)) stateCopy.quests = [];
-  
+  if (!Array.isArray(stateCopy.npcNames)) stateCopy.npcNames = [];
+
   // Ensure gold fields exist (should already be in st, but ensure for safety)
   if (typeof stateCopy.goldPlatinum === 'undefined' || stateCopy.goldPlatinum === null) stateCopy.goldPlatinum = 0;
   if (typeof stateCopy.goldGold === 'undefined' || stateCopy.goldGold === null) stateCopy.goldGold = 0;
@@ -2235,6 +2240,7 @@ window.addEventListener('beforeunload', (e) => {
     // attachInventory will be called when inventory tab is shown (in showTab function)
     if (typeof window.attachPCChar === 'function') attachPCChar();
     if (typeof window.attachTaunts === 'function') attachTaunts();
+    if (typeof window.attachNpcNames === 'function') attachNpcNames();
 
     // Attach collapse button if skills tab is visible
     attachCollapseBtn();
