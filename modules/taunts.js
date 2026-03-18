@@ -62,7 +62,7 @@
     localStorage.setItem(STORAGE_KEY_API, key);
   }
   function getModel() {
-    return localStorage.getItem(STORAGE_KEY_MODEL) || 'claude-haiku-4-5-20251001';
+    return localStorage.getItem(STORAGE_KEY_MODEL) || 'claude-sonnet-4-20250514';
   }
   function setModel(model) {
     localStorage.setItem(STORAGE_KEY_MODEL, model);
