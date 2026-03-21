@@ -510,8 +510,8 @@ test.describe('Proficiency scaling with level', () => {
       // Задаваме XP за това ниво - open Basic Info sub-tab
       await page.locator('button[data-subtab="basicinfo"]').click();
       await page.waitForTimeout(200);
-      await page.locator('#subtab-basicinfo #xpInput').fill(xp.toString());
-      await page.locator('#subtab-basicinfo #xpInput').blur();
+      await page.evaluate(xpVal => { window.st.xp = xpVal; window.save(); }, xp);
+      await page.waitForTimeout(200);
       await page.waitForTimeout(300);
 
       // Long Rest за да се изпълни пълната логика и renderAll()

@@ -96,8 +96,8 @@ test.describe('Rest Mechanics - Level Progression (1-20)', () => {
       await page.waitForTimeout(300);
       await page.locator('button[data-subtab="basicinfo"]').click();
       await page.waitForTimeout(200);
-      await page.locator('#subtab-basicinfo #xpInput').fill(xp.toString());
-      await page.locator('#subtab-basicinfo #xpInput').blur();
+      await page.evaluate(xpVal => { window.st.xp = xpVal; window.save(); }, xp);
+      await page.waitForTimeout(200);
       
       // Wait for input to process
       await page.waitForTimeout(300);
@@ -163,8 +163,8 @@ test.describe('Level Up Bug Fix - TDD Tests', () => {
     await expect(page.locator('#subtab-basicinfo #levelSpan')).toHaveText('1');
     
     // Set XP to 300 (enough for level 2)
-    await page.locator('#subtab-basicinfo #xpInput').fill('300');
-    await page.locator('#subtab-basicinfo #xpInput').blur();
+    await page.evaluate(xp => { window.st.xp = xp; window.save(); }, 300);
+    await page.waitForTimeout(200);
     await page.waitForTimeout(300);
     
     // Level should still be 1 (not 2)
@@ -185,8 +185,8 @@ test.describe('Level Up Bug Fix - TDD Tests', () => {
     await expect(page.locator('#subtab-basicinfo #levelSpan')).toHaveText('1');
     
     // Set XP to 300 (enough for level 2)
-    await page.locator('#subtab-basicinfo #xpInput').fill('300');
-    await page.locator('#subtab-basicinfo #xpInput').blur();
+    await page.evaluate(xp => { window.st.xp = xp; window.save(); }, 300);
+    await page.waitForTimeout(200);
     await page.waitForTimeout(300);
     
     // Level should still be 1
@@ -220,8 +220,8 @@ test.describe('Level Up Bug Fix - TDD Tests', () => {
     await expect(page.locator('#subtab-basicinfo #levelSpan')).toHaveText('1');
     
     // Set XP to 6500 (enough for level 5)
-    await page.locator('#subtab-basicinfo #xpInput').fill('6500');
-    await page.locator('#subtab-basicinfo #xpInput').blur();
+    await page.evaluate(xp => { window.st.xp = xp; window.save(); }, 6500);
+    await page.waitForTimeout(200);
     await page.waitForTimeout(300);
     
     // Level should still be 1

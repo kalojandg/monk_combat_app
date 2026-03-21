@@ -24,7 +24,7 @@ test.describe('Tabs - Basic Navigation', () => {
     await page.waitForTimeout(300);
     
     // Verify Stats tab loaded (Basic Info sub-tab by default)
-    await expect(page.locator('#subtab-basicinfo #xpInput')).toBeVisible();
+    await expect(page.locator('#subtab-basicinfo #xpDisplay')).toBeVisible();
   });
 
   test('Can click PC Characteristics tab', async ({ page }) => {
@@ -56,7 +56,7 @@ test.describe('Tabs - Basic Navigation', () => {
     // Start at Stats
     await page.locator('button[data-tab="stats"]').click();
     await page.waitForTimeout(300);
-    await expect(page.locator('#subtab-basicinfo #xpInput')).toBeVisible();
+    await expect(page.locator('#subtab-basicinfo #xpDisplay')).toBeVisible();
     
     // Switch to Inventory
     await page.locator('button[data-tab="inventory"]').click();
@@ -65,7 +65,7 @@ test.describe('Tabs - Basic Navigation', () => {
     // Switch back to Stats
     await page.locator('button[data-tab="stats"]').click();
     await page.waitForTimeout(300);
-    await expect(page.locator('#subtab-basicinfo #xpInput')).toBeVisible();
+    await expect(page.locator('#subtab-basicinfo #xpDisplay')).toBeVisible();
   });
 
   test('All tabs are clickable', async ({ page }) => {
@@ -172,8 +172,8 @@ test.describe('Tabs - Content Persistence', () => {
     await page.waitForTimeout(300);
     await page.locator('button[data-subtab="basicinfo"]').click();
     await page.waitForTimeout(200);
-    await page.locator('#subtab-basicinfo #xpInput').fill('900');
-    await page.locator('#subtab-basicinfo #xpInput').blur();
+    await page.evaluate(xp => { window.st.xp = xp; window.save(); }, 900);
+    await page.waitForTimeout(200);
     await page.waitForTimeout(300);
     
     // Level should still be 1 (level up happens on Long Rest)
@@ -197,8 +197,7 @@ test.describe('Tabs - Content Persistence', () => {
     await page.waitForTimeout(200);
     
     // Verify XP still there and level persisted
-    const xpValue = await page.locator('#subtab-basicinfo #xpInput').inputValue();
-    expect(xpValue).toBe('900');
+    await expect(page.locator('#subtab-basicinfo #xpDisplay')).toHaveText('900');
     await expect(page.locator('#subtab-basicinfo #levelSpan')).toHaveText('3');
   });
 
@@ -226,7 +225,7 @@ test.describe('Stats Tab - Second Level Navigation', () => {
 
   test('Can click basic info sub-tab and see basic statistics', async ({ page }) => {
     await page.locator('button[data-subtab="basicinfo"]').click();
-    await expect(page.locator('#subtab-basicinfo #xpInput')).toBeVisible();
+    await expect(page.locator('#subtab-basicinfo #xpDisplay')).toBeVisible();
     await expect(page.locator('#subtab-basicinfo #levelSpan')).toBeVisible();
     await expect(page.locator('#subtab-basicinfo #profSpan2')).toBeVisible();
     await expect(page.locator('#subtab-basicinfo #maDieSpan')).toBeVisible();
@@ -254,7 +253,7 @@ test.describe('Stats Tab - Second Level Navigation', () => {
   test('Can switch between sub-tabs', async ({ page }) => {
     // Start at basic info
     await page.locator('button[data-subtab="basicinfo"]').click();
-    await expect(page.locator('#subtab-basicinfo #xpInput')).toBeVisible();
+    await expect(page.locator('#subtab-basicinfo #xpDisplay')).toBeVisible();
     
     // Switch to stats
     await page.locator('button[data-subtab="stats"]').click();
@@ -266,7 +265,7 @@ test.describe('Stats Tab - Second Level Navigation', () => {
     
     // Switch back to basic info
     await page.locator('button[data-subtab="basicinfo"]').click();
-    await expect(page.locator('#subtab-basicinfo #xpInput')).toBeVisible();
+    await expect(page.locator('#subtab-basicinfo #xpDisplay')).toBeVisible();
   });
 
   test('Clicking first-level tab closes Stats tab and sub-tabs', async ({ page }) => {

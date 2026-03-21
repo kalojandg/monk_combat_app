@@ -288,6 +288,16 @@ input[type=text] {
   color: #d9def2;
 }
 
+.xp-add-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+.xp-add-row input {
+  flex: 1;
+  min-width: 0;
+}
+
 /* abilities */
 .abilities-grid {
   display: grid;

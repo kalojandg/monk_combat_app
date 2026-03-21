@@ -394,7 +394,7 @@ function renderAll() {
 
   // Basics (Stats)
   el("charName") && (el("charName").value = st.name || "");
-  el("xpInput") && (el("xpInput").value = st.xp);
+  el("xpDisplay") && (el("xpDisplay").textContent = st.xp);
   el("levelSpan") && (el("levelSpan").textContent = d.level);
   el("profSpan2") && (el("profSpan2").textContent = `+${d.prof}`);
   el("maDieSpan") && (el("maDieSpan").textContent = d.ma);
@@ -466,15 +466,18 @@ function renderAll() {
 el("charName") && el("charName").addEventListener("input", () => { st.name = el("charName").value; save(); });
 el("notes") && el("notes").addEventListener("input", () => { st.notes = el("notes").value; save(); });
 
-el("xpInput") && el("xpInput").addEventListener("input", () => {
-  st.xp = Math.max(0, Math.floor(Number(el("xpInput").value || 0)));
-  const d = derived();
-  st.hdAvail = clamp(st.hdAvail, 0, d.hdMax);
-  st.kiCurrent = clamp(st.kiCurrent, 0, d.kiMax);
-
-  _featuresDirty = true;  // 👈 маркираме за повторен рендер следващия път
-
-  save();
+el("btnAddXp") && el("btnAddXp").addEventListener("click", () => {
+  const addEl = el("xpAddInput");
+  const amount = Math.max(0, Math.floor(Number(addEl?.value || 0)));
+  if (amount > 0) {
+    st.xp = (st.xp || 0) + amount;
+    const d = derived();
+    st.hdAvail = clamp(st.hdAvail, 0, d.hdMax);
+    st.kiCurrent = clamp(st.kiCurrent, 0, d.kiMax);
+    _featuresDirty = true;
+    save();
+  }
+  if (addEl) addEl.value = '';
 });
 
 ["str", "dex", "con", "int_", "wis", "cha"].forEach(key => {
@@ -1994,15 +1997,20 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
       if (notesEl) {
         notesEl.addEventListener('input', () => { st.notes = notesEl.value; save(); });
       }
-      const xpInputEl = document.getElementById('xpInput');
-      if (xpInputEl) {
-        xpInputEl.addEventListener('input', () => {
-          st.xp = Math.max(0, Math.floor(Number(xpInputEl.value || 0)));
-          const d = derived();
-          st.hdAvail = clamp(st.hdAvail, 0, d.hdMax);
-          st.kiCurrent = clamp(st.kiCurrent, 0, d.kiMax);
-          _featuresDirty = true;
-          save();
+      const btnAddXpEl = document.getElementById('btnAddXp');
+      if (btnAddXpEl) {
+        btnAddXpEl.addEventListener('click', () => {
+          const addEl = document.getElementById('xpAddInput');
+          const amount = Math.max(0, Math.floor(Number(addEl?.value || 0)));
+          if (amount > 0) {
+            st.xp = (st.xp || 0) + amount;
+            const d = derived();
+            st.hdAvail = clamp(st.hdAvail, 0, d.hdMax);
+            st.kiCurrent = clamp(st.kiCurrent, 0, d.kiMax);
+            _featuresDirty = true;
+            save();
+          }
+          if (addEl) addEl.value = '';
         });
       }
       const hbInput = document.getElementById('homebrewHp');

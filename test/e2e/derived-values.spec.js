@@ -8,7 +8,7 @@ import { test, expect } from '@playwright/test';
 
 // Helper: автоматично отваря правилния подтаб според елемента
 async function ensureSubTab(page, elementId) {
-  const basicInfoElements = ['xpInput', 'charName', 'notes', 'levelSpan', 'profSpan2', 'maDieSpan', 'maxHpSpan', 'homebrewHp', 'hdMaxSpan', 'hdAvailSpan', 'kiMaxSpan', 'acSpan2', 'acMagicInput', 'unarmedMagicInput', 'meleeWeaponMagicInput', 'rangedMagicInput', 'umBonusSpan', 'passPercSpan', 'passInvSpan', 'passInsSpan'];
+  const basicInfoElements = ['xpDisplay', 'charName', 'notes', 'levelSpan', 'profSpan2', 'maDieSpan', 'maxHpSpan', 'homebrewHp', 'hdMaxSpan', 'hdAvailSpan', 'kiMaxSpan', 'acSpan2', 'acMagicInput', 'unarmedMagicInput', 'meleeWeaponMagicInput', 'rangedMagicInput', 'umBonusSpan', 'passPercSpan', 'passInvSpan', 'passInsSpan'];
   const statsElements = ['strInput', 'dexInput', 'conInput', 'intInput', 'wisInput', 'chaInput', 'saveAllBonusInput', 'saveStrProf', 'saveDexProf', 'saveConProf', 'saveIntProf', 'saveWisProf', 'saveChaProf', 'toughChk', 'strModSpan', 'dexModSpan', 'conModSpan', 'intModSpan', 'wisModSpan', 'chaModSpan', 'saveStrTotalSpan', 'saveDexTotalSpan', 'saveConTotalSpan', 'saveIntTotalSpan', 'saveWisTotalSpan', 'saveChaTotalSpan'];
   
   const id = elementId.replace('#', '');
@@ -69,8 +69,8 @@ test.describe('Derived Values - Interconnected Changes', () => {
     await expect(page.locator('#subtab-basicinfo #kiMaxSpan')).toHaveText('1');
     
     // Set XP to 6500 (enough for level 5)
-    await page.locator('#subtab-basicinfo #xpInput').fill('6500');
-    await page.locator('#subtab-basicinfo #xpInput').blur();
+    await page.evaluate(xp => { window.st.xp = xp; window.save(); }, 6500);
+    await page.waitForTimeout(200);
     await page.waitForTimeout(300);
     
     // Level should still be 1 (level up happens on Long Rest)
@@ -345,8 +345,8 @@ test.describe('Derived Values - Save Throws', () => {
     // Set XP to 6500 (enough for level 5) - open Basic Info sub-tab
     await page.locator('button[data-subtab="basicinfo"]').click();
     await page.waitForTimeout(200);
-    await page.locator('#subtab-basicinfo #xpInput').fill('6500');
-    await page.locator('#subtab-basicinfo #xpInput').blur();
+    await page.evaluate(xp => { window.st.xp = xp; window.save(); }, 6500);
+    await page.waitForTimeout(200);
     await page.waitForTimeout(300);
     
     // Level should still be 1 (level up happens on Long Rest)
@@ -493,8 +493,8 @@ test.describe('Derived Values - AC & Speed', () => {
     await expect(page.locator('#subtab-basicinfo #umBonusSpan')).toHaveText('0');
     
     // Set XP to 300 (enough for level 2)
-    await page.locator('#subtab-basicinfo #xpInput').fill('300');
-    await page.locator('#subtab-basicinfo #xpInput').blur();
+    await page.evaluate(xp => { window.st.xp = xp; window.save(); }, 300);
+    await page.waitForTimeout(200);
     await page.waitForTimeout(300);
     
     // Level should still be 1 (level up happens on Long Rest)
@@ -510,8 +510,8 @@ test.describe('Derived Values - AC & Speed', () => {
     await expect(page.locator('#subtab-basicinfo #umBonusSpan')).toHaveText('10');
     
     // Set XP to 14000 (enough for level 6)
-    await page.locator('#subtab-basicinfo #xpInput').fill('14000');
-    await page.locator('#subtab-basicinfo #xpInput').blur();
+    await page.evaluate(xp => { window.st.xp = xp; window.save(); }, 14000);
+    await page.waitForTimeout(200);
     await page.waitForTimeout(300);
     
     // Level should still be 2
@@ -543,8 +543,8 @@ test.describe('Derived Values - Complex HP Interactions', () => {
     // Set XP to 6500 (enough for level 5) - open Basic Info sub-tab
     await page.locator('button[data-subtab="basicinfo"]').click();
     await page.waitForTimeout(200);
-    await page.locator('#subtab-basicinfo #xpInput').fill('6500');
-    await page.locator('#subtab-basicinfo #xpInput').blur();
+    await page.evaluate(xp => { window.st.xp = xp; window.save(); }, 6500);
+    await page.waitForTimeout(200);
     await page.waitForTimeout(300);
     
     // Level should still be 1 (level up happens on Long Rest)
@@ -594,8 +594,8 @@ test.describe('Derived Values - Complex HP Interactions', () => {
     // Open Basic Info sub-tab
     await page.locator('button[data-subtab="basicinfo"]').click();
     await page.waitForTimeout(200);
-    await page.locator('#subtab-basicinfo #xpInput').fill('6500');
-    await page.locator('#subtab-basicinfo #xpInput').blur();
+    await page.evaluate(xp => { window.st.xp = xp; window.save(); }, 6500);
+    await page.waitForTimeout(200);
     await page.waitForTimeout(300);
     
     // Level should still be 1 (level up happens on Long Rest)
@@ -829,8 +829,8 @@ test.describe('Derived Values - CASCADE: Level Up', () => {
     // Set XP to 300 (enough for level 2) - open Basic Info sub-tab
     await page.locator('button[data-subtab="basicinfo"]').click();
     await page.waitForTimeout(200);
-    await page.locator('#subtab-basicinfo #xpInput').fill('300');
-    await page.locator('#subtab-basicinfo #xpInput').blur();
+    await page.evaluate(xp => { window.st.xp = xp; window.save(); }, 300);
+    await page.waitForTimeout(200);
     await page.waitForTimeout(300);
     
     // Level should still be 1 (level up happens on Long Rest)
@@ -854,8 +854,8 @@ test.describe('Derived Values - CASCADE: Level Up', () => {
     // Set XP to 6500 (enough for level 5) - open Basic Info sub-tab
     await page.locator('button[data-subtab="basicinfo"]').click();
     await page.waitForTimeout(200);
-    await page.locator('#subtab-basicinfo #xpInput').fill('6500');
-    await page.locator('#subtab-basicinfo #xpInput').blur();
+    await page.evaluate(xp => { window.st.xp = xp; window.save(); }, 6500);
+    await page.waitForTimeout(200);
     await page.waitForTimeout(300);
     
     // Level should still be 1 (level up happens on Long Rest)
@@ -880,8 +880,8 @@ test.describe('Derived Values - CASCADE: Level Up', () => {
     // First, get to level 5 - open Basic Info sub-tab
     await page.locator('button[data-subtab="basicinfo"]').click();
     await page.waitForTimeout(200);
-    await page.locator('#subtab-basicinfo #xpInput').fill('6500');
-    await page.locator('#subtab-basicinfo #xpInput').blur();
+    await page.evaluate(xp => { window.st.xp = xp; window.save(); }, 6500);
+    await page.waitForTimeout(200);
     await page.waitForTimeout(300);
     await page.locator('#btnLongRest').click();
     await page.locator('button[data-tab="stats"]').click();
@@ -891,8 +891,8 @@ test.describe('Derived Values - CASCADE: Level Up', () => {
     await expect(page.locator('#subtab-basicinfo #levelSpan')).toHaveText('5');
     
     // Set XP to 85000 (enough for level 11)
-    await page.locator('#subtab-basicinfo #xpInput').fill('85000');
-    await page.locator('#subtab-basicinfo #xpInput').blur();
+    await page.evaluate(xp => { window.st.xp = xp; window.save(); }, 85000);
+    await page.waitForTimeout(200);
     await page.waitForTimeout(300);
     
     // Level should still be 5 (level up happens on Long Rest)
@@ -929,8 +929,8 @@ test.describe('Derived Values - CASCADE: Level Up', () => {
     // Set XP to 6500 (enough for level 5) - open Basic Info sub-tab
     await page.locator('button[data-subtab="basicinfo"]').click();
     await page.waitForTimeout(200);
-    await page.locator('#subtab-basicinfo #xpInput').fill('6500');
-    await page.locator('#subtab-basicinfo #xpInput').blur();
+    await page.evaluate(xp => { window.st.xp = xp; window.save(); }, 6500);
+    await page.waitForTimeout(200);
     await page.waitForTimeout(300);
     
     // Level should still be 1 (level up happens on Long Rest)
@@ -1010,8 +1010,8 @@ test.describe('Derived Values - CASCADE: Multiple Changes', () => {
     await expect(page.locator('#subtab-basicinfo #maxHpSpan')).toHaveText('11');
     
     // Set XP to 6500 (enough for level 5)
-    await page.locator('#subtab-basicinfo #xpInput').fill('6500');
-    await page.locator('#subtab-basicinfo #xpInput').blur();
+    await page.evaluate(xp => { window.st.xp = xp; window.save(); }, 6500);
+    await page.waitForTimeout(200);
     await page.waitForTimeout(300);
     
     // Level should still be 1 (level up happens on Long Rest)
@@ -1051,8 +1051,8 @@ test.describe('Derived Values - CASCADE: Multiple Changes', () => {
     // Set XP to 6500 (enough for level 5) - open Basic Info sub-tab
     await page.locator('button[data-subtab="basicinfo"]').click();
     await page.waitForTimeout(200);
-    await page.locator('#subtab-basicinfo #xpInput').fill('6500');
-    await page.locator('#subtab-basicinfo #xpInput').blur();
+    await page.evaluate(xp => { window.st.xp = xp; window.save(); }, 6500);
+    await page.waitForTimeout(200);
     await page.waitForTimeout(300);
     
     // Level should still be 1 (level up happens on Long Rest)
@@ -1166,8 +1166,8 @@ test.describe('Derived Values - Edge Cases & Boundaries', () => {
     // Set XP to 355000 (enough for level 20) - open Basic Info sub-tab
     await page.locator('button[data-subtab="basicinfo"]').click();
     await page.waitForTimeout(200);
-    await page.locator('#subtab-basicinfo #xpInput').fill('355000');
-    await page.locator('#subtab-basicinfo #xpInput').blur();
+    await page.evaluate(xp => { window.st.xp = xp; window.save(); }, 355000);
+    await page.waitForTimeout(200);
     await page.waitForTimeout(300);
     
     // Level should still be 1 (level up happens on Long Rest)
@@ -1274,8 +1274,8 @@ test.describe('Derived Values - Ki Save DC', () => {
     await page.waitForTimeout(300);
     await page.locator('button[data-subtab="basicinfo"]').click();
     await page.waitForTimeout(200);
-    await page.locator('#subtab-basicinfo #xpInput').fill('6500');
-    await page.locator('#subtab-basicinfo #xpInput').blur();
+    await page.evaluate(xp => { window.st.xp = xp; window.save(); }, 6500);
+    await page.waitForTimeout(200);
     await page.waitForTimeout(300);
     
     // Level should still be 1 (level up happens on Long Rest)

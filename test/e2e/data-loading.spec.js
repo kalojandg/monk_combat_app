@@ -291,8 +291,8 @@ test.describe('Data Loading - Skills & Features', () => {
     await page.waitForTimeout(300);
     await page.locator('button[data-subtab="basicinfo"]').click();
     await page.waitForTimeout(200);
-    await page.locator('#subtab-basicinfo #xpInput').fill('6500');
-    await page.locator('#subtab-basicinfo #xpInput').blur();
+    await page.evaluate(xp => { window.st.xp = xp; window.save(); }, 6500);
+    await page.waitForTimeout(200);
     await page.waitForTimeout(300);
     
     // Level should still be 1 (level up happens on Long Rest)
@@ -416,7 +416,7 @@ test.describe('Data Loading - Error Handling', () => {
     await page.waitForTimeout(300);
     await page.locator('button[data-subtab="basicinfo"]').click();
     await page.waitForTimeout(200);
-    await expect(page.locator('#subtab-basicinfo #xpInput')).toBeVisible();
+    await expect(page.locator('#subtab-basicinfo #xpDisplay')).toBeVisible();
   });
 
 });

@@ -36,8 +36,8 @@ test.describe('Import / Export - Bundle v2', () => {
     await page.locator('button[data-subtab="basicinfo"]').click();
     await page.waitForTimeout(200);
     await page.locator('#subtab-basicinfo #charName').fill('Тестов Монах');
-    await page.locator('#subtab-basicinfo #xpInput').fill('6500'); // ниво 5
-    await page.locator('#subtab-basicinfo #xpInput').blur();
+    await page.evaluate(xp => { window.st.xp = xp; window.save(); }, 6500); // ниво 5
+    await page.waitForTimeout(200);
     await page.waitForTimeout(300);
     
     // Level should still be 1 (level up happens on Long Rest)
@@ -129,8 +129,8 @@ test.describe('Import / Export - Bundle v2', () => {
     await page.locator('button[data-subtab="basicinfo"]').click();
     await page.waitForTimeout(200);
     await page.locator('#subtab-basicinfo #charName').fill('Roundtrip Монах');
-    await page.locator('#subtab-basicinfo #xpInput').fill('14000'); // ниво 6 (9000 е за level 5)
-    await page.locator('#subtab-basicinfo #xpInput').blur();
+    await page.evaluate(xp => { window.st.xp = xp; window.save(); }, 14000); // ниво 6 (9000 е за level 5)
+    await page.waitForTimeout(200);
     await page.waitForTimeout(300);
     
     // Level should still be 1 (level up happens on Long Rest)
@@ -206,7 +206,7 @@ test.describe('Import / Export - Bundle v2', () => {
     await page.locator('button[data-subtab="basicinfo"]').click();
     await page.waitForTimeout(200);
     await expect(page.locator('#subtab-basicinfo #charName')).toHaveValue('Roundtrip Монах');
-    await expect(page.locator('#subtab-basicinfo #xpInput')).toHaveValue('14000');
+    await expect(page.locator('#subtab-basicinfo #xpDisplay')).toHaveText('14000');
     
     // Open Stats sub-tab for WIS
     await page.locator('button[data-subtab="stats"]').click();
@@ -234,8 +234,8 @@ test.describe('Import / Export - Bundle v2', () => {
     await page.waitForTimeout(200);
     await page.locator('#subtab-basicinfo #charName').fill('Full Roundtrip Монах');
     await page.locator('#subtab-basicinfo #notes').fill('Големият тест за import/export.');
-    await page.locator('#subtab-basicinfo #xpInput').fill('48000'); // ниво 9
-    await page.locator('#subtab-basicinfo #xpInput').blur();
+    await page.evaluate(xp => { window.st.xp = xp; window.save(); }, 48000); // ниво 9
+    await page.waitForTimeout(200);
     await page.waitForTimeout(300);
     
     // Level should still be 1 (level up happens on Long Rest)

@@ -106,8 +106,8 @@ test.describe('Attack Bonuses - Calculations', () => {
     await page.waitForTimeout(200);
     
     // Set XP to 6500 (enough for level 5)
-    await page.locator('#subtab-basicinfo #xpInput').fill('6500');
-    await page.locator('#subtab-basicinfo #xpInput').blur();
+    await page.evaluate(xp => { window.st.xp = xp; window.save(); }, 6500);
+    await page.waitForTimeout(200);
     await page.waitForTimeout(300);
     
     // Level should still be 1 (level up happens on Long Rest)
