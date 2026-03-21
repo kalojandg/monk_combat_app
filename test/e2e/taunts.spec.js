@@ -87,9 +87,9 @@ test.describe('Taunts - API Key Management', () => {
     expect(stored).toBe('claude-sonnet-4-20250514');
   });
 
-  test('Default model is Haiku 4.5', async ({ page }) => {
+  test('Default model is Sonnet 4', async ({ page }) => {
     const val = await page.locator('#tauntModel').inputValue();
-    expect(val).toBe('claude-haiku-4-5-20251001');
+    expect(val).toBe('claude-sonnet-4-20250514');
   });
 
   test('Save button shows confirmation feedback', async ({ page }) => {
@@ -278,7 +278,7 @@ test.describe('Taunts - Generate (mocked API)', () => {
     expect(capturedRequest).not.toBeNull();
     expect(capturedRequest.headers['x-api-key']).toBe('sk-ant-fake-test');
     expect(capturedRequest.headers['anthropic-dangerous-direct-browser-access']).toBe('true');
-    expect(capturedRequest.body.model).toBe('claude-haiku-4-5-20251001');
+    expect(capturedRequest.body.model).toBe('claude-sonnet-4-20250514');
     expect(capturedRequest.body.system).toBeTruthy();
     expect(capturedRequest.body.messages).toHaveLength(1);
   });
