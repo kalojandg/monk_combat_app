@@ -284,3 +284,105 @@ test.describe('Taunts - Generate (mocked API)', () => {
   });
 
 });
+
+test.describe('Taunts - Delete individual history item', () => {
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
+    await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
+
+    await page.evaluate(() => localStorage.setItem('monkTaunt_apiKey', 'sk-ant-fake-test'));
+    await page.locator('button[data-tab="taunts"]').click();
+  });
+
+  async function generateTaunts(page, texts) {
+    let idx = 0;
+    await page.route('**/api.anthropic.com/v1/messages', async route => {
+      const text = texts[idx % texts.length];
+      idx++;
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ content: [{ type: 'text', text }] }),
+      });
+    });
+    for (const _ of texts) {
+      await page.locator('#btnGenerateTaunt').click();
+      await expect(page.locator('#btnGenerateTaunt')).toHaveText('Generate Taunt', { timeout: 5000 });
+    }
+  }
+
+  test('Each history item has a delete button', async ({ page }) => {
+    await generateTaunts(page, ['Реплика едно', 'Реплика две']);
+
+    const items = page.locator('#tauntHistoryList li');
+    await expect(items).toHaveCount(2);
+
+    for (let i = 0; i < 2; i++) {
+      await expect(items.nth(i).locator('button[data-idx]')).toBeVisible();
+    }
+  });
+
+  test('Delete button removes the correct taunt', async ({ page }) => {
+    await generateTaunts(page, ['Запази ме', 'Изтрий мен']);
+
+    // newest is first (index 0 = "Изтрий мен"), index 1 = "Запази ме"
+    const items = page.locator('#tauntHistoryList li');
+    await expect(items).toHaveCount(2);
+
+    // delete the first item ("Изтрий мен")
+    await items.first().locator('button[data-idx]').click();
+    await page.waitForTimeout(200);
+
+    await expect(items).toHaveCount(1);
+    await expect(items.first()).toContainText('Запази ме');
+    await expect(page.locator('#tauntHistoryList')).not.toContainText('Изтрий мен');
+  });
+
+  test('Delete updates localStorage', async ({ page }) => {
+    await generateTaunts(page, ['Ще остана', 'Ще изчезна']);
+
+    const items = page.locator('#tauntHistoryList li');
+    // delete item at index 0 (newest = "Ще изчезна")
+    await items.first().locator('button[data-idx]').click();
+    await page.waitForTimeout(200);
+
+    const stored = await page.evaluate(() =>
+      JSON.parse(localStorage.getItem('monkTaunt_history'))
+    );
+    expect(stored).toHaveLength(1);
+    expect(stored[0].text).toBe('Ще остана');
+  });
+
+  test('Deleting the last item hides the history section', async ({ page }) => {
+    await generateTaunts(page, ['Единствената реплика']);
+
+    await expect(page.locator('#tauntHistory')).toBeVisible();
+
+    const items = page.locator('#tauntHistoryList li');
+    await items.first().locator('button[data-idx]').click();
+    await page.waitForTimeout(200);
+
+    await expect(page.locator('#tauntHistory')).not.toBeVisible();
+  });
+
+  test('Remaining taunts keep correct order after delete from middle', async ({ page }) => {
+    await generateTaunts(page, ['Първа', 'Втора', 'Трета']);
+
+    // history is newest-first: ["Трета", "Втора", "Първа"]
+    const items = page.locator('#tauntHistoryList li');
+    await expect(items).toHaveCount(3);
+
+    // delete middle item ("Втора", index 1)
+    await items.nth(1).locator('button[data-idx]').click();
+    await page.waitForTimeout(200);
+
+    await expect(items).toHaveCount(2);
+    await expect(items.nth(0)).toContainText('Трета');
+    await expect(items.nth(1)).toContainText('Първа');
+  });
+
+});

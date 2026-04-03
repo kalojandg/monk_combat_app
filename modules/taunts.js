@@ -82,6 +82,12 @@
   function clearHistory() {
     localStorage.removeItem(STORAGE_KEY_HISTORY);
   }
+  function deleteHistoryItem(idx) {
+    const h = getHistory();
+    h.splice(idx, 1);
+    localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(h));
+    renderHistory();
+  }
 
   function getHpPercent() {
     const st = window.st;
@@ -212,7 +218,9 @@
       return;
     }
     wrap.classList.remove('hidden');
-    list.innerHTML = h.map(item => `<li>${item.text}</li>`).join('');
+    list.innerHTML = h.map((item, i) =>
+      `<li><span class="taunt-item-text">${item.text}</span><button class="danger small taunt-delete-btn" data-idx="${i}" title="Изтрий">🗑</button></li>`
+    ).join('');
   }
 
   /* --- public API --- */
@@ -238,6 +246,12 @@
     if (btnClear) btnClear.addEventListener('click', () => {
       clearHistory();
       renderHistory();
+    });
+
+    const historyWrap = document.getElementById('tauntHistory');
+    if (historyWrap) historyWrap.addEventListener('click', e => {
+      const btn = e.target.closest('button[data-idx]');
+      if (btn) deleteHistoryItem(Number(btn.dataset.idx));
     });
 
     updateMoodIndicator();
