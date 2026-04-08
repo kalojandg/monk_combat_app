@@ -6,7 +6,9 @@
       "Bash(npx playwright test:*)",
       "Bash(node test/taunts.unit.js)",
       "Bash(netstat -ano)",
-      "Bash(grep \"test\\\\.skip\" d:/Downloads/monk/monk_combat_app/test/e2e/*.js)"
+      "Bash(grep \"test\\\\.skip\" d:/Downloads/monk/monk_combat_app/test/e2e/*.js)",
+      "Bash(python3 -c ':*)",
+      "Bash(node -e ':*)"
     ]
   }
 }

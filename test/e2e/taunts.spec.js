@@ -1,15 +1,33 @@
 import { test, expect } from '@playwright/test';
 
-/**
- * COMBAT TAUNTS TAB TESTS
- *
- * Tests for the Taunts tab UI, API key management, and API call mocking.
- * Since API calls cost money, we mock the Anthropic API in tests.
- */
+// Fake insults list used in all tests that need insults.json
+const FAKE_INSULTS = [
+  'Миришеш като сирене стояло 3 дни на слънце',
+  'С тоя нож си по-опасен за себе си, отколкото за мен',
+  'Лицето ти кара кучетата да бягат',
+  'Движиш се като крава в блато',
+  'Толкова си бавен, че зомби ще те надбяга в маратон',
+];
+
+async function mockInsults(page) {
+  await page.route('**/insults.json', route =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(FAKE_INSULTS),
+    })
+  );
+}
+
+async function openTauntsTab(page) {
+  await page.locator('button[data-tab="taunts"]').click();
+  await expect(page.locator('#tab-taunts')).toBeVisible();
+}
 
 test.describe('Taunts - Tab Navigation', () => {
 
   test.beforeEach(async ({ page }) => {
+    await mockInsults(page);
     await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
@@ -25,364 +43,185 @@ test.describe('Taunts - Tab Navigation', () => {
   });
 
   test('Taunts tab shows expected UI elements', async ({ page }) => {
-    await page.locator('button[data-tab="taunts"]').click();
-    await expect(page.locator('#tab-taunts')).toBeVisible();
-
-    // API key input
-    await expect(page.locator('#tauntApiKey')).toBeVisible();
-    // Model selector
-    await expect(page.locator('#tauntModel')).toBeVisible();
-    // Save key button
-    await expect(page.locator('#btnSaveApiKey')).toBeVisible();
-    // Generate button
+    await openTauntsTab(page);
     await expect(page.locator('#btnGenerateTaunt')).toBeVisible();
-    // Display area
     await expect(page.locator('#tauntDisplay')).toBeVisible();
+    await expect(page.locator('#tauntMoodIndicator')).toBeVisible();
   });
 
-  test('Taunts tab has default placeholder text', async ({ page }) => {
-    await page.locator('button[data-tab="taunts"]').click();
-    const placeholder = page.locator('#tauntDisplay .taunt-placeholder');
-    await expect(placeholder).toBeVisible();
+  test('No API key input or model selector present', async ({ page }) => {
+    await openTauntsTab(page);
+    await expect(page.locator('#tauntApiKey')).toHaveCount(0);
+    await expect(page.locator('#tauntModel')).toHaveCount(0);
+    await expect(page.locator('#btnSaveApiKey')).toHaveCount(0);
+  });
+
+  test('No history section present', async ({ page }) => {
+    await openTauntsTab(page);
+    await expect(page.locator('#tauntHistory')).toHaveCount(0);
+  });
+
+  test('Has placeholder text before first generate', async ({ page }) => {
+    await openTauntsTab(page);
+    await expect(page.locator('#tauntDisplay .taunt-placeholder')).toBeVisible();
   });
 
 });
 
-test.describe('Taunts - API Key Management', () => {
+test.describe('Taunts - Generate random insult', () => {
 
   test.beforeEach(async ({ page }) => {
+    await mockInsults(page);
     await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
     await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
-    await page.locator('button[data-tab="taunts"]').click();
+    await openTauntsTab(page);
   });
 
-  test('API key saves to localStorage', async ({ page }) => {
-    await page.locator('#tauntApiKey').fill('sk-ant-test-key-123');
-    await page.locator('#btnSaveApiKey').click();
-
-    const stored = await page.evaluate(() => localStorage.getItem('monkTaunt_apiKey'));
-    expect(stored).toBe('sk-ant-test-key-123');
-  });
-
-  test('API key persists across tab switches', async ({ page }) => {
-    await page.locator('#tauntApiKey').fill('sk-ant-persist-test');
-    await page.locator('#btnSaveApiKey').click();
-
-    // Switch away and back
-    await page.locator('button[data-tab="inventory"]').click();
-    await page.locator('button[data-tab="taunts"]').click();
-
-    const val = await page.locator('#tauntApiKey').inputValue();
-    expect(val).toBe('sk-ant-persist-test');
-  });
-
-  test('Model selection saves to localStorage', async ({ page }) => {
-    await page.locator('#tauntModel').selectOption('claude-sonnet-4-20250514');
-    await page.locator('#btnSaveApiKey').click();
-
-    const stored = await page.evaluate(() => localStorage.getItem('monkTaunt_model'));
-    expect(stored).toBe('claude-sonnet-4-20250514');
-  });
-
-  test('Default model is Sonnet 4', async ({ page }) => {
-    const val = await page.locator('#tauntModel').inputValue();
-    expect(val).toBe('claude-sonnet-4-20250514');
-  });
-
-  test('Save button shows confirmation feedback', async ({ page }) => {
-    await page.locator('#tauntApiKey').fill('sk-ant-test');
-    await page.locator('#btnSaveApiKey').click();
-
-    await expect(page.locator('#btnSaveApiKey')).toHaveText('Saved!');
-    // Reverts back after timeout
-    await expect(page.locator('#btnSaveApiKey')).toHaveText('Save Key', { timeout: 3000 });
-  });
-
-});
-
-test.describe('Taunts - Generate (mocked API)', () => {
-
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-    await page.evaluate(() => localStorage.clear());
-    await page.reload();
-    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
-    await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
-
-    // Set a fake API key so the module doesn't reject
-    await page.evaluate(() => localStorage.setItem('monkTaunt_apiKey', 'sk-ant-fake-test'));
-
-    await page.locator('button[data-tab="taunts"]').click();
-  });
-
-  test('Shows error when no API key is set', async ({ page }) => {
-    // Clear key
-    await page.evaluate(() => localStorage.removeItem('monkTaunt_apiKey'));
-    // Re-open tab to re-attach with cleared key
-    await page.locator('button[data-tab="inventory"]').click();
-    await page.locator('button[data-tab="taunts"]').click();
-
+  test('Clicking Generate Taunt shows an insult from the list', async ({ page }) => {
     await page.locator('#btnGenerateTaunt').click();
-    await page.waitForTimeout(500);
-
-    const error = page.locator('#tauntDisplay .taunt-error');
-    await expect(error).toBeVisible();
-  });
-
-  test('Generate button shows loading state during API call', async ({ page }) => {
-    // Mock API with a delayed response
-    await page.route('**/api.anthropic.com/v1/messages', async route => {
-      await new Promise(r => setTimeout(r, 500));
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          content: [{ type: 'text', text: 'Test taunt response' }]
-        }),
-      });
-    });
-
-    await page.locator('#btnGenerateTaunt').click();
-
-    // Button should show loading text
-    await expect(page.locator('#btnGenerateTaunt')).toHaveText('Generating...');
-    await expect(page.locator('#btnGenerateTaunt')).toBeDisabled();
-
-    // Wait for completion
-    await expect(page.locator('#btnGenerateTaunt')).toHaveText('Generate Taunt', { timeout: 5000 });
-    await expect(page.locator('#btnGenerateTaunt')).toBeEnabled();
-  });
-
-  test('Displays taunt from mocked API response', async ({ page }) => {
-    await page.route('**/api.anthropic.com/v1/messages', async route => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          content: [{ type: 'text', text: 'Ей, тъпако, стреляй по мен!' }]
-        }),
-      });
-    });
-
-    await page.locator('#btnGenerateTaunt').click();
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(300);
 
     const tauntText = page.locator('#tauntDisplay .taunt-text');
     await expect(tauntText).toBeVisible();
-    await expect(tauntText).toContainText('Ей, тъпако, стреляй по мен!');
+
+    const displayed = await tauntText.textContent();
+    const stripped = displayed.replace(/^"|"$/g, '').trim();
+    expect(FAKE_INSULTS).toContain(stripped);
   });
 
-  test('Taunt is added to history after generation', async ({ page }) => {
-    await page.route('**/api.anthropic.com/v1/messages', async route => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          content: [{ type: 'text', text: 'History test taunt' }]
-        }),
-      });
-    });
-
+  test('Displayed taunt is wrapped in quotes', async ({ page }) => {
     await page.locator('#btnGenerateTaunt').click();
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(300);
 
-    // History section should be visible
-    const history = page.locator('#tauntHistory');
-    await expect(history).toBeVisible();
-
-    // History list should contain the taunt
-    const historyItem = page.locator('#tauntHistoryList li');
-    await expect(historyItem.first()).toContainText('History test taunt');
+    const text = await page.locator('#tauntDisplay .taunt-text').textContent();
+    expect(text.trim()).toMatch(/^".+"$/);
   });
 
-  test('Multiple taunts accumulate in history', async ({ page }) => {
-    let callCount = 0;
-    await page.route('**/api.anthropic.com/v1/messages', async route => {
-      callCount++;
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          content: [{ type: 'text', text: `Taunt number ${callCount}` }]
-        }),
-      });
-    });
-
-    // Generate 3 taunts
-    for (let i = 0; i < 3; i++) {
+  test('Multiple clicks show different content (not stuck)', async ({ page }) => {
+    const results = new Set();
+    for (let i = 0; i < 8; i++) {
       await page.locator('#btnGenerateTaunt').click();
-      await expect(page.locator('#btnGenerateTaunt')).toHaveText('Generate Taunt', { timeout: 5000 });
+      await page.waitForTimeout(200);
+      const text = await page.locator('#tauntDisplay .taunt-text').textContent();
+      results.add(text.trim());
     }
-
-    const items = page.locator('#tauntHistoryList li');
-    await expect(items).toHaveCount(3);
+    // With 5 options and 8 clicks, at least 2 unique results expected
+    expect(results.size).toBeGreaterThanOrEqual(2);
   });
 
-  test('Clear history button works', async ({ page }) => {
-    await page.route('**/api.anthropic.com/v1/messages', async route => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          content: [{ type: 'text', text: 'Will be cleared' }]
-        }),
-      });
-    });
-
+  test('Button is re-enabled after generating', async ({ page }) => {
     await page.locator('#btnGenerateTaunt').click();
-    await expect(page.locator('#tauntHistory')).toBeVisible({ timeout: 3000 });
-
-    await page.locator('#btnClearTauntHistory').click();
-    await expect(page.locator('#tauntHistory')).not.toBeVisible();
+    await page.waitForTimeout(500);
+    await expect(page.locator('#btnGenerateTaunt')).toBeEnabled();
   });
 
-  test('Shows error on API failure', async ({ page }) => {
-    await page.route('**/api.anthropic.com/v1/messages', async route => {
-      await route.fulfill({
-        status: 401,
-        contentType: 'application/json',
-        body: JSON.stringify({ error: { message: 'Invalid API key' } }),
-      });
-    });
+  test('Shows error message when insults.json fails to load', async ({ page }) => {
+    // Override with a failing route
+    await page.route('**/insults.json', route => route.fulfill({ status: 500 }));
 
+    // Clear cache so the new route is used
+    await page.evaluate(() => window.__insults_cache = null);
     await page.locator('#btnGenerateTaunt').click();
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(500);
 
-    const error = page.locator('#tauntDisplay .taunt-error');
-    await expect(error).toBeVisible();
-    await expect(error).toContainText('API error');
-  });
-
-  test('API request sends correct headers and model', async ({ page }) => {
-    let capturedRequest = null;
-    await page.route('**/api.anthropic.com/v1/messages', async route => {
-      capturedRequest = {
-        headers: route.request().headers(),
-        body: JSON.parse(route.request().postData()),
-      };
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          content: [{ type: 'text', text: 'Test' }]
-        }),
-      });
-    });
-
-    await page.locator('#btnGenerateTaunt').click();
-    await expect(page.locator('#btnGenerateTaunt')).toHaveText('Generate Taunt', { timeout: 5000 });
-
-    expect(capturedRequest).not.toBeNull();
-    expect(capturedRequest.headers['x-api-key']).toBe('sk-ant-fake-test');
-    expect(capturedRequest.headers['anthropic-dangerous-direct-browser-access']).toBe('true');
-    expect(capturedRequest.body.model).toBe('claude-sonnet-4-20250514');
-    expect(capturedRequest.body.system).toBeTruthy();
-    expect(capturedRequest.body.messages).toHaveLength(1);
+    await expect(page.locator('#tauntDisplay .taunt-error')).toBeVisible();
   });
 
 });
 
-test.describe('Taunts - Delete individual history item', () => {
+test.describe('Taunts - Mood Indicator', () => {
 
   test.beforeEach(async ({ page }) => {
+    await mockInsults(page);
     await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
     await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
-
-    await page.evaluate(() => localStorage.setItem('monkTaunt_apiKey', 'sk-ant-fake-test'));
-    await page.locator('button[data-tab="taunts"]').click();
   });
 
-  async function generateTaunts(page, texts) {
-    let idx = 0;
-    await page.route('**/api.anthropic.com/v1/messages', async route => {
-      const text = texts[idx % texts.length];
-      idx++;
-      await route.fulfill({
+  test('Mood indicator shows Cocky when HP is above 50%', async ({ page }) => {
+    // Default HP=8, maxHP from derived — above 50%
+    await openTauntsTab(page);
+    const indicator = page.locator('#tauntMoodIndicator');
+    await expect(indicator).toContainText('Cocky & Brutal');
+    await expect(indicator).toHaveClass(/taunt-mood-high/);
+  });
+
+  test('Mood indicator shows Bloodied when HP is 30-50%', async ({ page }) => {
+    // Set HP to 40% of maxHP (maxHP default ~10, so set hpCurrent=4)
+    await page.evaluate(() => {
+      window.st.hpCurrent = 4;
+      window.st.hpMax = 10;
+      window.save();
+    });
+    await openTauntsTab(page);
+    const indicator = page.locator('#tauntMoodIndicator');
+    await expect(indicator).toContainText('Bloodied but Standing');
+    await expect(indicator).toHaveClass(/taunt-mood-mid/);
+  });
+
+  test('Mood indicator shows Desperate when HP is below 30%', async ({ page }) => {
+    await page.evaluate(() => {
+      window.st.hpCurrent = 1;
+      window.save();
+    });
+    await openTauntsTab(page);
+    const indicator = page.locator('#tauntMoodIndicator');
+    await expect(indicator).toContainText('Desperate & Unhinged');
+    await expect(indicator).toHaveClass(/taunt-mood-low/);
+  });
+
+  test('Mood indicator shows HP percentage', async ({ page }) => {
+    await openTauntsTab(page);
+    const text = await page.locator('#tauntMoodIndicator').textContent();
+    expect(text).toMatch(/HP \d+%/);
+  });
+
+  test('Mood indicator updates when HP changes and tab is re-rendered', async ({ page }) => {
+    await openTauntsTab(page);
+    await expect(page.locator('#tauntMoodIndicator')).toContainText('Cocky');
+
+    // Drop HP
+    await page.evaluate(() => {
+      window.st.hpCurrent = 1;
+      window.save();
+    });
+    await page.waitForTimeout(300);
+
+    await expect(page.locator('#tauntMoodIndicator')).toContainText('Desperate & Unhinged');
+  });
+
+});
+
+test.describe('Taunts - insults.json caching', () => {
+
+  test('insults.json is fetched only once across multiple generates', async ({ page }) => {
+    let fetchCount = 0;
+    await page.route('**/insults.json', route => {
+      fetchCount++;
+      return route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ content: [{ type: 'text', text }] }),
+        body: JSON.stringify(FAKE_INSULTS),
       });
     });
-    for (const _ of texts) {
+
+    await page.goto('/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
+    await openTauntsTab(page);
+
+    for (let i = 0; i < 5; i++) {
       await page.locator('#btnGenerateTaunt').click();
-      await expect(page.locator('#btnGenerateTaunt')).toHaveText('Generate Taunt', { timeout: 5000 });
+      await page.waitForTimeout(200);
     }
-  }
 
-  test('Each history item has a delete button', async ({ page }) => {
-    await generateTaunts(page, ['Реплика едно', 'Реплика две']);
-
-    const items = page.locator('#tauntHistoryList li');
-    await expect(items).toHaveCount(2);
-
-    for (let i = 0; i < 2; i++) {
-      await expect(items.nth(i).locator('button[data-idx]')).toBeVisible();
-    }
-  });
-
-  test('Delete button removes the correct taunt', async ({ page }) => {
-    await generateTaunts(page, ['Запази ме', 'Изтрий мен']);
-
-    // newest is first (index 0 = "Изтрий мен"), index 1 = "Запази ме"
-    const items = page.locator('#tauntHistoryList li');
-    await expect(items).toHaveCount(2);
-
-    // delete the first item ("Изтрий мен")
-    await items.first().locator('button[data-idx]').click();
-    await page.waitForTimeout(200);
-
-    await expect(items).toHaveCount(1);
-    await expect(items.first()).toContainText('Запази ме');
-    await expect(page.locator('#tauntHistoryList')).not.toContainText('Изтрий мен');
-  });
-
-  test('Delete updates localStorage', async ({ page }) => {
-    await generateTaunts(page, ['Ще остана', 'Ще изчезна']);
-
-    const items = page.locator('#tauntHistoryList li');
-    // delete item at index 0 (newest = "Ще изчезна")
-    await items.first().locator('button[data-idx]').click();
-    await page.waitForTimeout(200);
-
-    const stored = await page.evaluate(() =>
-      JSON.parse(localStorage.getItem('monkTaunt_history'))
-    );
-    expect(stored).toHaveLength(1);
-    expect(stored[0].text).toBe('Ще остана');
-  });
-
-  test('Deleting the last item hides the history section', async ({ page }) => {
-    await generateTaunts(page, ['Единствената реплика']);
-
-    await expect(page.locator('#tauntHistory')).toBeVisible();
-
-    const items = page.locator('#tauntHistoryList li');
-    await items.first().locator('button[data-idx]').click();
-    await page.waitForTimeout(200);
-
-    await expect(page.locator('#tauntHistory')).not.toBeVisible();
-  });
-
-  test('Remaining taunts keep correct order after delete from middle', async ({ page }) => {
-    await generateTaunts(page, ['Първа', 'Втора', 'Трета']);
-
-    // history is newest-first: ["Трета", "Втора", "Първа"]
-    const items = page.locator('#tauntHistoryList li');
-    await expect(items).toHaveCount(3);
-
-    // delete middle item ("Втора", index 1)
-    await items.nth(1).locator('button[data-idx]').click();
-    await page.waitForTimeout(200);
-
-    await expect(items).toHaveCount(2);
-    await expect(items.nth(0)).toContainText('Трета');
-    await expect(items.nth(1)).toContainText('Първа');
+    expect(fetchCount).toBe(1);
   });
 
 });
