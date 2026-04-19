@@ -153,6 +153,47 @@
     renderGold(); // Update display immediately
   }
 
+  // Pure function: subtract cost from current using cross-denomination borrowing.
+  // Borrows from the next higher denomination only when needed (borrow-down strategy).
+  // Returns new { pp, gp, sp, cp } or null if insufficient funds.
+  // 1 PP = 10 GP = 100 SP = 1000 CP
+  function spendGold(current, cost) {
+    const toCp = ({ pp = 0, gp = 0, sp = 0, cp = 0 }) =>
+      Math.floor(pp) * 1000 + Math.floor(gp) * 100 + Math.floor(sp) * 10 + Math.floor(cp);
+    if (toCp(cost) > toCp(current)) return null;
+
+    let pp = Number(current.pp || 0);
+    let gp = Number(current.gp || 0);
+    let sp = Number(current.sp || 0);
+    let cp = Number(current.cp || 0);
+
+    // CP layer
+    cp -= Number(cost.cp || 0);
+    if (cp < 0) {
+      const borrow = Math.ceil(-cp / 10);
+      sp -= borrow;
+      cp += borrow * 10;
+    }
+    // SP layer
+    sp -= Number(cost.sp || 0);
+    if (sp < 0) {
+      const borrow = Math.ceil(-sp / 10);
+      gp -= borrow;
+      sp += borrow * 10;
+    }
+    // GP layer
+    gp -= Number(cost.gp || 0);
+    if (gp < 0) {
+      const borrow = Math.ceil(-gp / 10);
+      pp -= borrow;
+      gp += borrow * 10;
+    }
+    // PP layer (protected by toCp check above)
+    pp -= Number(cost.pp || 0);
+
+    return { pp, gp, sp, cp };
+  }
+
   function handleGoldSpend() {
     if (typeof window.st === 'undefined' || typeof window.save === 'undefined') {
       console.warn('st or save not available yet');
@@ -160,27 +201,43 @@
     }
 
     const getInput = id => Math.max(0, Math.floor(Number(document.getElementById(id)?.value || 0)));
-
-    const plat = getInput('goldPlatinumInput');
-    const gold = getInput('goldGoldInput');
-    const silver = getInput('goldSilverInput');
-    const copper = getInput('goldCopperInput');
-
-    // Subtract, but don't go below zero
-    window.st.goldPlatinum = Math.max(0, (Number(window.st.goldPlatinum || 0) - plat));
-    window.st.goldGold = Math.max(0, (Number(window.st.goldGold || 0) - gold));
-    window.st.goldSilver = Math.max(0, (Number(window.st.goldSilver || 0) - silver));
-    window.st.goldCopper = Math.max(0, (Number(window.st.goldCopper || 0) - copper));
-
-    // Clear inputs
     const el = id => document.getElementById(id);
+
+    const cost = {
+      pp: getInput('goldPlatinumInput'),
+      gp: getInput('goldGoldInput'),
+      sp: getInput('goldSilverInput'),
+      cp: getInput('goldCopperInput'),
+    };
+    const current = {
+      pp: Number(window.st.goldPlatinum || 0),
+      gp: Number(window.st.goldGold || 0),
+      sp: Number(window.st.goldSilver || 0),
+      cp: Number(window.st.goldCopper || 0),
+    };
+
+    const result = spendGold(current, cost);
+    const errEl = el('goldSpendError');
+
+    if (result === null) {
+      if (errEl) errEl.classList.remove('hidden');
+      return;
+    }
+
+    if (errEl) errEl.classList.add('hidden');
+
+    window.st.goldPlatinum = result.pp;
+    window.st.goldGold = result.gp;
+    window.st.goldSilver = result.sp;
+    window.st.goldCopper = result.cp;
+
     if (el('goldPlatinumInput')) el('goldPlatinumInput').value = '';
     if (el('goldGoldInput')) el('goldGoldInput').value = '';
     if (el('goldSilverInput')) el('goldSilverInput').value = '';
     if (el('goldCopperInput')) el('goldCopperInput').value = '';
 
-    window.save(); // trigger render + cloud write
-    renderGold(); // Update display immediately
+    window.save();
+    renderGold();
   }
 
   function attachInventory() {
@@ -245,4 +302,5 @@
   window.renderGold = renderGold;
   window.handleGoldGain = handleGoldGain;
   window.handleGoldSpend = handleGoldSpend;
+  window.spendGold = spendGold;
 })();

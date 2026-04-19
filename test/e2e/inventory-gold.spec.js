@@ -146,18 +146,95 @@ test.describe('Inventory - Gold Management', () => {
     await expect(page.locator('#goldCopperSpan')).toHaveText('125');
   });
 
-  test('Spend gold - cannot go below zero', async ({ page }) => {
+  test('Spend gold - shows error and keeps values unchanged when insufficient funds', async ({ page }) => {
     // Gain 10 gold
     await page.locator('#goldGoldInput').fill('10');
     await page.locator('#goldGainBtn').click();
     await expect(page.locator('#goldGoldSpan')).toHaveText('10');
-    
-    // Try to spend 15 (more than available)
+
+    // Try to spend 15 GP (more than the 10 GP available across all denominations)
     await page.locator('#goldGoldInput').fill('15');
     await page.locator('#goldSpendBtn').click();
-    
-    // Should stay at 0, not go negative
+
+    // Values must stay unchanged
+    await expect(page.locator('#goldGoldSpan')).toHaveText('10');
+    // Error message must be visible
+    await expect(page.locator('#goldSpendError')).toBeVisible();
+  });
+
+  // --- Cross-denomination conversion tests ---
+
+  test('Spend gold - converts GP to SP when SP is insufficient', async ({ page }) => {
+    // Have 1 GP, 0 SP. Spend 5 SP → borrow 1 GP → 10 SP → pay 5 → 5 SP left
+    await page.locator('#goldGoldInput').fill('1');
+    await page.locator('#goldGainBtn').click();
+    await expect(page.locator('#goldGoldSpan')).toHaveText('1');
+
+    await page.locator('#goldSilverInput').fill('5');
+    await page.locator('#goldSpendBtn').click();
+
     await expect(page.locator('#goldGoldSpan')).toHaveText('0');
+    await expect(page.locator('#goldSilverSpan')).toHaveText('5');
+    await expect(page.locator('#goldCopperSpan')).toHaveText('0');
+  });
+
+  test('Spend gold - converts PP to GP when GP is insufficient', async ({ page }) => {
+    // Have 1 PP, 0 GP. Spend 3 GP → borrow 1 PP → 10 GP → pay 3 → 7 GP left
+    await page.locator('#goldPlatinumInput').fill('1');
+    await page.locator('#goldGainBtn').click();
+    await expect(page.locator('#goldPlatinumSpan')).toHaveText('1');
+
+    await page.locator('#goldGoldInput').fill('3');
+    await page.locator('#goldSpendBtn').click();
+
+    await expect(page.locator('#goldPlatinumSpan')).toHaveText('0');
+    await expect(page.locator('#goldGoldSpan')).toHaveText('7');
+    await expect(page.locator('#goldSilverSpan')).toHaveText('0');
+    await expect(page.locator('#goldCopperSpan')).toHaveText('0');
+  });
+
+  test('Spend gold - complex conversion: 300 GP, spend 13 SP and 16 CP → 298 GP, 5 SP, 4 CP', async ({ page }) => {
+    await page.locator('#goldGoldInput').fill('300');
+    await page.locator('#goldGainBtn').click();
+    await expect(page.locator('#goldGoldSpan')).toHaveText('300');
+
+    await page.locator('#goldSilverInput').fill('13');
+    await page.locator('#goldCopperInput').fill('16');
+    await page.locator('#goldSpendBtn').click();
+
+    await expect(page.locator('#goldGoldSpan')).toHaveText('298');
+    await expect(page.locator('#goldSilverSpan')).toHaveText('5');
+    await expect(page.locator('#goldCopperSpan')).toHaveText('4');
+    await expect(page.locator('#goldPlatinumSpan')).toHaveText('0');
+  });
+
+  test('Spend gold - chain conversion CP → SP → GP: have 1 GP only, spend 15 CP', async ({ page }) => {
+    // 1 GP → borrow for SP (ceil(15/10)=2 SP) → borrow 1 GP for 10 SP → have 10 SP
+    // spend 15 CP → borrow 2 SP for 20 CP → pay 15 → 5 CP left, 8 SP left, 0 GP left
+    await page.locator('#goldGoldInput').fill('1');
+    await page.locator('#goldGainBtn').click();
+
+    await page.locator('#goldCopperInput').fill('15');
+    await page.locator('#goldSpendBtn').click();
+
+    await expect(page.locator('#goldGoldSpan')).toHaveText('0');
+    await expect(page.locator('#goldSilverSpan')).toHaveText('8');
+    await expect(page.locator('#goldCopperSpan')).toHaveText('5');
+  });
+
+  test('Spend gold - error hidden after successful spend', async ({ page }) => {
+    // Trigger error first
+    await page.locator('#goldGoldInput').fill('5');
+    await page.locator('#goldSpendBtn').click();
+    await expect(page.locator('#goldSpendError')).toBeVisible();
+
+    // Gain and spend successfully
+    await page.locator('#goldGoldInput').fill('10');
+    await page.locator('#goldGainBtn').click();
+    await page.locator('#goldGoldInput').fill('5');
+    await page.locator('#goldSpendBtn').click();
+
+    await expect(page.locator('#goldSpendError')).toBeHidden();
   });
 
   test('Gain gold - handles negative input as zero', async ({ page }) => {
