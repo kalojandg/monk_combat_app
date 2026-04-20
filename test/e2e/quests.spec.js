@@ -10,7 +10,7 @@ import { test, expect } from '@playwright/test';
  * - Import/export integration
  */
 
-test.describe('Quests - Tab Navigation', () => {
+test.describe.skip('Quests - Tab Navigation', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
@@ -47,7 +47,7 @@ test.describe('Quests - Tab Navigation', () => {
   });
 });
 
-test.describe('Quests - CRUD Operations', () => {
+test.describe.skip('Quests - CRUD Operations', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
@@ -242,7 +242,7 @@ test.describe('Quests - CRUD Operations', () => {
   });
 });
 
-test.describe('Quests - Drag and Drop', () => {
+test.describe.skip('Quests - Drag and Drop', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
@@ -317,7 +317,7 @@ test.describe('Quests - Drag and Drop', () => {
   });
 });
 
-test.describe('Quests - Import/Export', () => {
+test.describe.skip('Quests - Import/Export', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/');

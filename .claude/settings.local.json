@@ -8,7 +8,12 @@
       "Bash(netstat -ano)",
       "Bash(grep \"test\\\\.skip\" d:/Downloads/monk/monk_combat_app/test/e2e/*.js)",
       "Bash(python3 -c ':*)",
-      "Bash(node -e ':*)"
+      "Bash(node -e ':*)",
+      "Bash(gh --version)",
+      "Bash(winget install *)",
+      "Bash(powershell.exe -Command \"winget install --id GitHub.cli --accept-source-agreements --accept-package-agreements\")",
+      "Bash(powershell.exe -Command \"gh --version\")",
+      "Bash(gh auth *)"
     ]
   }
 }

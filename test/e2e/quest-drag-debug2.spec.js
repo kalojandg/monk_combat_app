@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('Debug sortable instance', async ({ page }) => {
+test.skip('Debug sortable instance', async ({ page }) => {
   // Listen to console messages
   page.on('console', msg => console.log('BROWSER:', msg.text()));
   page.on('pageerror', err => console.log('PAGE ERROR:', err.message));

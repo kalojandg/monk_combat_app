@@ -11,7 +11,7 @@ async function loadTabs() {
     'familiars': 'tabs/familiars.html',
     'skills': 'tabs/skills.html',
     'sessionNotes': 'tabs/sessionNotes.html',
-    'quests': 'tabs/quests.html',
+    // 'quests': 'tabs/quests.html', // moved to shared-inventory app
     'taunts': 'tabs/taunts.html',
     'npc-names': 'tabs/npc-names.html'
   };
@@ -750,7 +750,7 @@ function applyBundle(data) {
   if (typeof window.renderInventoryTable === 'function') window.renderInventoryTable();
   if (typeof window.renderAliasTable === 'function') window.renderAliasTable();
   if (typeof window.renderFamTable === 'function') window.renderFamTable();
-  if (typeof window.renderQuests === 'function') window.renderQuests();
+  // if (typeof window.renderQuests === 'function') window.renderQuests(); // moved to shared-inventory app
 }
 
 // Inventory functions are in modules/inventory.js
@@ -1894,20 +1894,14 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
       }, 100);
     }
 
-    // Re-attach quest event listeners when quests tab is shown
-    if (tabKey === 'quests') {
-      setTimeout(() => {
-        if (typeof window.attachQuestListeners === 'function') {
-          window.attachQuestListeners();
-        }
-        if (typeof window.renderQuests === 'function') {
-          window.renderQuests();
-        }
-        if (typeof window.initQuestDragAndDrop === 'function') {
-          window.initQuestDragAndDrop();
-        }
-      }, 100);
-    }
+    // Quests tab moved to shared-inventory app
+    // if (tabKey === 'quests') {
+    //   setTimeout(() => {
+    //     if (typeof window.attachQuestListeners === 'function') window.attachQuestListeners();
+    //     if (typeof window.renderQuests === 'function') window.renderQuests();
+    //     if (typeof window.initQuestDragAndDrop === 'function') window.initQuestDragAndDrop();
+    //   }, 100);
+    // }
 
     if (tabKey === 'stats') {
       // Show first sub-tab by default if none is active
