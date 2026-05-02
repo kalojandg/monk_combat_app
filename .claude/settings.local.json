@@ -13,7 +13,11 @@
       "Bash(winget install *)",
       "Bash(powershell.exe -Command \"winget install --id GitHub.cli --accept-source-agreements --accept-package-agreements\")",
       "Bash(powershell.exe -Command \"gh --version\")",
-      "Bash(gh auth *)"
+      "Bash(gh auth *)",
+      "Bash(node --input-type=module)",
+      "Bash(node gen-shared-icons.mjs)",
+      "Bash(npm install *)",
+      "Bash(npx playwright *)"
     ]
   }
 }

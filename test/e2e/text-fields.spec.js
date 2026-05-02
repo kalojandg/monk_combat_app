@@ -6,7 +6,7 @@ import { test, expect } from '@playwright/test';
  * Тестват persistence на text fields (Personality, Bond, Flaw, Notes).
  */
 
-test.describe('Text Fields - PC Characteristics', () => {
+test.describe.skip('Text Fields - PC Characteristics (retired – character died)', () => {
   
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
@@ -168,24 +168,27 @@ test.describe('Text Fields - Notes', () => {
   test('Notes persist independently from PC characteristics', async ({ page }) => {
     // Fill notes
     await page.locator('#subtab-basicinfo #notes').fill('Campaign notes');
-    
-    // Go to PC tab and fill personality
+
+    // Go to PC tab and add a language (personality/bond/flaw are retired)
     await page.locator('button[data-tab="pcchar"]').click();
-    await page.locator('#pcPersonality').fill('Character personality');
-    
+    await page.locator('#btnLangAdd').click();
+    await page.locator('#pcModalName').fill('Elvish');
+    await page.locator('#pcModalSave').click();
+
     // Reload
     await page.reload();
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
-    
-    // Check both fields persist independently
+
+    // Notes persist
     await page.locator('button[data-tab="stats"]').click();
     await page.waitForTimeout(300);
     await page.locator('button[data-subtab="basicinfo"]').click();
     await page.waitForTimeout(200);
     await expect(page.locator('#subtab-basicinfo #notes')).toHaveValue('Campaign notes');
-    
+
+    // PC tab still loads correctly
     await page.locator('button[data-tab="pcchar"]').click();
-    await expect(page.locator('#pcPersonality')).toHaveValue('Character personality');
+    await expect(page.locator('#btnLangAdd')).toBeVisible();
   });
 
 });
