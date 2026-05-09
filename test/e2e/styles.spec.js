@@ -340,7 +340,7 @@ test.describe('Styles - Inputs & textareas', () => {
     }
   });
 
-  test.skip('PC Characteristics textareas share the same look (retired – no textareas after lineage update)', async ({ page }) => {
+  test('PC Characteristics textareas share the same look', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
 

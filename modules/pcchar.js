@@ -215,73 +215,35 @@
       openPcModal('tool');
     });
 
-    // RETIRED (character died) – personality/bond/flaw listeners kept for history
-    // const tPers = document.getElementById('pcPersonality');
-    // const tBond = document.getElementById('pcBond');
-    // const tFlaw = document.getElementById('pcFlaw');
+    const tPers = document.getElementById('pcPersonality');
+    const tBond = document.getElementById('pcBond');
+    const tFlaw = document.getElementById('pcFlaw');
 
-    // tPers && tPers.addEventListener('input', () => {
-    //   if (typeof window.st !== 'undefined' && typeof window.save !== 'undefined') {
-    //     window.st.personality = tPers.value;
-    //     window.save();
-    //   }
-    // });
-    // tBond && tBond.addEventListener('input', () => {
-    //   if (typeof window.st !== 'undefined' && typeof window.save !== 'undefined') {
-    //     window.st.bond = tBond.value;
-    //     window.save();
-    //   }
-    // });
-    // tFlaw && tFlaw.addEventListener('input', () => {
-    //   if (typeof window.st !== 'undefined' && typeof window.save !== 'undefined') {
-    //     window.st.flaw = tFlaw.value;
-    //     window.save();
-    //   }
-    // });
-
-  }
-
-  function renderKfplBoxes() {
-    const root = document.getElementById('kfplTracker');
-    if (!root) return;
-    if (typeof window.st === 'undefined') return;
-
-    const level = Number(window.st.level) || 1;
-    // proficiency bonus mirrors app.js profBonus()
-    let prof = 2;
-    if (level >= 17) prof = 6;
-    else if (level >= 13) prof = 5;
-    else if (level >= 9) prof = 4;
-    else if (level >= 5) prof = 3;
-
-    const used = Number(window.st.kfplUsed) || 0;
-
-    const boxes = Array.from({ length: prof }, (_, i) => {
-      const checked = i < used;
-      return `<input type="checkbox" class="kfpl-box" data-idx="${i}"
-        ${checked ? 'checked disabled' : ''}
-        aria-label="Use ${i + 1}">`;
-    }).join('');
-
-    root.innerHTML = `<span class="kfpl-label">Uses (long rest):</span>${boxes}`;
-
-    root.querySelectorAll('.kfpl-box:not([disabled])').forEach(cb => {
-      cb.addEventListener('change', () => {
-        if (!cb.checked) return;
-        if (typeof window.st === 'undefined' || typeof window.save === 'undefined') return;
-        const idx = parseInt(cb.dataset.idx, 10);
-        window.st.kfplUsed = idx + 1;
+    tPers && tPers.addEventListener('input', () => {
+      if (typeof window.st !== 'undefined' && typeof window.save !== 'undefined') {
+        window.st.personality = tPers.value;
         window.save();
-        renderKfplBoxes();
-      });
+      }
     });
+    tBond && tBond.addEventListener('input', () => {
+      if (typeof window.st !== 'undefined' && typeof window.save !== 'undefined') {
+        window.st.bond = tBond.value;
+        window.save();
+      }
+    });
+    tFlaw && tFlaw.addEventListener('input', () => {
+      if (typeof window.st !== 'undefined' && typeof window.save !== 'undefined') {
+        window.st.flaw = tFlaw.value;
+        window.save();
+      }
+    });
+
   }
 
   // Export functions to global scope
   window.attachPCChar = attachPCChar;
   window.renderLangTable = renderLangTable;
   window.renderToolTable = renderToolTable;
-  window.renderKfplBoxes = renderKfplBoxes;
   window.openPcModal = openPcModal;
   window.closePcModal = closePcModal;
 })();

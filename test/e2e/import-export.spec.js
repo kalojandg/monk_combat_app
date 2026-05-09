@@ -57,9 +57,11 @@ test.describe('Import / Export - Bundle v2', () => {
     await page.locator('#subtab-stats #dexInput').fill('16');
     await page.locator('#subtab-stats #dexInput').blur();
 
-    // PC Characteristics таб – personality/bond/flaw са retired; проверяваме kfplUsed вместо
+    // PC Characteristics таб
     await page.locator('button[data-tab="pcchar"]').click();
-    await page.evaluate(() => { window.st.kfplUsed = 2; window.save(); });
+    await page.locator('#pcPersonality').fill('Спокоен, обмислен, любител на чай.');
+    await page.locator('#pcBond').fill('Заклел се е да пази манастира.');
+    await page.locator('#pcFlaw').fill('Натрапчиво пресмята всичко в бой.');
 
     // Notes (глобално поле) - в Basic Info sub-tab
     await page.locator('button[data-tab="stats"]').click();
@@ -104,7 +106,9 @@ test.describe('Import / Export - Bundle v2', () => {
     expect(bundle.state.xp).toBe(6500);
     expect(bundle.state.dex).toBe(16);
 
-    expect(bundle.state.kfplUsed).toBe(2);
+    expect(bundle.state.personality).toBe('Спокоен, обмислен, любител на чай.');
+    expect(bundle.state.bond).toBe('Заклел се е да пази манастира.');
+    expect(bundle.state.flaw).toBe('Натрапчиво пресмята всичко в бой.');
 
     expect(bundle.state.notes).toBe('Бележка за теста на import/export.');
 
@@ -150,9 +154,9 @@ test.describe('Import / Export - Bundle v2', () => {
     await page.locator('button[data-tab="skills"]').click();
     await page.waitForTimeout(200);
 
-    // PC Characteristics – personality retired; тестваме kfplUsed
+    // PC Characteristics
     await page.locator('button[data-tab="pcchar"]').click();
-    await page.evaluate(() => { window.st.kfplUsed = 1; window.save(); });
+    await page.locator('#pcPersonality').fill('Спокоен пазител на портите.');
 
     // 2) Генерираме bundle и го запазваме в променлива в теста
     const bundle = await page.evaluate(() => {
@@ -215,10 +219,9 @@ test.describe('Import / Export - Bundle v2', () => {
     await page.waitForTimeout(200);
     await expect(page.locator('#subtab-basicinfo #levelSpan')).toHaveText('6');
 
-    // PC Characteristics – kfplUsed трябва да е възстановен от bundle
+    // PC Characteristics
     await page.locator('button[data-tab="pcchar"]').click();
-    const kfplUsed = await page.evaluate(() => window.st.kfplUsed);
-    expect(kfplUsed).toBe(1);
+    await expect(page.locator('#pcPersonality')).toHaveValue('Спокоен пазител на портите.');
   });
 
   test('FULL STATE ROUND-TRIP: UI → bundle → applyBundle() пази всички полета', async ({ page }) => {
@@ -298,9 +301,11 @@ test.describe('Import / Export - Bundle v2', () => {
     await page.locator('button[data-tab="skills"]').click();
     await page.waitForTimeout(300);
 
-    // PC Characteristics – personality/bond/flaw retired; използваме kfplUsed
+    // PC Characteristics
     await page.locator('button[data-tab="pcchar"]').click();
-    await page.evaluate(() => { window.st.kfplUsed = 3; window.save(); });
+    await page.locator('#pcPersonality').fill('Спокоен, но подозрителен към демони.');
+    await page.locator('#pcBond').fill('Дължи живота си на учителя от манастира.');
+    await page.locator('#pcFlaw').fill('Склонен е да поема прекомерни рискове.');
 
     // Languages & Tools
     await page.locator('#btnLangAdd').click();

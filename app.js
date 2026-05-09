@@ -135,8 +135,7 @@ const defaultState = {
   baseSpeed: 30,
   tough: false,
   hpAdjust: 0,
-  kiSaveDcMagic: 0,
-  kfplUsed: 0
+  kiSaveDcMagic: 0
 };
 
 // --- bundle helpers ---
@@ -448,10 +447,13 @@ function renderAll() {
   el("saveChaTotalSpan") && (el("saveChaTotalSpan").textContent = (d.savesTotal.cha >= 0 ? "+" : "") + d.savesTotal.cha);
 
   // PC Characteristics textareas
+  el("pcPersonality") && (el("pcPersonality").value = st.personality || "");
+  el("pcBond") && (el("pcBond").value = st.bond || "");
+  el("pcFlaw") && (el("pcFlaw").value = st.flaw || "");
+
   // tables
   window.renderLangTable?.();
   window.renderToolTable?.();
-  window.renderKfplBoxes?.();
 
   renderSkills(d.mods, d.prof);
   renderDeathSaves();
@@ -652,9 +654,7 @@ el("btnLongRest") && el("btnLongRest").addEventListener("click", () => {
   st.kiCurrent = d.kiMax;
   st.hpCurrent = d.maxHP;
   st.dsSuccess = 0; st.dsFail = 0; st.status = "alive";
-  st.kfplUsed = 0;
   save();
-  window.renderKfplBoxes?.();
 });
 
 // ---- Attack Bonuses ----

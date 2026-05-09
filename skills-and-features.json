@@ -2,19 +2,6 @@
   "class": "Monk",
   "features": [
     {
-      "id": "vampiric_bite",
-      "name": "Vampiric Bite",
-      "level": 1,
-      "lineage": "Revenant",
-      "short": "Natural weapon (melee, proficient); MA die piercing; adv. on attacks at ≤½ HP; on hit regain HP equal to damage rolled (not Constructs/Undead).",
-      "desc": [
-        "Your fanged bite is a natural weapon, which counts as a melee weapon with which you are proficient. You can add any physical modifier to the attack and damage rolls when you attack with this bite. It deals Martial Arts die piercing damage on a hit.",
-        "While you are missing half or more of your hit points, you have advantage on attack rolls you make with this bite.",
-        "When you attack with this bite and hit a creature that isn't a Construct or an Undead, you can empower yourself in the following way: you regain hit points equal to the dice-rolled damage dealt by the bite."
-      ],
-      "notes": "Revenant Lineage trait."
-    },
-    {
       "id": "unarmored_defense",
       "name": "Unarmored Defense",
       "level": 1,

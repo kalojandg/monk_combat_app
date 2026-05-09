@@ -424,61 +424,6 @@ td.right {
 .flex-align-center { align-items: center; }
 .gap-small { gap: .5rem; }
 
-/* Racial trait cards */
-.racial-trait {
-  background: #101323;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px 14px;
-  margin-bottom: 10px;
-}
-
-.racial-trait__name {
-  font-weight: 700;
-  color: #cfd7ff;
-  margin-bottom: 6px;
-}
-
-.racial-trait__body {
-  color: var(--text);
-  font-size: .9rem;
-  line-height: 1.5;
-}
-
-.racial-trait__body ul {
-  margin: 4px 0 0 18px;
-  padding: 0;
-}
-
-.racial-trait__body li {
-  margin-bottom: 4px;
-}
-
-.kfpl-tracker {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 10px;
-  flex-wrap: wrap;
-}
-
-.kfpl-label {
-  font-size: .8rem;
-  color: var(--muted);
-}
-
-.kfpl-box {
-  width: 20px;
-  height: 20px;
-  accent-color: #7b8cde;
-  cursor: pointer;
-}
-
-.kfpl-box:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
 /* Textarea styling - standard dark theme */
 textarea.dark-textarea {
   width: 100%;

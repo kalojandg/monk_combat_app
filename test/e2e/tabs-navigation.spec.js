@@ -31,12 +31,14 @@ test.describe('Tabs - Basic Navigation', () => {
     // Click PC Char tab
     await page.locator('button[data-tab="pcchar"]').click();
     
-    // Verify PC Char content is visible (languages, tools, racial traits)
+    // Verify PC Char content is visible (has languages, personality, etc)
     const tabContent = page.locator('#tab-pcchar');
     await expect(tabContent).toBeVisible();
     await expect(page.locator('#btnLangAdd')).toBeVisible();
     await expect(page.locator('#btnToolAdd')).toBeVisible();
-    await expect(page.locator('#kfplTracker')).toBeVisible();
+    await expect(page.locator('#pcPersonality')).toBeVisible();
+    await expect(page.locator('#pcBond')).toBeVisible();
+    await expect(page.locator('#pcFlaw')).toBeVisible();
   });
 
   test('Can click Inventory tab', async ({ page }) => {
