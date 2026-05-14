@@ -21,6 +21,7 @@
       <div class="header-right">
         <button id="btnShortRest">Short Rest</button>
         <button id="btnLongRest" class="primary">Long Rest</button>
+        <button id="btnNewChar">New Character</button>
         <button id="btnExport">Export</button>
         <input type="file" id="importFile" accept="application/json,.json" style="display:none">
         <button id="btnImport">Import</button>
@@ -137,10 +138,23 @@
   </div>
 
 
+  <!-- New Character Modal -->
+  <div id="newCharModal" class="modal hidden">
+    <div class="modal__card">
+      <div class="modal__title">Нов Герой</div>
+      <p style="color:#ccc;font-size:0.9em;margin:8px 0 4px">Ще се създаде нов монк с d8 хит зар. Всички текущи данни ще бъдат изтрити.</p>
+      <div class="modal__actions">
+        <button id="newCharCancel">Отказ</button>
+        <button id="newCharConfirm" class="primary">Създай</button>
+      </div>
+    </div>
+  </div>
+
   <!-- External libraries -->
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
   <!-- Module scripts (load before app.js) -->
+  <script src="modules/newchar.js"></script>
   <script src="modules/aliases.js"></script>
   <script src="modules/familiars.js"></script>
   <script src="modules/one-liners.js"></script>

@@ -148,6 +148,7 @@ function stripTransientState(s) {
 let st = load();
 // Export st to global scope for modules
 window.st = st;
+window.defaultState = defaultState;
 function load() {
   try {
     const raw = localStorage.getItem("monkSheet_v3");
@@ -2243,6 +2244,7 @@ window.addEventListener('beforeunload', (e) => {
     if (typeof window.attachPCChar === 'function') attachPCChar();
     if (typeof window.attachTaunts === 'function') attachTaunts();
     if (typeof window.attachNpcNames === 'function') attachNpcNames();
+    if (typeof window.attachNewChar === 'function') attachNewChar();
 
     // Attach collapse button if skills tab is visible
     attachCollapseBtn();
