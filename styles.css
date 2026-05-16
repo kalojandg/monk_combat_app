@@ -78,6 +78,44 @@ a {
   flex-wrap: wrap;
 }
 
+.class-badges {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.class-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 3px 10px 3px 6px;
+}
+.class-badge-icon {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+}
+.class-badge-icon svg {
+  width: 18px;
+  height: 18px;
+}
+.monk-badge .class-badge-icon { color: #7c9ef8; }
+.cleric-badge .class-badge-icon { color: #c084fc; }
+.class-badge-name {
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.class-badge-sep { color: var(--muted); font-size: .78rem; margin: 0 1px; }
+.class-badge-lv {
+  font-size: .9rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
 .header h1 {
   font-weight: 700;
   font-size: 18px;

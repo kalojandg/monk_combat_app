@@ -442,6 +442,10 @@ function renderAll() {
   el("levelSpan") && (el("levelSpan").textContent = d.level);
   el("monkLevelSpan") && (el("monkLevelSpan").textContent = st.monkLevel || 0);
   el("clericLevelSpan") && (el("clericLevelSpan").textContent = st.clericLevel || 0);
+
+  _initClassBadges();
+  el("monkBadgeLv") && (el("monkBadgeLv").textContent = st.monkLevel || 0);
+  el("clericBadgeLv") && (el("clericBadgeLv").textContent = st.clericLevel || 0);
   el("profSpan2") && (el("profSpan2").textContent = `+${d.prof}`);
   el("maDieSpan") && (el("maDieSpan").textContent = d.ma);
   el("maxHpSpan") && (el("maxHpSpan").textContent = d.maxHP);
@@ -1589,6 +1593,24 @@ function attachAliasLog() {
   // init
   renderAliasTable();
   setSaveEnabled(false);
+}
+
+// ===== Class Badges (header) =====
+
+function _initClassBadges() {
+  const root = document.getElementById('class-badges');
+  if (!root || root._initialized) return;
+  root._initialized = true;
+  root.className = 'class-badges';
+  root.innerHTML = `
+    <div class="class-badge monk-badge">
+      <div class="class-badge-icon">${MONK_SVG}</div>
+      <span class="class-badge-name">Monk</span><span class="class-badge-sep">:</span><span class="class-badge-lv" id="monkBadgeLv">1</span>
+    </div>
+    <div class="class-badge cleric-badge">
+      <div class="class-badge-icon">${CLERIC_SVG}</div>
+      <span class="class-badge-name">Cleric</span><span class="class-badge-sep">:</span><span class="class-badge-lv" id="clericBadgeLv">0</span>
+    </div>`;
 }
 
 // ===== Level-Up Modal =====
