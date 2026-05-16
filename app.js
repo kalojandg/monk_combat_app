@@ -311,32 +311,7 @@ function skillBonusTotal(name, mods, prof) {
   const abil = entry[1];
   return (mods[abil] || 0) + (st.skillProfs[name] ? prof : 0);
 }
-// Main skills table in Stats tab
-function renderSkills(mods, prof) {
-  const body = el("skillsBody");
-  if (!body) return;
-  body.innerHTML = "";
-  SKILLS.forEach(([name, abil]) => {
-    const profChecked = !!st.skillProfs[name];
-    const bonus = (mods[abil] || 0) + (profChecked ? prof : 0);
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${name}</td>
-      <td>${abil.toUpperCase()}</td>
-      <td><input type="checkbox" ${profChecked ? "checked" : ""} data-skill="${name}"></td>
-      <td class="right">${bonus >= 0 ? "+" : ""}${bonus}</td>`;
-    body.appendChild(tr);
-  });
-  body.querySelectorAll("input[type=checkbox]").forEach(chk => {
-    chk.addEventListener("change", (e) => {
-      const sk = e.target.getAttribute("data-skill");
-      st.skillProfs[sk] = e.target.checked;
-      save();
-    });
-  });
-}
-// Secondary skills table in Stats tab → Passive Skills sub-tab
-function renderSkillsInSubtab(mods, prof) {
-  const body = document.querySelector('#subtab-passiveskills #skillsBody');
+function _renderSkillsTable(body, mods, prof) {
   if (!body) return;
   body.innerHTML = "";
   SKILLS.forEach(([name, abil]) => {
@@ -360,6 +335,15 @@ function renderSkillsInSubtab(mods, prof) {
     });
   });
   _attachSkillInfoTooltips(body);
+}
+
+// Main skills table in Stats tab
+function renderSkills(mods, prof) {
+  _renderSkillsTable(el("skillsBody"), mods, prof);
+}
+// Passive Skills sub-tab — delegates to shared renderer
+function renderSkillsInSubtab(mods, prof) {
+  _renderSkillsTable(document.querySelector('#subtab-passiveskills #skillsBody'), mods, prof);
 }
 
 function _attachSkillInfoTooltips(container) {
