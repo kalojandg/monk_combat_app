@@ -1,0 +1,188 @@
+{
+  "class": "Cleric",
+  "features": [
+    {
+      "id": "cleric_spellcasting",
+      "name": "Spellcasting",
+      "level": 1,
+      "short": "WIS-based divine spellcasting; prepare spells equal to WIS mod + Cleric level.",
+      "desc": [
+        "As a conduit for divine power, you can cast cleric spells. Wisdom is your spellcasting ability for your cleric spells.",
+        "Spell save DC = 8 + proficiency bonus + Wisdom modifier.",
+        "Spell attack modifier = proficiency bonus + Wisdom modifier.",
+        "You prepare the list of cleric spells available to you. To do so, choose a number of cleric spells equal to your Wisdom modifier + your cleric level (minimum of one spell)."
+      ],
+      "bullets": [
+        "Cantrips: You know three cantrips from the cleric spell list.",
+        "Ritual Casting: You can cast a cleric spell as a ritual if it has the ritual tag and you have it prepared.",
+        "Spellcasting Focus: You can use a holy symbol as a spellcasting focus."
+      ]
+    },
+    {
+      "id": "cleric_divine_domain",
+      "name": "Divine Domain: Death",
+      "level": 1,
+      "short": "Death Domain — spells of endings and necromancy; Reaper cantrip enhancement.",
+      "desc": [
+        "You have chosen the Death domain, the province of gods that oversee the transition of life into death (e.g., Bhaal, Myrkul, Velsharoon).",
+        "Death domain gods embody murder, pain, disease, or the underworld."
+      ],
+      "bullets": [
+        "Bonus Spells (always prepared): False Life, Ray of Sickness (L1); Blindness/Deafness, Ray of Enfeeblement (L3); Animate Dead, Vampiric Touch (L5); Blight, Death Ward (L7); Antilife Shell, Cloudkill (L9).",
+        "Martial Weapon Proficiency: You gain proficiency with martial weapons.",
+        "Reaper: Learn one necromancy cantrip of your choice. Necromancy cantrips that target one creature can instead target two creatures within range and within 5 feet of each other."
+      ]
+    },
+    {
+      "id": "cleric_death_domain_spells",
+      "name": "Death Domain: Bonus Spells",
+      "level": 1,
+      "short": "Always prepared: False Life, Ray of Sickness (L1); Blindness/Deafness, Ray of Enfeeblement (L3); Animate Dead, Vampiric Touch (L5); Blight, Death Ward (L7); Antilife Shell, Cloudkill (L9).",
+      "desc": [
+        "The Death domain grants you the following spells (always prepared, don't count against your daily spells):"
+      ],
+      "bullets": [
+        "1st: False Life, Ray of Sickness",
+        "3rd: Blindness/Deafness, Ray of Enfeeblement",
+        "5th: Animate Dead, Vampiric Touch",
+        "7th: Blight, Death Ward",
+        "9th: Antilife Shell, Cloudkill"
+      ]
+    },
+    {
+      "id": "cleric_death_bonus_proficiency",
+      "name": "Death Domain: Martial Weapon Proficiency",
+      "level": 1,
+      "short": "Gain proficiency with martial weapons.",
+      "desc": [
+        "When you choose this domain at 1st level, you gain proficiency with martial weapons."
+      ]
+    },
+    {
+      "id": "cleric_death_reaper",
+      "name": "Reaper",
+      "level": 1,
+      "short": "Necromancy cantrips can affect two targets within 5 ft of each other.",
+      "desc": [
+        "At 1st level, you learn one necromancy cantrip of your choice from any spell list. When you cast a necromancy cantrip that normally targets only one creature, the spell can instead target two creatures within range and within 5 feet of each other."
+      ]
+    },
+    {
+      "id": "cleric_channel_divinity",
+      "name": "Channel Divinity",
+      "level": 2,
+      "short": "1×/short rest: Touch of Death or Turn Undead. Recharge on short or long rest.",
+      "desc": [
+        "At 2nd level, you gain the ability to channel divine energy directly from your deity.",
+        "You start with two effects: Touch of Death and Turn Undead. You must finish a short or long rest to use Channel Divinity again."
+      ]
+    },
+    {
+      "id": "cleric_turn_undead",
+      "name": "Channel Divinity: Turn Undead",
+      "level": 2,
+      "parent": "cleric_channel_divinity",
+      "short": "Action: undead within 30 ft make WIS save (DC = spell save DC) or flee for 1 minute.",
+      "desc": [
+        "As an action, you present your holy symbol and speak a prayer censuring the undead. Each undead that can see or hear you within 30 feet of you must make a Wisdom saving throw.",
+        "If the creature fails its saving throw, it is turned for 1 minute or until it takes any damage."
+      ]
+    },
+    {
+      "id": "cleric_death_touch_of_death",
+      "name": "Channel Divinity: Touch of Death",
+      "level": 2,
+      "parent": "cleric_channel_divinity",
+      "short": "When you hit with a melee attack, deal extra necrotic damage = 5 + 2× Cleric level.",
+      "desc": [
+        "Starting at 2nd level, you can use Channel Divinity to destroy another creature's life force by touch.",
+        "When you hit a creature with a melee attack, you can use Channel Divinity to deal extra necrotic damage to the target. The damage equals 5 + twice your cleric level."
+      ]
+    },
+    {
+      "id": "cleric_death_inescapable_destruction",
+      "name": "Inescapable Destruction",
+      "level": 6,
+      "short": "Necrotic damage you deal ignores resistance.",
+      "desc": [
+        "Starting at 6th level, your ability to channel negative energy becomes more potent. Necrotic damage dealt by your cleric spells and Channel Divinity options ignores resistance to necrotic damage."
+      ]
+    },
+    {
+      "id": "cleric_channel_divinity_2",
+      "name": "Channel Divinity (2 uses)",
+      "level": 6,
+      "short": "You can now use Channel Divinity twice between rests.",
+      "desc": [
+        "Beginning at 6th level, you can use your Channel Divinity twice between rests."
+      ]
+    },
+    {
+      "id": "cleric_destroy_undead",
+      "name": "Destroy Undead (CR 1/2)",
+      "level": 5,
+      "short": "Turn Undead instantly destroys undead of CR 1/2 or lower that fail the save.",
+      "desc": [
+        "Starting at 5th level, when an undead fails its saving throw against your Turn Undead feature, the creature is instantly destroyed if its challenge rating is at or below CR 1/2."
+      ]
+    },
+    {
+      "id": "cleric_death_divine_strike",
+      "name": "Divine Strike",
+      "level": 8,
+      "short": "Once per turn, deal extra 1d8 necrotic damage on a weapon attack (2d8 at level 14).",
+      "desc": [
+        "At 8th level, you gain the ability to infuse your weapon strikes with necrotic energy. Once on each of your turns when you hit a creature with a weapon attack, you can cause the attack to deal an extra 1d8 necrotic damage.",
+        "When you reach 14th level, the extra damage increases to 2d8."
+      ]
+    },
+    {
+      "id": "cleric_divine_intervention",
+      "name": "Divine Intervention",
+      "level": 10,
+      "short": "Call on your deity for aid. Roll d100 ≤ Cleric level = success. Recharge after 7 days on success.",
+      "desc": [
+        "Beginning at 10th level, you can call on your deity to intervene on your behalf when your need is great.",
+        "Imploring your deity's aid requires you to use your action. Describe the assistance you seek, and roll percentile dice. If you roll a number equal to or lower than your cleric level, your deity intervenes.",
+        "If your deity intervenes, you can't use this feature again for 7 days. Otherwise, you can use it again after you finish a long rest."
+      ]
+    },
+    {
+      "id": "cleric_destroy_undead_2",
+      "name": "Destroy Undead (CR 1)",
+      "level": 8,
+      "short": "Turn Undead instantly destroys undead of CR 1 or lower.",
+      "desc": [
+        "Starting at 8th level, when an undead fails its saving throw against your Turn Undead feature, the creature is instantly destroyed if its challenge rating is at or below CR 1."
+      ]
+    },
+    {
+      "id": "cleric_death_improved_reaper",
+      "name": "Improved Reaper",
+      "level": 17,
+      "short": "When you cast a 1st–5th level spell that targets only one creature, you can target two creatures within range and 5 ft of each other (using one spell slot).",
+      "desc": [
+        "Starting at 17th level, when you cast a cleric spell of 1st through 5th level that targets only one creature, you can target two creatures within range and within 5 feet of each other. If the spell consumes its material components, you must provide them for each target."
+      ]
+    },
+    {
+      "id": "cleric_channel_divinity_3",
+      "name": "Channel Divinity (3 uses)",
+      "level": 18,
+      "short": "You can now use Channel Divinity three times between rests.",
+      "desc": [
+        "At 18th level, you can use your Channel Divinity three times between rests."
+      ]
+    },
+    {
+      "id": "cleric_divine_intervention_improved",
+      "name": "Improved Divine Intervention",
+      "level": 20,
+      "short": "Divine Intervention succeeds automatically. Recharge after 7 days.",
+      "desc": [
+        "At 20th level, your call for intervention succeeds automatically, no roll required.",
+        "Once you use this feature, you can't use it again for 7 days."
+      ]
+    }
+  ]
+}

@@ -99,7 +99,9 @@ const defaultState = {
   name: "Пийс Ошит",
   notes: "",
   xp: 0,
-  level: 1,  // Level is now stored in state, not calculated from XP
+  level: 1,       // Character Level (monkLevel + clericLevel)
+  monkLevel: 1,   // Monk class level — drives Ki, MA die, Unarmored Movement
+  clericLevel: 0, // Cleric class level — drives Cleric features
   unarmedMagic: 0,  // Magic bonus for unarmed attacks
   meleeWeaponMagic: 0,  // Magic bonus for melee weapon attacks
   rangedMagic: 0,
@@ -168,6 +170,13 @@ function load() {
       obj.level = levelFromXP(obj.xp || 0);
     }
 
+    // --- миграция: multiclass — ако monkLevel не съществува или сумата не съвпада, всичко е Монк
+    if (typeof obj.monkLevel === 'undefined' || obj.monkLevel === null ||
+        (Number(obj.monkLevel) + Number(obj.clericLevel || 0)) !== Number(obj.level || 1)) {
+      obj.monkLevel = obj.level || 1;
+      obj.clericLevel = 0;
+    }
+
     // --- миграция: meleeMagic -> unarmedMagic (за стари данни)
     if (typeof obj.meleeMagic !== 'undefined' && typeof obj.unarmedMagic === 'undefined') {
       obj.unarmedMagic = obj.meleeMagic || 0;
@@ -189,6 +198,7 @@ function save() {
   if (window.st) {
     st = window.st;
   }
+  _featuresDirty = true;  // ensure accordion re-renders on next tab visit
   localStorage.setItem("monkSheet_v3", JSON.stringify(st));
   renderAll();
   window.renderAliasTable?.();      // ← безопасно, ще се изпълни ако функцията съществува
@@ -211,14 +221,16 @@ function levelFromXP(xp) {
   return lvl;
 }
 function derived() {
-  // Use st.level instead of calculating from XP (level up happens on Long Rest)
+  // Character level drives: prof bonus, HP, HD
   const level = st.level || 1;
+  // Monk level drives: Ki, Martial Arts die, Unarmored Movement
+  const monkLevel = st.monkLevel || 1;
   const mods = {
     str: modFrom(st.str), dex: modFrom(st.dex), con: modFrom(st.con), int_: modFrom(st.int_), wis: modFrom(st.wis), cha: modFrom(st.cha)
   };
   const prof = profBonus(level);
-  const ma = maDie(level);
-  const kiMax = level;
+  const ma = maDie(monkLevel);
+  const kiMax = monkLevel;
   const hdMax = level;
 
   const formulaMaxHP = baseHP(level, mods.con) + (st.tough ? 2 * level : 0) + Number(st.hpAdjust || 0);
@@ -226,7 +238,7 @@ function derived() {
   const maxHP = Math.max(1, Math.floor(formulaMaxHP + hbAdj));
 
   const ac = 10 + mods.dex + mods.wis + Number(st.acMagic || 0);
-  const um = umBonus(level);
+  const um = umBonus(monkLevel);
   const totalSpeed = Number(st.baseSpeed || 0) + um;
 
   const savesBase = {
@@ -397,6 +409,8 @@ function renderAll() {
   el("charName") && (el("charName").value = st.name || "");
   el("xpDisplay") && (el("xpDisplay").textContent = st.xp);
   el("levelSpan") && (el("levelSpan").textContent = d.level);
+  el("monkLevelSpan") && (el("monkLevelSpan").textContent = st.monkLevel || 0);
+  el("clericLevelSpan") && (el("clericLevelSpan").textContent = st.clericLevel || 0);
   el("profSpan2") && (el("profSpan2").textContent = `+${d.prof}`);
   el("maDieSpan") && (el("maDieSpan").textContent = d.ma);
   el("maxHpSpan") && (el("maxHpSpan").textContent = d.maxHP);
@@ -638,17 +652,22 @@ el("btnShortRest") && el("btnShortRest").addEventListener("click", () => {
 });
 
 // Long Rest
-el("btnLongRest") && el("btnLongRest").addEventListener("click", () => {
-  // Check if level should increase based on XP
+el("btnLongRest") && el("btnLongRest").addEventListener("click", async () => {
   const newLevel = levelFromXP(st.xp);
   if (newLevel > st.level) {
-    st.level = newLevel;
-    // When level increases, add the difference to available hit dice
-    const oldHdMax = st.level - 1; // previous level's max HD
-    const newHdMax = st.level;     // new level's max HD
-    st.hdAvail = Math.min(newHdMax, st.hdAvail + (newHdMax - oldHdMax));
+    const levelsGained = newLevel - st.level;
+    for (let i = 0; i < levelsGained; i++) {
+      const choice = await chooseLevelUpClass(st.level, st.monkLevel || 0, st.clericLevel || 0);
+      if (choice === 'monk') {
+        st.monkLevel = (st.monkLevel || 0) + 1;
+      } else {
+        st.clericLevel = (st.clericLevel || 0) + 1;
+      }
+      st.level++;
+      st.hdAvail = Math.min(st.level, (st.hdAvail || 0) + 1);
+    }
   }
-  
+
   const d = derived();
   const recover = Math.ceil(d.hdMax / 2);
   st.hdAvail = Math.min(d.hdMax, st.hdAvail + recover);
@@ -732,7 +751,14 @@ function applyBundle(data) {
   if (typeof st.level === 'undefined' || st.level === null) {
     st.level = levelFromXP(st.xp || 0);
   }
-  
+
+  // Migrate: multiclass — ако monkLevel липсва или сумата не съвпада, всичко е Монк
+  if (typeof st.monkLevel === 'undefined' || st.monkLevel === null ||
+      (Number(st.monkLevel) + Number(st.clericLevel || 0)) !== Number(st.level || 1)) {
+    st.monkLevel = st.level || 1;
+    st.clericLevel = 0;
+  }
+
   // Migrate: initialize gold fields if missing (for old imports)
   if (typeof st.goldPlatinum === 'undefined' || st.goldPlatinum === null) st.goldPlatinum = 0;
   if (typeof st.goldGold === 'undefined' || st.goldGold === null) st.goldGold = 0;
@@ -1521,10 +1547,109 @@ function attachAliasLog() {
   setSaveEnabled(false);
 }
 
+// ===== Level-Up Modal =====
+
+const MONK_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 74" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
+  <!-- Finger block (4 fingers as one rectangular mass) -->
+  <path d="M8,36 L8,10 Q8,4 14,4 L46,4 Q52,4 52,10 L52,36"/>
+  <!-- Finger separators -->
+  <line x1="19" y1="4" x2="19" y2="36"/>
+  <line x1="30" y1="4" x2="30" y2="36"/>
+  <line x1="41" y1="4" x2="41" y2="36"/>
+  <!-- Palm body -->
+  <path d="M8,36 L6,68 Q6,72 10,72 L48,72 Q52,72 52,68 L50,36 Z"/>
+  <!-- Thumb (left protrusion) -->
+  <path d="M8,36 Q0,34 0,46 L0,58 Q0,66 8,66"/>
+</svg>`;
+
+const CLERIC_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 86" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
+  <!-- Handle shaft -->
+  <line x1="28" y1="32" x2="28" y2="76"/>
+  <!-- Handle end knob -->
+  <rect x="23" y="73" width="10" height="8" rx="2"/>
+  <!-- 8-pointed starburst centered at (28,20) -->
+  <path d="M28,2 L31,11 L40,6 L37,15 L48,18 L39,23 L44,32 L34,29 L32,40 L28,32 L24,40 L22,29 L12,32 L17,23 L8,18 L19,15 L16,6 L25,11 Z"/>
+  <!-- Mace head (spiked ball) -->
+  <circle cx="28" cy="20" r="9"/>
+</svg>`;
+
+let _levelUpResolve = null;
+
+function _initLevelUpModal() {
+  if (document.getElementById('levelUpModal')) return;
+  const wrap = document.createElement('div');
+  wrap.id = 'levelUpModal';
+  wrap.className = 'hidden';
+  wrap.innerHTML = `
+    <div class="levelup-dialog">
+      <div class="levelup-title">Ниво нагоре!</div>
+      <div class="levelup-subtitle" id="levelUpSubtitle"></div>
+      <div class="levelup-cards">
+        <div class="levelup-card monk" id="cardMonk">
+          <div class="levelup-card-icon">${MONK_SVG}</div>
+          <div class="levelup-card-class">Monk</div>
+          <div class="levelup-card-level" id="monkLevelLabel"></div>
+          <div class="levelup-card-feature" id="monkFeatureLabel"></div>
+        </div>
+        <div class="levelup-card cleric" id="cardCleric">
+          <div class="levelup-card-icon">${CLERIC_SVG}</div>
+          <div class="levelup-card-class">Cleric</div>
+          <div class="levelup-card-level" id="clericLevelLabel"></div>
+          <div class="levelup-card-feature" id="clericFeatureLabel"></div>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(wrap);
+
+  document.getElementById('cardMonk').addEventListener('click', () => _resolveLevelUp('monk'));
+  document.getElementById('cardCleric').addEventListener('click', () => _resolveLevelUp('cleric'));
+}
+
+function _resolveLevelUp(choice) {
+  const modal = document.getElementById('levelUpModal');
+  if (modal) modal.classList.add('hidden');
+  if (_levelUpResolve) { _levelUpResolve(choice); _levelUpResolve = null; }
+}
+
+function _getNextLevelFeatureNames(data, nextLevel) {
+  const items = Array.isArray(data) ? data :
+    Array.isArray(data.features) ? data.features : [];
+  return items
+    .filter(it => Number(it.level) === nextLevel && !it.parent)
+    .map(it => it.name)
+    .slice(0, 2);
+}
+
+async function chooseLevelUpClass(charLevel, monkLevel, clericLevel) {
+  _initLevelUpModal();
+
+  const [monkData, clericData] = await Promise.all([loadFeatures(), loadClericFeatures()]);
+
+  const nextMonk = monkLevel + 1;
+  const nextCleric = clericLevel + 1;
+  const monkFeats = _getNextLevelFeatureNames(monkData, nextMonk);
+  const clericFeats = _getNextLevelFeatureNames(clericData, nextCleric);
+
+  document.getElementById('levelUpSubtitle').textContent =
+    `Character Level ${charLevel} → ${charLevel + 1}`;
+  document.getElementById('monkLevelLabel').textContent = `Lv ${monkLevel} → ${nextMonk}`;
+  document.getElementById('monkFeatureLabel').textContent =
+    monkFeats.length ? monkFeats.join(', ') : '—';
+  document.getElementById('clericLevelLabel').textContent = `Lv ${clericLevel} → ${nextCleric}`;
+  document.getElementById('clericFeatureLabel').textContent =
+    clericFeats.length ? clericFeats.join(', ') : '—';
+
+  document.getElementById('levelUpModal').classList.remove('hidden');
+
+  return new Promise(resolve => { _levelUpResolve = resolve; });
+}
+
 // ===== Class Features (accordion) =====
 
 let __feat_cache = null;
+let __cleric_feat_cache = null;
 const FEAT_URL = 'skills-and-features.json';
+const CLERIC_FEAT_URL = 'cleric-features.json';
 
 async function loadFeatures() {
   if (__feat_cache) return __feat_cache;
@@ -1532,6 +1657,14 @@ async function loadFeatures() {
   if (!res.ok) throw new Error(`Cannot load ${FEAT_URL} (${res.status})`);
   __feat_cache = await res.json();
   return __feat_cache;
+}
+
+async function loadClericFeatures() {
+  if (__cleric_feat_cache) return __cleric_feat_cache;
+  const res = await fetch(CLERIC_FEAT_URL, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`Cannot load ${CLERIC_FEAT_URL} (${res.status})`);
+  __cleric_feat_cache = await res.json();
+  return __cleric_feat_cache;
 }
 
 function enhanceFeatureAccordions() {
@@ -1559,37 +1692,54 @@ function enhanceFeatureAccordions() {
   });
 }
 
-async function renderFeaturesAccordion(level) {
-  const host = document.getElementById('featuresAccordion'); // <-- тук
+function _buildFeatureHTML(it, className) {
+  const name = (it.name || '').replace(/</g, '&lt;');
+  const lvl = Number(it.level) || 1;
+  const classBadge = `[${className}]`;
+  const desc = (Array.isArray(it.desc) ? it.desc : (it.desc ? [it.desc] : []))
+    .map(p => `<p>${String(p).replace(/</g, '&lt;')}</p>`).join('');
+  const bullets = (Array.isArray(it.bullets) ? it.bullets : [])
+    .map(li => `<div class="feat-bullet">• ${String(li).replace(/</g, '&lt;')}</div>`).join('');
+  const notes = it.notes ? `<p class="small-note">${String(it.notes).replace(/</g, '&lt;')}</p>` : '';
+  return `
+    <details class="feat">
+      <summary>${classBadge} Lv ${lvl} — ${name}</summary>
+      <div class="feature-card">${desc}${bullets}${notes}</div>
+    </details>`;
+}
+
+async function renderFeaturesAccordion(monkLevel, clericLevel) {
+  const host = document.getElementById('featuresAccordion');
   if (!host) return;
 
-  host.innerHTML = '<small>Чете от <code>skills-and-features.json</code>…</small>';
+  host.innerHTML = '<small>Чете features…</small>';
 
   try {
-    const data = await loadFeatures();
-    const items = Array.isArray(data) ? data :
-      Array.isArray(data.features) ? data.features : [];
-    const list = items
-      .filter(it => (Number(it.level) || 1) <= Number(level || 1))
-      .sort((a, b) => (Number(a.level) || 0) - (Number(b.level) || 0));
+    const [monkData, clericData] = await Promise.all([
+      loadFeatures(),
+      loadClericFeatures()
+    ]);
 
-    host.innerHTML = list.map(it => {
-      const name = (it.name || '').replace(/</g, '&lt;');
-      const lvl = Number(it.level) || 1;
-      const desc = (Array.isArray(it.desc) ? it.desc : (it.desc ? [it.desc] : []))
-        .map(p => `<p>${String(p).replace(/</g, '&lt;')}</p>`).join('');
-      const bullets = (Array.isArray(it.bullets) ? it.bullets : [])
-        .map(li => `<div class="feat-bullet">• ${String(li).replace(/</g, '&lt;')}</div>`).join('');
-      const notes = it.notes ? `<p class="small-note">${String(it.notes).replace(/</g, '&lt;')}</p>` : '';
-      return `
-        <details class="feat">
-          <summary>Lv ${lvl} ${name}</summary>
-          <div class="feature-card">${desc}${bullets}${notes}</div>
-        </details>`;
-    }).join('');
+    const monkItems = (Array.isArray(monkData) ? monkData :
+      Array.isArray(monkData.features) ? monkData.features : [])
+      .filter(it => (Number(it.level) || 1) <= Number(monkLevel || 1))
+      .map(it => ({ ...it, _class: 'Monk' }));
+
+    const clericItems = (Array.isArray(clericData) ? clericData :
+      Array.isArray(clericData.features) ? clericData.features : [])
+      .filter(it => (Number(it.level) || 1) <= Number(clericLevel || 0))
+      .map(it => ({ ...it, _class: 'Cleric' }));
+
+    // Interleave: sort by level, then Monk before Cleric at equal level
+    const allItems = [...monkItems, ...clericItems].sort((a, b) => {
+      const lvlDiff = (Number(a.level) || 0) - (Number(b.level) || 0);
+      if (lvlDiff !== 0) return lvlDiff;
+      return a._class === 'Monk' ? -1 : 1;
+    });
+
+    host.innerHTML = allItems.map(it => _buildFeatureHTML(it, it._class)).join('');
 
     enhanceFeatureAccordions();
-    // Attach collapse button after accordion is rendered
     attachCollapseBtn();
   } catch (e) {
     console.error(e);
@@ -1620,7 +1770,7 @@ document.addEventListener("click", (e) => {
   if (tab === 'skills' || tab === 'features') {
     const d = derived();
     if (!_featuresRendered || _featuresDirty) {
-      renderFeaturesAccordion(d.level);
+      renderFeaturesAccordion(st.monkLevel || 1, st.clericLevel || 0);
       _featuresRendered = true;
       _featuresDirty = false;
     }
@@ -1636,10 +1786,7 @@ document.addEventListener('click', (e) => {
   // ... твоята логика за активиране/скриване ...
 
   if (tab === 'skills' || tab === 'features') {
-    console.log("render");
-    // гарантирано рисуваме при отваряне
-    const d = derived();           // вземи текущото ниво
-    renderFeaturesAccordion(d.level);
+    renderFeaturesAccordion(st.monkLevel || 1, st.clericLevel || 0);
   }
 });
 
@@ -1879,7 +2026,7 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
     // 3) лениво рендериране само когато е нужно
     if (tabKey === 'featuresSection') {
       const d = derived();
-      renderFeaturesAccordion(d.level);
+      renderFeaturesAccordion(st.monkLevel || 1, st.clericLevel || 0);
     }
 
     // Re-attach inventory event listeners when inventory tab is shown
@@ -1914,7 +2061,7 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
       // Lazy render features accordion
       const d = derived();
       if (!_featuresRendered || _featuresDirty) {
-        renderFeaturesAccordion(d.level);
+        renderFeaturesAccordion(st.monkLevel || 1, st.clericLevel || 0);
         _featuresRendered = true;
         _featuresDirty = false;
       }
@@ -2193,7 +2340,7 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
     // Skills табът все още чертае features акордеона
     if (name === 'skills') {
       const d = derived();
-      renderFeaturesAccordion(d.level); // чертай акордеона тук
+      renderFeaturesAccordion(st.monkLevel || 1, st.clericLevel || 0); // чертай акордеона тук
     }
     if (name === 'sessionNotes') {
       onNotesTabShown();                // както вече имаш

@@ -80,7 +80,7 @@ test.describe('Rest Mechanics - Long Rest Basic', () => {
 });
 
 test.describe('Rest Mechanics - Level Progression (1-20)', () => {
-  
+
   for (let level = 1; level <= 20; level++) {
     test(`Level ${level}: Long Rest updates all derived values correctly`, async ({ page }) => {
       await page.goto('/');
@@ -89,7 +89,7 @@ test.describe('Rest Mechanics - Level Progression (1-20)', () => {
       await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
       await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
       await expect(page.locator('#hpDelta')).toBeVisible({ timeout: 5000 });
-      
+
       // Set XP for this level - open Stats tab and Basic Info sub-tab
       const xp = XP_FOR_LEVEL[level];
       await page.locator('button[data-tab="stats"]').click();
@@ -98,21 +98,34 @@ test.describe('Rest Mechanics - Level Progression (1-20)', () => {
       await page.waitForTimeout(200);
       await page.evaluate(xpVal => { window.st.xp = xpVal; window.save(); }, xp);
       await page.waitForTimeout(200);
-      
+
       // Wait for input to process
       await page.waitForTimeout(300);
-      
+
       // Level should still be 1 (level up happens on Long Rest, not on XP change)
       await expect(page.locator('#subtab-basicinfo #levelSpan')).toHaveText('1');
-      
+
       // Take damage (so long rest has something to restore)
-      // HP контролите са винаги видими - няма Combat таб
       await page.locator('#hpDelta').fill('1');
       await page.locator('#btnDamage').click();
-      
-      // Long rest - this is when level up happens
+
+      // Auto-click Monk card for every level-up modal
+      await page.evaluate(() => {
+        if (window.__levelUpObs) window.__levelUpObs.disconnect();
+        const obs = new MutationObserver(() => {
+          const modal = document.getElementById('levelUpModal');
+          if (!modal || modal.classList.contains('hidden')) return;
+          const card = document.getElementById('cardMonk');
+          if (card) setTimeout(() => card.click(), 30);
+        });
+        obs.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['class'] });
+        window.__levelUpObs = obs;
+      });
+
+      // Long rest - triggers level-up modal(s), auto-handled above
       await page.locator('#btnLongRest').click();
-      
+      await page.waitForTimeout(500);
+
       // Verify level increased after long rest
       await page.locator('button[data-tab="stats"]').click();
       await page.waitForTimeout(300);
@@ -183,15 +196,28 @@ test.describe('Level Up Bug Fix - TDD Tests', () => {
     await page.locator('button[data-subtab="basicinfo"]').click();
     await page.waitForTimeout(200);
     await expect(page.locator('#subtab-basicinfo #levelSpan')).toHaveText('1');
-    
+
     // Set XP to 300 (enough for level 2)
     await page.evaluate(xp => { window.st.xp = xp; window.save(); }, 300);
     await page.waitForTimeout(200);
     await page.waitForTimeout(300);
-    
+
     // Level should still be 1
     await expect(page.locator('#subtab-basicinfo #levelSpan')).toHaveText('1');
-    
+
+    // Auto-click Monk card for level-up modal
+    await page.evaluate(() => {
+      if (window.__levelUpObs) window.__levelUpObs.disconnect();
+      const obs = new MutationObserver(() => {
+        const modal = document.getElementById('levelUpModal');
+        if (!modal || modal.classList.contains('hidden')) return;
+        const card = document.getElementById('cardMonk');
+        if (card) setTimeout(() => card.click(), 30);
+      });
+      obs.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['class'] });
+      window.__levelUpObs = obs;
+    });
+
     // Long rest
     await page.locator('#btnLongRest').click();
     
@@ -218,17 +244,31 @@ test.describe('Level Up Bug Fix - TDD Tests', () => {
     await page.locator('button[data-subtab="basicinfo"]').click();
     await page.waitForTimeout(200);
     await expect(page.locator('#subtab-basicinfo #levelSpan')).toHaveText('1');
-    
+
     // Set XP to 6500 (enough for level 5)
     await page.evaluate(xp => { window.st.xp = xp; window.save(); }, 6500);
     await page.waitForTimeout(200);
     await page.waitForTimeout(300);
-    
+
     // Level should still be 1
     await expect(page.locator('#subtab-basicinfo #levelSpan')).toHaveText('1');
-    
+
+    // Auto-click Monk card for every level-up modal (multiple for big XP jumps)
+    await page.evaluate(() => {
+      if (window.__levelUpObs) window.__levelUpObs.disconnect();
+      const obs = new MutationObserver(() => {
+        const modal = document.getElementById('levelUpModal');
+        if (!modal || modal.classList.contains('hidden')) return;
+        const card = document.getElementById('cardMonk');
+        if (card) setTimeout(() => card.click(), 30);
+      });
+      obs.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['class'] });
+      window.__levelUpObs = obs;
+    });
+
     // Long rest
     await page.locator('#btnLongRest').click();
+    await page.waitForTimeout(600);
     
     // Level should now be 5
     await page.locator('button[data-tab="stats"]').click();
