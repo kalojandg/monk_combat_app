@@ -710,6 +710,10 @@ el("btnLongRest") && el("btnLongRest").addEventListener("click", async () => {
   st.dsSuccess = 0; st.dsFail = 0; st.status = "alive";
   if (typeof window.restoreMarkSlots === 'function') window.restoreMarkSlots();
   save();
+
+  // Refresh resurrection tab spell sections if visible
+  if (typeof window.renderDomainSpells === 'function') window.renderDomainSpells(st.clericLevel || 0);
+  if (typeof window.initMarkSpells === 'function') window.initMarkSpells();
 });
 
 // ---- Attack Bonuses ----
