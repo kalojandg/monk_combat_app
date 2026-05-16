@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 /**
  * RESURRECTION TAB TESTS (TDD)
  *
- * Тестват таба "Resurrection" с Mark of Shadow dragonmark traits.
+ * Tests for the Resurrection tab with Mark of Shadow dragonmark traits.
  */
 
 test.describe('Resurrection Tab - Navigation', () => {
@@ -46,7 +46,7 @@ test.describe('Resurrection Tab - Content', () => {
   });
 
   test('Tab has section title with "Resurrection"', async ({ page }) => {
-    await expect(page.locator('#tab-resurrection .section-title')).toContainText('Resurrection');
+    await expect(page.locator('#tab-resurrection .section-title').first()).toContainText('Resurrection');
   });
 
   test('Mark of Shadow accordion entry exists', async ({ page }) => {
@@ -54,24 +54,9 @@ test.describe('Resurrection Tab - Content', () => {
     expect(summaries.some(s => s.includes('Mark of Shadow'))).toBe(true);
   });
 
-  test('Cunning Intuition accordion entry exists', async ({ page }) => {
-    const summaries = await page.locator('#tab-resurrection details.feat summary').allTextContents();
-    expect(summaries.some(s => s.includes('Cunning Intuition'))).toBe(true);
-  });
-
-  test('Shape Shadows accordion entry exists', async ({ page }) => {
-    const summaries = await page.locator('#tab-resurrection details.feat summary').allTextContents();
-    expect(summaries.some(s => s.includes('Shape Shadows'))).toBe(true);
-  });
-
-  test('Spells of the Mark accordion entry exists', async ({ page }) => {
-    const summaries = await page.locator('#tab-resurrection details.feat summary').allTextContents();
-    expect(summaries.some(s => s.includes('Spells of the Mark'))).toBe(true);
-  });
-
-  test('Exactly 4 accordion entries in resurrection tab', async ({ page }) => {
+  test('Exactly 1 accordion entry in resurrection tab', async ({ page }) => {
     const count = await page.locator('#tab-resurrection details.feat').count();
-    expect(count).toBe(4);
+    expect(count).toBe(1);
   });
 });
 
@@ -81,41 +66,6 @@ test.describe('Resurrection Tab - Accordion Interaction', () => {
     await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
     await page.locator('button.tab-btn', { hasText: 'Resurrection' }).click();
     await page.waitForTimeout(300);
-  });
-
-  test('Cunning Intuition expands and shows d4 content', async ({ page }) => {
-    const details = page.locator('#tab-resurrection details.feat', { hasText: 'Cunning Intuition' });
-    await details.locator('summary').click();
-    await page.waitForTimeout(400);
-
-    await expect(details.locator('.feature-card')).toBeVisible();
-    const text = await details.locator('.feature-card').textContent();
-    expect(text).toContain('d4');
-  });
-
-  test('Shape Shadows expands and shows minor illusion + invisibility', async ({ page }) => {
-    const details = page.locator('#tab-resurrection details.feat', { hasText: 'Shape Shadows' });
-    await details.locator('summary').click();
-    await page.waitForTimeout(400);
-
-    await expect(details.locator('.feature-card')).toBeVisible();
-    const text = await details.locator('.feature-card').textContent();
-    expect(text).toContain('minor illusion');
-    expect(text).toContain('invisibility');
-  });
-
-  test('Spells of the Mark expands and lists all 5 spell levels', async ({ page }) => {
-    const details = page.locator('#tab-resurrection details.feat', { hasText: 'Spells of the Mark' });
-    await details.locator('summary').click();
-    await page.waitForTimeout(400);
-
-    await expect(details.locator('.feature-card')).toBeVisible();
-    const text = await details.locator('.feature-card').textContent();
-    expect(text).toContain('disguise self');
-    expect(text).toContain('pass without trace');
-    expect(text).toContain('major image');
-    expect(text).toContain('greater invisibility');
-    expect(text).toContain('mislead');
   });
 
   test('Mark of Shadow expands and shows partial elf note', async ({ page }) => {
@@ -129,7 +79,7 @@ test.describe('Resurrection Tab - Accordion Interaction', () => {
   });
 
   test('Feature card is visible after opening (not clipped by max-height)', async ({ page }) => {
-    const details = page.locator('#tab-resurrection details.feat', { hasText: 'Cunning Intuition' });
+    const details = page.locator('#tab-resurrection details.feat', { hasText: 'Mark of Shadow' });
     await details.locator('summary').click();
     await page.waitForTimeout(400);
 

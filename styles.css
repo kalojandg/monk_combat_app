@@ -1569,6 +1569,119 @@ details.feat[open] .feature-card {
 
 
 
+/* ===== Mark of Shadow Spells ===== */
+.mark-spell-item {
+  background: #171a28;
+  border: 1px solid #2a2f45;
+  border-radius: 10px;
+  margin: 6px 0;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+}
+.mark-spell-item:hover {
+  border-color: rgba(170, 190, 255, 0.4);
+  background: #1d2135;
+}
+.mark-spell-item.expanded {
+  border-color: var(--accent, #7c9ef8);
+}
+.mark-spell-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.mark-spell-name {
+  font-weight: 600;
+  font-size: 1rem;
+  flex: 1;
+}
+.mark-spell-level-badge {
+  font-size: .78rem;
+  color: #9b8fff;
+  background: rgba(155, 143, 255, .12);
+  border-radius: 6px;
+  padding: 2px 7px;
+}
+.mark-spell-details {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #2a2f45;
+  font-size: .93rem;
+  line-height: 1.5;
+}
+.mark-spell-details div { margin: 3px 0; }
+.mark-spell-details .spell-desc { margin-top: 8px; color: #c8cde8; }
+
+.slot-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
+.slot-row .level { min-width: 60px; font-size: .9rem; color: #9b8fff; }
+.slot-controls { display: flex; align-items: center; gap: 8px; }
+.btn-slot-use {
+  background: rgba(155, 143, 255, .15);
+  border: 1px solid rgba(155, 143, 255, .3);
+  border-radius: 6px;
+  color: #c8c0ff;
+  cursor: pointer;
+  padding: 2px 8px;
+  font-size: .85rem;
+}
+.btn-slot-use:hover:not(:disabled) { background: rgba(155, 143, 255, .3); }
+.btn-slot-use:disabled { opacity: .35; cursor: not-allowed; }
+.slot-row.slot-full .level { color: #666; }
+.count { font-size: .95rem; color: #c8cde8; }
+.slot-remaining { font-weight: 700; }
+.separator { margin: 0 2px; color: #555; }
+.small.muted, .muted { color: #666; }
+.mt-14 { margin-top: 14px; }
+
+.spell-ability-badge {
+  font-size: .72rem;
+  font-weight: 700;
+  border-radius: 5px;
+  padding: 1px 6px;
+  letter-spacing: .04em;
+}
+.ability-wis { background: rgba(100, 180, 100, .15); color: #7ecb7e; }
+.ability-cha { background: rgba(220, 120, 255, .15); color: #dc78ff; }
+
+.mark-spell-note {
+  font-size: .75rem;
+  color: #9b8fff;
+  font-style: italic;
+  margin-left: 4px;
+}
+
+.domain-spells-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 6px;
+  font-size: .93rem;
+}
+.domain-spells-table th,
+.domain-spells-table td {
+  padding: 7px 12px;
+  text-align: left;
+  border-bottom: 1px solid #2a2f45;
+}
+.domain-spells-table th {
+  color: #9b8fff;
+  font-weight: 600;
+  font-size: .85rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.domain-spells-table tbody tr:hover {
+  background: rgba(155, 143, 255, .06);
+}
+.domain-spells-table td:first-child {
+  color: #9b8fff;
+  min-width: 90px;
+}
+.domain-spells-table td:last-child {
+  color: #c8cde8;
+  font-style: italic;
+}
+
 /* ===== Level-Up Modal ===== */
 #levelUpModal {
   position: fixed;
@@ -1666,4 +1779,48 @@ details.feat[open] .feature-card {
   text-align: center;
   line-height: 1.35;
   min-height: 2.5em;
+}
+
+/* ── Skill info icon (Cunning Intuition) ── */
+.skill-info-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  border: 1.5px solid #22c55e;
+  color: #22c55e;
+  background: none;
+  font-size: 11px;
+  font-weight: 700;
+  font-style: italic;
+  font-family: serif;
+  cursor: pointer;
+  margin-left: 6px;
+  padding: 0;
+  line-height: 1;
+  vertical-align: middle;
+  transition: background 0.15s;
+}
+.skill-info-btn:hover {
+  background: rgba(34, 197, 94, 0.15);
+}
+
+.skill-tooltip {
+  display: none;
+  position: absolute;
+  z-index: 1200;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #e2e8f0;
+  max-width: 320px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  line-height: 1.5;
+}
+.skill-tooltip.visible {
+  display: block;
 }

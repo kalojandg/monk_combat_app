@@ -272,6 +272,9 @@ function derived() {
 window.derived = derived;
 
 // ===== Skills =====
+const CUNNING_INTUITION_SKILLS = ['Performance', 'Stealth'];
+const CUNNING_INTUITION_TEXT = 'Cunning Intuition: When you make a Charisma (Performance) or Dexterity (Stealth) check, you can roll a d4 and add the number rolled to the ability check.';
+
 const SKILLS = [
   ["Acrobatics", "dex"],
   ["Animal Handling", "wis"],
@@ -339,8 +342,11 @@ function renderSkillsInSubtab(mods, prof) {
   SKILLS.forEach(([name, abil]) => {
     const profChecked = !!st.skillProfs[name];
     const bonus = (mods[abil] || 0) + (profChecked ? prof : 0);
+    const infoBtn = CUNNING_INTUITION_SKILLS.includes(name)
+      ? `<button class="skill-info-btn" data-tooltip="${CUNNING_INTUITION_TEXT}" aria-label="Cunning Intuition info">i</button>`
+      : '';
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${name}</td>
+    tr.innerHTML = `<td>${name}${infoBtn}</td>
       <td>${abil.toUpperCase()}</td>
       <td><input type="checkbox" ${profChecked ? "checked" : ""} data-skill="${name}"></td>
       <td class="right">${bonus >= 0 ? "+" : ""}${bonus}</td>`;
@@ -353,7 +359,34 @@ function renderSkillsInSubtab(mods, prof) {
       save();
     });
   });
+  _attachSkillInfoTooltips(body);
 }
+
+function _attachSkillInfoTooltips(container) {
+  container.querySelectorAll('.skill-info-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const tooltip = document.getElementById('skill-tooltip');
+      if (!tooltip) return;
+      if (tooltip.classList.contains('visible') && tooltip._sourceBtn === btn) {
+        tooltip.classList.remove('visible');
+        tooltip._sourceBtn = null;
+        return;
+      }
+      tooltip.textContent = btn.dataset.tooltip || '';
+      tooltip.classList.add('visible');
+      tooltip._sourceBtn = btn;
+      const rect = btn.getBoundingClientRect();
+      tooltip.style.top = (rect.bottom + 6 + window.scrollY) + 'px';
+      tooltip.style.left = Math.max(8, rect.left + window.scrollX - 100) + 'px';
+    });
+  });
+}
+
+document.addEventListener('click', () => {
+  const tooltip = document.getElementById('skill-tooltip');
+  if (tooltip) { tooltip.classList.remove('visible'); tooltip._sourceBtn = null; }
+});
 
 // ===== Tabs =====
 document.addEventListener("click", (e) => {
@@ -675,6 +708,7 @@ el("btnLongRest") && el("btnLongRest").addEventListener("click", async () => {
   st.kiCurrent = d.kiMax;
   st.hpCurrent = d.maxHP;
   st.dsSuccess = 0; st.dsFail = 0; st.status = "alive";
+  if (typeof window.restoreMarkSlots === 'function') window.restoreMarkSlots();
   save();
 });
 
@@ -1630,6 +1664,9 @@ async function chooseLevelUpClass(charLevel, monkLevel, clericLevel) {
   const nextCleric = clericLevel + 1;
   const monkFeats = _getNextLevelFeatureNames(monkData, nextMonk);
   const clericFeats = _getNextLevelFeatureNames(clericData, nextCleric);
+  const clericSpells = typeof window.getClericSpellsGained === 'function'
+    ? window.getClericSpellsGained(nextCleric) : [];
+  const allClericFeats = [...clericFeats, ...clericSpells];
 
   document.getElementById('levelUpSubtitle').textContent =
     `Character Level ${charLevel} → ${charLevel + 1}`;
@@ -1638,7 +1675,7 @@ async function chooseLevelUpClass(charLevel, monkLevel, clericLevel) {
     monkFeats.length ? monkFeats.join(', ') : '—';
   document.getElementById('clericLevelLabel').textContent = `Lv ${clericLevel} → ${nextCleric}`;
   document.getElementById('clericFeatureLabel').textContent =
-    clericFeats.length ? clericFeats.join(', ') : '—';
+    allClericFeats.length ? allClericFeats.join(', ') : '—';
 
   document.getElementById('levelUpModal').classList.remove('hidden');
 
@@ -2034,6 +2071,10 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
       setTimeout(() => {
         const tabEl2 = document.getElementById('tab-resurrection');
         if (tabEl2) enhanceFeatureAccordions(tabEl2);
+        if (typeof window.renderClericCantrips === 'function') window.renderClericCantrips();
+        if (typeof window.renderChaSpells === 'function') window.renderChaSpells();
+        if (typeof window.renderDomainSpells === 'function') window.renderDomainSpells(st.clericLevel || 0);
+        if (typeof window.initMarkSpells === 'function') window.initMarkSpells();
       }, 50);
     }
 
