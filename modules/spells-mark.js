@@ -50,8 +50,19 @@ const API_BASE = 'https://www.dnd5eapi.co';
 // Spell details cache
 const _spellCache = {};
 
+const _LOCAL_SPELLS = {
+  'word-of-radiance': {
+    name: 'Word of Radiance', level: 0,
+    casting_time: '1 action', range: '5 feet', duration: 'Instantaneous',
+    components: ['V', 'M (holy symbol)'],
+    desc: ['You utter a divine word, and burning radiance erupts from you. Each creature of your choice that you can see within range must succeed on a Constitution saving throw or take 1d6 radiant damage.'],
+    higher_level: ['The damage increases by 1d6 when you reach 5th level (2d6), 11th level (3d6), and 17th level (4d6).'],
+  },
+};
+
 async function _fetchSpellDetails(index) {
   if (_spellCache[index]) return _spellCache[index];
+  if (_LOCAL_SPELLS[index]) { _spellCache[index] = _LOCAL_SPELLS[index]; return _LOCAL_SPELLS[index]; }
   const res = await fetch(`${API_BASE}/api/spells/${index}`);
   if (!res.ok) throw new Error(`API ${res.status}`);
   const data = await res.json();
