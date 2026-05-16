@@ -815,6 +815,13 @@ function applyBundle(data) {
   if (typeof window.renderAliasTable === 'function') window.renderAliasTable();
   if (typeof window.renderFamTable === 'function') window.renderFamTable();
   // if (typeof window.renderQuests === 'function') window.renderQuests(); // moved to shared-inventory app
+
+  // Refresh Resurrection tab spell sections with imported state
+  if (typeof window.renderDomainSpells === 'function') window.renderDomainSpells(st.clericLevel || 0);
+  if (typeof window.initMarkSpells === 'function') window.initMarkSpells();
+  if (typeof window.renderClericPrepSpells === 'function') window.renderClericPrepSpells();
+  if (typeof window.renderClericCantrips === 'function') window.renderClericCantrips();
+  if (typeof window.renderChaSpells === 'function') window.renderChaSpells();
 }
 
 // Inventory functions are in modules/inventory.js
