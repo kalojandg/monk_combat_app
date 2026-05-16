@@ -997,30 +997,16 @@ details.feat[open]>summary::before {
   transform: rotate(90deg) translateX(1px);
 }
 
-/* картата с текста — има shadow, radius и плавно разгръщане */
+/* картата с текста — има shadow и radius; видимостта се управлява от native <details> */
 .feature-card {
   margin-top: .55rem;
-  /* малко отстояние от хедъра */
   background: var(--feat-card-bg);
   border: 1px solid var(--feat-card-border);
   border-radius: 16px;
   padding: .95rem 1.05rem;
   line-height: 1.58;
   font-size: 1.03rem;
-  /* четим текст */
   box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
-  /* анимация на отварянето */
-  overflow: hidden;
-  max-height: 0;
-  opacity: 0;
-  transform: translateY(-4px);
-  transition: max-height .36s ease, opacity .25s ease, transform .36s ease;
-}
-
-details.feat[open] .feature-card {
-  opacity: 1;
-  transform: translateY(0);
-  max-height: 2000px; /* fallback ако JS не е задал inline style */
 }
 
 /* параграфи вътре */
@@ -1050,12 +1036,6 @@ details.feat[open] .feature-card {
   opacity: .8;
 }
 
-/* достъпност: ако потребителят е с reduced motion — без височинни анимации */
-@media (prefers-reduced-motion: reduce) {
-  .feature-card {
-    transition: opacity .2s ease;
-  }
-}
 
 .btn-collapse {
   margin-left: 1em;
