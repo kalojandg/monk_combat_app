@@ -1613,6 +1613,59 @@ details.feat[open] .feature-card {
 .mark-spell-details div { margin: 3px 0; }
 .mark-spell-details .spell-desc { margin-top: 8px; color: #c8cde8; }
 
+.prep-counter {
+  font-size: .88rem;
+  padding: 4px 2px 8px;
+  color: #c8cde8;
+}
+.prep-level-acc {
+  margin: 6px 0;
+  border: 1px solid #2a2f45;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.prep-level-summary {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: .9rem;
+  font-weight: 600;
+  color: #9b8fff;
+  background: rgba(155, 143, 255, .06);
+  list-style: none;
+  user-select: none;
+}
+.prep-level-summary::-webkit-details-marker { display: none; }
+.prep-level-summary::before { content: '▶ '; font-size: .7rem; }
+details[open] .prep-level-summary::before { content: '▼ '; }
+.prep-level-body { padding: 6px 8px; }
+.btn-mark-prep {
+  font-style: italic;
+  font-family: Georgia, serif;
+  font-size: .8rem;
+  font-weight: 700;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid #4a7a55;
+  background: transparent;
+  color: #4a7a55;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: background .15s, color .15s;
+}
+.btn-mark-prep.active {
+  background: #22c55e22;
+  border-color: #22c55e;
+  color: #22c55e;
+}
+.btn-mark-prep:hover:not(:disabled) { background: rgba(34,197,94,.15); }
+.btn-mark-prep:disabled { opacity: .3; cursor: not-allowed; }
+.mark-spell-item.mark-prepared {
+  border-color: rgba(34, 197, 94, 0.35);
+  background: #141f18;
+}
 .slot-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
 .slot-row .level { min-width: 60px; font-size: .9rem; color: #9b8fff; }
 .slot-controls { display: flex; align-items: center; gap: 8px; }

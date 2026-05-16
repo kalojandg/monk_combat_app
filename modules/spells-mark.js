@@ -58,6 +58,13 @@ const _LOCAL_SPELLS = {
     desc: ['You utter a divine word, and burning radiance erupts from you. Each creature of your choice that you can see within range must succeed on a Constitution saving throw or take 1d6 radiant damage.'],
     higher_level: ['The damage increases by 1d6 when you reach 5th level (2d6), 11th level (3d6), and 17th level (4d6).'],
   },
+  'ray-of-sickness': {
+    name: 'Ray of Sickness', level: 1,
+    casting_time: '1 action', range: '60 feet', duration: 'Instantaneous',
+    components: ['V', 'S'],
+    desc: ['A ray of sickening greenish energy lashes out toward a creature within range. Make a ranged spell attack against the target. On a hit, the target takes 2d8 poison damage and must make a Constitution saving throw. On a failed save, it is also poisoned until the end of your next turn.'],
+    higher_level: ['When you cast this spell using a spell slot of 2nd level or higher, the damage increases by 1d8 for each slot level above 1st.'],
+  },
 };
 
 // Spells cast via Innate Spellcasting require no material components
@@ -76,18 +83,19 @@ async function _fetchSpellDetails(index) {
   return data;
 }
 
-async function _fetchClericSlots(clericLevel) {
-  const res = await fetch(`${API_BASE}/api/classes/cleric/levels/${clericLevel}`);
-  if (!res.ok) throw new Error(`API ${res.status}`);
-  const data = await res.json();
-  const sc = data.spellcasting || {};
-  const slots = {};
-  for (let i = 1; i <= 9; i++) {
-    const max = sc[`spell_slots_level_${i}`] || 0;
-    if (max > 0) slots[i] = max;
-  }
-  return slots;
-}
+// Standard D&D 5e Cleric spell slot progression (no API needed)
+const CLERIC_SPELL_SLOTS = {
+  1:  { 1: 2 },
+  2:  { 1: 3 },
+  3:  { 1: 4, 2: 2 },
+  4:  { 1: 4, 2: 3 },
+  5:  { 1: 4, 2: 3, 3: 2 },
+  6:  { 1: 4, 2: 3, 3: 3 },
+  7:  { 1: 4, 2: 3, 3: 3, 4: 1 },
+  8:  { 1: 4, 2: 3, 3: 3, 4: 2 },
+  9:  { 1: 4, 2: 3, 3: 3, 4: 3, 5: 1 },
+  10: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2 },
+};
 
 const WIS_CANTRIPS = [
   { index: 'sacred-flame',     name: 'Holy Word',        source: 'Cleric',              ability: 'WIS' },
@@ -165,30 +173,25 @@ function _renderMarkSpells(maxSlotLevel) {
 
   const levels = Object.keys(MARK_SPELLS).map(Number).filter(l => l <= maxSlotLevel).sort((a, b) => a - b);
 
-  root.innerHTML = levels.map(lvl => {
-    const spells = MARK_SPELLS[lvl];
-    return spells.map(sp => {
-      const expanded = _expandedSpell === sp.index;
+  root.innerHTML = levels.map(lvl =>
+    MARK_SPELLS[lvl].map(sp => {
+      const isExpanded = _expandedSpell === sp.index;
       return `
-        <div class="mark-spell-item${expanded ? ' expanded' : ''}" data-index="${sp.index}">
+        <div class="mark-spell-item${isExpanded ? ' expanded' : ''}" data-index="${sp.index}">
           <div class="mark-spell-header">
             <span class="mark-spell-name">${sp.name}</span>
             <span class="mark-spell-level-badge">L${lvl}</span>
           </div>
-          ${expanded ? `<div class="mark-spell-details"><div class="small muted">Loading...</div></div>` : ''}
+          ${isExpanded ? `<div class="mark-spell-details"><div class="small muted">Loading...</div></div>` : ''}
         </div>`;
-    }).join('');
-  }).join('');
+    }).join('')
+  ).join('');
 
   root.addEventListener('click', async e => {
     const item = e.target.closest('.mark-spell-item');
     if (!item) return;
     const index = item.dataset.index;
-    if (_expandedSpell === index) {
-      _expandedSpell = null;
-    } else {
-      _expandedSpell = index;
-    }
+    _expandedSpell = _expandedSpell === index ? null : index;
     _renderMarkSpells(maxSlotLevel);
 
     if (_expandedSpell === index) {
@@ -196,7 +199,7 @@ function _renderMarkSpells(maxSlotLevel) {
         const d = await _fetchSpellDetails(index);
         const detailEl = root.querySelector(`.mark-spell-item[data-index="${index}"] .mark-spell-details`);
         if (detailEl) detailEl.innerHTML = _renderSpellDetail(d);
-      } catch (err) {
+      } catch {
         const detailEl = root.querySelector(`.mark-spell-item[data-index="${index}"] .mark-spell-details`);
         if (detailEl) detailEl.innerHTML = '<div class="small muted">Failed to load spell details.</div>';
       }
@@ -221,48 +224,215 @@ function _renderSpellDetail(d) {
   return lines.join('');
 }
 
-async function initMarkSpells() {
+function initMarkSpells() {
   const clericLevel = window.st.clericLevel || 0;
+  if (!window.st.preparedClericSpells) window.st.preparedClericSpells = [];
 
   if (clericLevel < 1) {
+    window.st.markSlots = {};
     _renderMarkSlots();
     _renderMarkSpells(0);
     return;
   }
 
-  try {
-    const apiSlots = await _fetchClericSlots(clericLevel);
-    // Sync max values, preserve used counts
-    const existing = window.st.markSlots || {};
-    const merged = {};
-    for (const [lvl, max] of Object.entries(apiSlots)) {
-      const n = Number(lvl);
-      merged[n] = {
-        max,
-        used: Math.min(existing[n]?.used || 0, max),
-      };
-    }
-    window.st.markSlots = merged;
-    window.save();
-  } catch (err) {
-    // API unavailable — use cached state
-    if (!window.st.markSlots) window.st.markSlots = {};
+  const slotTable = CLERIC_SPELL_SLOTS[Math.min(clericLevel, 10)] || {};
+  const existing = window.st.markSlots || {};
+  const merged = {};
+  for (const [lvl, max] of Object.entries(slotTable)) {
+    const n = Number(lvl);
+    merged[n] = { max, used: Math.min(existing[n]?.used || 0, max) };
   }
+  window.st.markSlots = merged;
+  window.save();
 
-  const slots = window.st.markSlots || {};
-  const maxSlotLevel = Math.max(0, ...Object.keys(slots).map(Number));
+  const maxSlotLevel = Math.max(0, ...Object.keys(merged).map(Number));
   _renderMarkSlots();
   _renderMarkSpells(maxSlotLevel);
 }
 
-// Called on Long Rest to reset used slots
+// Called on Long Rest — reset used slots and clear cleric prepared list
 function restoreMarkSlots() {
   const slots = window.st.markSlots;
-  if (!slots) return;
-  for (const lvl of Object.keys(slots)) {
-    slots[lvl].used = 0;
+  if (slots) {
+    for (const lvl of Object.keys(slots)) {
+      slots[lvl].used = 0;
+    }
+  }
+  window.st.preparedClericSpells = [];
+}
+
+// ── Cleric Spell Preparation Browser ──
+
+// Domain + Mark spells are always prepared — filter from regular prep browser
+const _ALWAYS_PREPARED = new Set([
+  'false-life', 'ray-of-sickness', 'blindness-deafness', 'ray-of-enfeeblement',
+  'animate-dead', 'vampiric-touch', 'blight', 'death-ward', 'antilife-shell', 'cloudkill',
+  'disguise-self', 'silent-image', 'darkness', 'pass-without-trace',
+  'clairvoyance', 'major-image', 'greater-invisibility', 'hallucinatory-terrain', 'mislead',
+]);
+
+const _clericSpellsByLevel = {};
+let _clericSpellSet = null;
+let _prepExpandedLevel = null;
+let _prepExpandedSpell = null;
+
+async function _fetchClericSpellSet() {
+  if (_clericSpellSet) return _clericSpellSet;
+  const res = await fetch(`${API_BASE}/api/classes/cleric/spells`);
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  const data = await res.json();
+  _clericSpellSet = new Set((data.results || []).map(s => s.index));
+  return _clericSpellSet;
+}
+
+async function _fetchClericSpellsForLevel(slotLevel) {
+  if (_clericSpellsByLevel[slotLevel]) return _clericSpellsByLevel[slotLevel];
+  const [classSet, levelRes] = await Promise.all([
+    _fetchClericSpellSet(),
+    fetch(`${API_BASE}/api/spells?level=${slotLevel}`),
+  ]);
+  if (!levelRes.ok) throw new Error(`API ${levelRes.status}`);
+  const levelData = await levelRes.json();
+  const filtered = (levelData.results || [])
+    .filter(s => classSet.has(s.index) && !_ALWAYS_PREPARED.has(s.index))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  _clericSpellsByLevel[slotLevel] = filtered;
+  return filtered;
+}
+
+function renderClericPrepSpells() {
+  const root = document.getElementById('cleric-prep-root');
+  if (!root) return;
+
+  const clericLevel = window.st.clericLevel || 0;
+  if (clericLevel < 1) {
+    root.innerHTML = '<div class="small muted">No Cleric levels.</div>';
+    return;
+  }
+
+  const wisMod = Math.floor(((window.st.wis || 10) - 10) / 2);
+  const maxPrepared = Math.max(1, clericLevel + wisMod);
+  const prepared = window.st.preparedClericSpells || [];
+  const maxSlotLevel = Math.max(0, ...Object.keys(window.st.markSlots || {}).map(Number));
+
+  if (maxSlotLevel < 1) {
+    root.innerHTML = '<div class="small muted">No spell slots yet.</div>';
+    return;
+  }
+
+  root.innerHTML = `
+    <div class="prep-counter">Prepared: <strong>${prepared.length}/${maxPrepared}</strong> <span class="small muted">(Cleric ${clericLevel} + WIS ${wisMod >= 0 ? '+' : ''}${wisMod})</span></div>
+    ${Array.from({length: maxSlotLevel}, (_, i) => i + 1).map(lvl => {
+      const isOpen = _prepExpandedLevel === lvl;
+      return `
+        <details class="prep-level-acc"${isOpen ? ' open' : ''} data-slotlvl="${lvl}">
+          <summary class="prep-level-summary">Level ${lvl} Spells</summary>
+          <div class="prep-level-body" data-body-lvl="${lvl}">
+            ${isOpen ? '<div class="small muted">Loading...</div>' : ''}
+          </div>
+        </details>`;
+    }).join('')}`;
+
+  if (_prepExpandedLevel && _prepExpandedLevel <= maxSlotLevel) {
+    _loadClericLevelBody(_prepExpandedLevel);
+  }
+
+  root.querySelectorAll('details.prep-level-acc').forEach(det => {
+    det.addEventListener('toggle', () => {
+      const lvl = Number(det.dataset.slotlvl);
+      if (det.open) {
+        _prepExpandedLevel = lvl;
+        _prepExpandedSpell = null;
+        _loadClericLevelBody(lvl);
+      } else if (_prepExpandedLevel === lvl) {
+        _prepExpandedLevel = null;
+      }
+    });
+  });
+}
+
+async function _loadClericLevelBody(slotLevel) {
+  const root = document.getElementById('cleric-prep-root');
+  if (!root) return;
+  const oldBody = root.querySelector(`[data-body-lvl="${slotLevel}"]`);
+  if (!oldBody) return;
+
+  // Replace with fresh node so no old click listeners accumulate
+  const body = oldBody.cloneNode(false);
+  oldBody.replaceWith(body);
+  body.innerHTML = '<div class="small muted">Loading...</div>';
+
+  const prepared = window.st.preparedClericSpells || [];
+  const clericLevel = window.st.clericLevel || 0;
+  const wisMod = Math.floor(((window.st.wis || 10) - 10) / 2);
+  const maxPrepared = Math.max(1, clericLevel + wisMod);
+  const atMax = prepared.length >= maxPrepared;
+
+  try {
+    const spells = await _fetchClericSpellsForLevel(slotLevel);
+    if (!spells.length) {
+      body.innerHTML = '<div class="small muted">No Cleric spells at this level.</div>';
+      return;
+    }
+
+    body.innerHTML = spells.map(sp => {
+      const isPrepared = prepared.includes(sp.index);
+      return `
+        <div class="mark-spell-item${isPrepared ? ' mark-prepared' : ''}" data-pi="${sp.index}">
+          <div class="mark-spell-header">
+            <span class="mark-spell-name">${sp.name}</span>
+            <button class="btn-mark-prep${isPrepared ? ' active' : ''}" data-prep="${sp.index}"${(!isPrepared && atMax) ? ' disabled' : ''} title="${isPrepared ? 'Un-prepare' : 'Prepare'}">P</button>
+          </div>
+        </div>`;
+    }).join('');
+
+    body.addEventListener('click', async e => {
+      const prepBtn = e.target.closest('.btn-mark-prep');
+      if (prepBtn) {
+        e.stopPropagation();
+        const idx = prepBtn.dataset.prep;
+        const preps = window.st.preparedClericSpells || [];
+        const freshMax = Math.max(1, (window.st.clericLevel || 0) + Math.floor(((window.st.wis || 10) - 10) / 2));
+        const pos = preps.indexOf(idx);
+        if (pos >= 0) preps.splice(pos, 1);
+        else if (preps.length < freshMax) preps.push(idx);
+        window.st.preparedClericSpells = preps;
+        window.save();
+        renderClericPrepSpells();
+        return;
+      }
+
+      const item = e.target.closest('[data-pi]');
+      if (!item) return;
+      const index = item.dataset.pi;
+
+      // Toggle expand in-place (no re-render needed)
+      if (_prepExpandedSpell === index) {
+        _prepExpandedSpell = null;
+        item.classList.remove('expanded');
+        item.querySelector('.mark-spell-details')?.remove();
+      } else {
+        if (_prepExpandedSpell) {
+          const prev = body.querySelector(`[data-pi="${_prepExpandedSpell}"]`);
+          if (prev) { prev.classList.remove('expanded'); prev.querySelector('.mark-spell-details')?.remove(); }
+        }
+        _prepExpandedSpell = index;
+        item.classList.add('expanded');
+        const detDiv = document.createElement('div');
+        detDiv.className = 'mark-spell-details';
+        detDiv.innerHTML = '<div class="small muted">Loading...</div>';
+        item.appendChild(detDiv);
+        _fetchSpellDetails(index)
+          .then(d => { detDiv.innerHTML = _renderSpellDetail(d); })
+          .catch(() => { detDiv.innerHTML = '<div class="small muted">Failed to load spell details.</div>'; });
+      }
+    });
+  } catch {
+    body.innerHTML = '<div class="small muted">Failed to load spells. Check your connection.</div>';
   }
 }
+
+window.renderClericPrepSpells = renderClericPrepSpells;
 
 function _spellItemHTML(sp, expandedIndex, dataAttr = 'data-spell="1"') {
   const expanded = expandedIndex === sp.index;

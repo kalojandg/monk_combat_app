@@ -714,6 +714,7 @@ el("btnLongRest") && el("btnLongRest").addEventListener("click", async () => {
   // Refresh resurrection tab spell sections if visible
   if (typeof window.renderDomainSpells === 'function') window.renderDomainSpells(st.clericLevel || 0);
   if (typeof window.initMarkSpells === 'function') window.initMarkSpells();
+  if (typeof window.renderClericPrepSpells === 'function') window.renderClericPrepSpells();
 });
 
 // ---- Attack Bonuses ----
@@ -2079,6 +2080,7 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
         if (typeof window.renderChaSpells === 'function') window.renderChaSpells();
         if (typeof window.renderDomainSpells === 'function') window.renderDomainSpells(st.clericLevel || 0);
         if (typeof window.initMarkSpells === 'function') window.initMarkSpells();
+        if (typeof window.renderClericPrepSpells === 'function') window.renderClericPrepSpells();
       }, 50);
     }
 
