@@ -54,11 +54,14 @@ const _LOCAL_SPELLS = {
   'word-of-radiance': {
     name: 'Word of Radiance', level: 0,
     casting_time: '1 action', range: '5 feet', duration: 'Instantaneous',
-    components: ['V', 'M (holy symbol)'],
+    components: ['V', 'M'], material: 'holy symbol',
     desc: ['You utter a divine word, and burning radiance erupts from you. Each creature of your choice that you can see within range must succeed on a Constitution saving throw or take 1d6 radiant damage.'],
     higher_level: ['The damage increases by 1d6 when you reach 5th level (2d6), 11th level (3d6), and 17th level (4d6).'],
   },
 };
+
+// Spells cast via Innate Spellcasting require no material components
+const _NO_MATERIAL_SPELLS = new Set(['animal-friendship', 'suggestion']);
 
 async function _fetchSpellDetails(index) {
   if (_spellCache[index]) return _spellCache[index];
@@ -66,6 +69,9 @@ async function _fetchSpellDetails(index) {
   const res = await fetch(`${API_BASE}/api/spells/${index}`);
   if (!res.ok) throw new Error(`API ${res.status}`);
   const data = await res.json();
+  if (_NO_MATERIAL_SPELLS.has(index) && Array.isArray(data.components) && data.components.includes('M')) {
+    data.material = 'not applicable';
+  }
   _spellCache[index] = data;
   return data;
 }
@@ -203,7 +209,10 @@ function _renderSpellDetail(d) {
   if (d.casting_time) lines.push(`<div><strong>Casting Time:</strong> ${d.casting_time}</div>`);
   if (d.range)        lines.push(`<div><strong>Range:</strong> ${d.range}</div>`);
   if (d.duration)     lines.push(`<div><strong>Duration:</strong> ${d.duration}</div>`);
-  if (Array.isArray(d.components)) lines.push(`<div><strong>Components:</strong> ${d.components.join(', ')}</div>`);
+  if (Array.isArray(d.components)) {
+    const comps = d.components.map(c => (c === 'M' && d.material) ? `M (${d.material})` : c);
+    lines.push(`<div><strong>Components:</strong> ${comps.join(', ')}</div>`);
+  }
   if (d.concentration) lines.push(`<div><strong>Concentration:</strong> Yes</div>`);
   if (d.ritual)        lines.push(`<div><strong>Ritual:</strong> Yes</div>`);
   if (Array.isArray(d.desc)) lines.push(`<div class="spell-desc">${d.desc.join('<br><br>')}</div>`);
