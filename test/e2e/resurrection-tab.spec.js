@@ -68,14 +68,14 @@ test.describe('Resurrection Tab - Accordion Interaction', () => {
     await page.waitForTimeout(300);
   });
 
-  test('Mark of Shadow expands and shows partial elf note', async ({ page }) => {
+  test('Mark of Shadow expands and shows Keen Senses', async ({ page }) => {
     const details = page.locator('#tab-resurrection details.feat', { hasText: 'Mark of Shadow' });
     await details.locator('summary').click();
     await page.waitForTimeout(400);
 
     await expect(details.locator('.feature-card')).toBeVisible();
     const text = await details.locator('.feature-card').textContent();
-    expect(text.length).toBeGreaterThan(10);
+    expect(text.toLowerCase()).toContain('keen senses');
   });
 
   test('Feature card is visible after opening (not clipped by max-height)', async ({ page }) => {
