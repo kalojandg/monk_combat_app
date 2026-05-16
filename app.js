@@ -4,6 +4,7 @@ async function loadTabs() {
   const tabMap = {
     'stats': 'tabs/stats.html',
     'pcchar': 'tabs/pcchar.html',
+    'resurrection': 'tabs/resurrection.html',
     'inventory': 'tabs/inventory.html',
     'shenanigans': 'tabs/shenanigans.html',
     'liners': 'tabs/liners.html',
@@ -1667,8 +1668,8 @@ async function loadClericFeatures() {
   return __cleric_feat_cache;
 }
 
-function enhanceFeatureAccordions() {
-  const root = document.getElementById('featuresAccordion');
+function enhanceFeatureAccordions(root) {
+  if (!root) root = document.getElementById('featuresAccordion');
   if (!root) return;
 
   root.querySelectorAll('details.feat').forEach(d => {
@@ -2027,6 +2028,13 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
     if (tabKey === 'featuresSection') {
       const d = derived();
       renderFeaturesAccordion(st.monkLevel || 1, st.clericLevel || 0);
+    }
+
+    if (tabKey === 'resurrection') {
+      setTimeout(() => {
+        const tabEl2 = document.getElementById('tab-resurrection');
+        if (tabEl2) enhanceFeatureAccordions(tabEl2);
+      }, 50);
     }
 
     // Re-attach inventory event listeners when inventory tab is shown

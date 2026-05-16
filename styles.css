@@ -972,6 +972,7 @@ details.feat[open]>summary::before {
 details.feat[open] .feature-card {
   opacity: 1;
   transform: translateY(0);
+  max-height: 2000px; /* fallback ако JS не е задал inline style */
 }
 
 /* параграфи вътре */
