@@ -1737,28 +1737,8 @@ async function loadClericFeatures() {
 }
 
 function enhanceFeatureAccordions(root) {
-  if (!root) root = document.getElementById('featuresAccordion');
-  if (!root) return;
-
-  root.querySelectorAll('details.feat').forEach(d => {
-    const card = d.querySelector('.feature-card');
-    if (!card) return;
-
-    // инициална височина
-    card.style.maxHeight = d.open ? card.scrollHeight + 'px' : '0px';
-
-    d.addEventListener('toggle', () => {
-      // динамична височина при отваряне/затваряне
-      const h = d.open ? card.scrollHeight : 0;
-      card.style.maxHeight = h + 'px';
-    });
-
-    // ако съдържанието се промени динамично (рядко), обнови височината
-    const ro = new ResizeObserver(() => {
-      if (d.open) card.style.maxHeight = card.scrollHeight + 'px';
-    });
-    ro.observe(card);
-  });
+  // CSS handles max-height animation via details.feat[open] .feature-card { max-height: 2000px }
+  // No JS inline style needed — it was overriding CSS on mobile, preventing accordions from opening
 }
 
 function _buildFeatureHTML(it, className) {
