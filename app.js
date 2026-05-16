@@ -267,7 +267,13 @@ function derived() {
   // Ki Save DC = 8 + WIS mod + Prof + Magic bonus
   const kiSaveDC = 8 + mods.wis + prof + Number(st.kiSaveDcMagic || 0);
 
-  return { level, mods, prof, ma, kiMax, hdMax, maxHP, ac, um, totalSpeed, savesBase, savesTotal, meleeAtk, meleeWeaponAtk, rangedAtk, kiSaveDC };
+  // Spell Save DC / Spell Attack — WIS (Cleric) and CHA (Mark of Shadow)
+  const spellSaveDC_WIS = 8 + prof + mods.wis;
+  const spellAtk_WIS    = prof + mods.wis;
+  const spellSaveDC_CHA = 8 + prof + mods.cha;
+  const spellAtk_CHA    = prof + mods.cha;
+
+  return { level, mods, prof, ma, kiMax, hdMax, maxHP, ac, um, totalSpeed, savesBase, savesTotal, meleeAtk, meleeWeaponAtk, rangedAtk, kiSaveDC, spellSaveDC_WIS, spellAtk_WIS, spellSaveDC_CHA, spellAtk_CHA };
 }
 window.derived = derived;
 
@@ -416,6 +422,13 @@ function renderAll() {
   el("rangedAtkSpan") && (el("rangedAtkSpan").textContent = (d.rangedAtk >= 0 ? "+" : "") + d.rangedAtk);
   // Melee Weapon Atk Bonus (DEX mod + Prof + Melee Weapon Magic)
   el("meleeWeaponMagicAtkSpan") && (el("meleeWeaponMagicAtkSpan").textContent = (d.meleeWeaponAtk >= 0 ? "+" : "") + d.meleeWeaponAtk);
+
+  // Spell DC / Spell Atk — WIS and CHA
+  const fmt = n => (n >= 0 ? "+" : "") + n;
+  el("spellDcWisSpan") && (el("spellDcWisSpan").textContent = d.spellSaveDC_WIS);
+  el("spellAtkWisSpan") && (el("spellAtkWisSpan").textContent = fmt(d.spellAtk_WIS));
+  el("spellDcChaSpan") && (el("spellDcChaSpan").textContent = d.spellSaveDC_CHA);
+  el("spellAtkChaSpan") && (el("spellAtkChaSpan").textContent = fmt(d.spellAtk_CHA));
 
   // Stats – inputs for magic atk bonuses
   el("unarmedMagicInput") && (el("unarmedMagicInput").value = st.unarmedMagic ?? 0);

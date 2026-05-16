@@ -19,37 +19,6 @@
       ]
     },
     {
-      "id": "cleric_divine_domain",
-      "name": "Divine Domain: Death",
-      "level": 1,
-      "short": "Death Domain — spells of endings and necromancy; Reaper cantrip enhancement.",
-      "desc": [
-        "You have chosen the Death domain, the province of gods that oversee the transition of life into death (e.g., Bhaal, Myrkul, Velsharoon).",
-        "Death domain gods embody murder, pain, disease, or the underworld."
-      ],
-      "bullets": [
-        "Bonus Spells (always prepared): False Life, Ray of Sickness (L1); Blindness/Deafness, Ray of Enfeeblement (L3); Animate Dead, Vampiric Touch (L5); Blight, Death Ward (L7); Antilife Shell, Cloudkill (L9).",
-        "Martial Weapon Proficiency: You gain proficiency with martial weapons.",
-        "Reaper: Learn one necromancy cantrip of your choice. Necromancy cantrips that target one creature can instead target two creatures within range and within 5 feet of each other."
-      ]
-    },
-    {
-      "id": "cleric_death_domain_spells",
-      "name": "Death Domain: Bonus Spells",
-      "level": 1,
-      "short": "Always prepared: False Life, Ray of Sickness (L1); Blindness/Deafness, Ray of Enfeeblement (L3); Animate Dead, Vampiric Touch (L5); Blight, Death Ward (L7); Antilife Shell, Cloudkill (L9).",
-      "desc": [
-        "The Death domain grants you the following spells (always prepared, don't count against your daily spells):"
-      ],
-      "bullets": [
-        "1st: False Life, Ray of Sickness",
-        "3rd: Blindness/Deafness, Ray of Enfeeblement",
-        "5th: Animate Dead, Vampiric Touch",
-        "7th: Blight, Death Ward",
-        "9th: Antilife Shell, Cloudkill"
-      ]
-    },
-    {
       "id": "cleric_death_bonus_proficiency",
       "name": "Death Domain: Martial Weapon Proficiency",
       "level": 1,
