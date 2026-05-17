@@ -1,12 +1,19 @@
 import { test, expect } from '@playwright/test';
 
-// Fake insults list used in all tests that need insults.json
 const FAKE_INSULTS = [
   'Миришеш като сирене стояло 3 дни на слънце',
   'С тоя нож си по-опасен за себе си, отколкото за мен',
   'Лицето ти кара кучетата да бягат',
   'Движиш се като крава в блато',
   'Толкова си бавен, че зомби ще те надбяга в маратон',
+];
+
+const FAKE_DARK_JOKES = [
+  "Why did the man miss the funeral? He wasn't a mourning person.",
+  "Dark humor is like food. Not everyone gets it.",
+  "My therapist said time heals all wounds. So I stabbed her.",
+  "What do you call a dog with no legs? Doesn't matter what you call him. He won't come anyway.",
+  "The cemetery is so crowded. People are just dying to get in.",
 ];
 
 async function mockInsults(page) {
@@ -19,15 +26,26 @@ async function mockInsults(page) {
   );
 }
 
-async function openInsultsTab(page) {
-  await page.locator('button[data-tab="mild-insults"]').click();
-  await expect(page.locator('#tab-mild-insults')).toBeVisible();
+async function mockDarkJokes(page) {
+  await page.route('**/dark-jokes.json', route =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(FAKE_DARK_JOKES),
+    })
+  );
 }
 
-test.describe('Mild Insults - Tab Navigation', () => {
+async function openInsultsTab(page) {
+  await page.locator('button[data-tab="insults"]').click();
+  await expect(page.locator('#tab-insults')).toBeVisible();
+}
+
+test.describe('Insults - Tab Navigation', () => {
 
   test.beforeEach(async ({ page }) => {
     await mockInsults(page);
+    await mockDarkJokes(page);
     await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
@@ -35,17 +53,19 @@ test.describe('Mild Insults - Tab Navigation', () => {
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
   });
 
-  test('Mild Insults tab button exists and is clickable', async ({ page }) => {
-    const btn = page.locator('button[data-tab="mild-insults"]');
+  test('Insults tab button exists and is clickable', async ({ page }) => {
+    const btn = page.locator('button[data-tab="insults"]');
     await expect(btn).toBeVisible();
     await btn.click();
-    await expect(page.locator('#tab-mild-insults')).toBeVisible();
+    await expect(page.locator('#tab-insults')).toBeVisible();
   });
 
-  test('Mild Insults tab shows expected UI elements', async ({ page }) => {
+  test('Insults tab shows expected UI elements', async ({ page }) => {
     await openInsultsTab(page);
     await expect(page.locator('#btnGenerateInsult')).toBeVisible();
     await expect(page.locator('#insultDisplay')).toBeVisible();
+    await expect(page.locator('#btnGenerateDarkJoke')).toBeVisible();
+    await expect(page.locator('#darkJokeDisplay')).toBeVisible();
   });
 
   test('No API key input or model selector present', async ({ page }) => {
@@ -63,14 +83,16 @@ test.describe('Mild Insults - Tab Navigation', () => {
   test('Has placeholder text before first generate', async ({ page }) => {
     await openInsultsTab(page);
     await expect(page.locator('#insultDisplay .insult-placeholder')).toBeVisible();
+    await expect(page.locator('#darkJokeDisplay .dark-joke-placeholder')).toBeVisible();
   });
 
 });
 
-test.describe('Mild Insults - Generate random insult', () => {
+test.describe('Insults - Generate random insult', () => {
 
   test.beforeEach(async ({ page }) => {
     await mockInsults(page);
+    await mockDarkJokes(page);
     await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
@@ -107,7 +129,6 @@ test.describe('Mild Insults - Generate random insult', () => {
       const text = await page.locator('#insultDisplay .insult-text').textContent();
       results.add(text.trim());
     }
-    // With 5 options and 8 clicks, at least 2 unique results expected
     expect(results.size).toBeGreaterThanOrEqual(2);
   });
 
@@ -118,10 +139,7 @@ test.describe('Mild Insults - Generate random insult', () => {
   });
 
   test('Shows error message when insults.json fails to load', async ({ page }) => {
-    // Override with a failing route
     await page.route('**/insults.json', route => route.fulfill({ status: 500 }));
-
-    // Clear cache so the new route is used
     await page.evaluate(() => window.__insults_cache = null);
     await page.locator('#btnGenerateInsult').click();
     await page.waitForTimeout(500);
@@ -131,7 +149,59 @@ test.describe('Mild Insults - Generate random insult', () => {
 
 });
 
-test.describe('Mild Insults - insults.json caching', () => {
+test.describe('Insults - Generate dark joke', () => {
+
+  test.beforeEach(async ({ page }) => {
+    await mockInsults(page);
+    await mockDarkJokes(page);
+    await page.goto('/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
+    await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
+    await openInsultsTab(page);
+  });
+
+  test('Clicking Generate Dark Joke shows a joke from the list', async ({ page }) => {
+    await page.locator('#btnGenerateDarkJoke').click();
+    await page.waitForTimeout(300);
+
+    const jokeText = page.locator('#darkJokeDisplay .dark-joke-text');
+    await expect(jokeText).toBeVisible();
+
+    const displayed = await jokeText.textContent();
+    expect(FAKE_DARK_JOKES).toContain(displayed.trim());
+  });
+
+  test('Multiple clicks show different jokes (not stuck)', async ({ page }) => {
+    const results = new Set();
+    for (let i = 0; i < 8; i++) {
+      await page.locator('#btnGenerateDarkJoke').click();
+      await page.waitForTimeout(200);
+      const text = await page.locator('#darkJokeDisplay .dark-joke-text').textContent();
+      results.add(text.trim());
+    }
+    expect(results.size).toBeGreaterThanOrEqual(2);
+  });
+
+  test('Dark joke button is re-enabled after generating', async ({ page }) => {
+    await page.locator('#btnGenerateDarkJoke').click();
+    await page.waitForTimeout(500);
+    await expect(page.locator('#btnGenerateDarkJoke')).toBeEnabled();
+  });
+
+  test('Shows error message when dark-jokes.json fails to load', async ({ page }) => {
+    await page.route('**/dark-jokes.json', route => route.fulfill({ status: 500 }));
+    await page.evaluate(() => window.__dark_jokes_cache = null);
+    await page.locator('#btnGenerateDarkJoke').click();
+    await page.waitForTimeout(500);
+
+    await expect(page.locator('#darkJokeDisplay .dark-joke-error')).toBeVisible();
+  });
+
+});
+
+test.describe('Insults - insults.json caching', () => {
 
   test('insults.json is fetched only once across multiple generates', async ({ page }) => {
     let fetchCount = 0;
@@ -143,6 +213,7 @@ test.describe('Mild Insults - insults.json caching', () => {
         body: JSON.stringify(FAKE_INSULTS),
       });
     });
+    await mockDarkJokes(page);
 
     await page.goto('/');
     await page.evaluate(() => localStorage.clear());
@@ -152,6 +223,32 @@ test.describe('Mild Insults - insults.json caching', () => {
 
     for (let i = 0; i < 5; i++) {
       await page.locator('#btnGenerateInsult').click();
+      await page.waitForTimeout(200);
+    }
+
+    expect(fetchCount).toBe(1);
+  });
+
+  test('dark-jokes.json is fetched only once across multiple generates', async ({ page }) => {
+    let fetchCount = 0;
+    await mockInsults(page);
+    await page.route('**/dark-jokes.json', route => {
+      fetchCount++;
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(FAKE_DARK_JOKES),
+      });
+    });
+
+    await page.goto('/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
+    await openInsultsTab(page);
+
+    for (let i = 0; i < 5; i++) {
+      await page.locator('#btnGenerateDarkJoke').click();
       await page.waitForTimeout(200);
     }
 

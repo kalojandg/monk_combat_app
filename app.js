@@ -13,7 +13,7 @@ async function loadTabs() {
     'skills': 'tabs/skills.html',
     'sessionNotes': 'tabs/sessionNotes.html',
     // 'quests': 'tabs/quests.html', // moved to shared-inventory app
-    'mild-insults': 'tabs/mild-insults.html',
+    'insults': 'tabs/insults.html',
     'npc-names': 'tabs/npc-names.html'
   };
 

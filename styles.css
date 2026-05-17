@@ -1379,7 +1379,7 @@ details.feat[open]>summary::before {
   font-style: italic;
 }
 
-/* ===== Mild Insults Tab ===== */
+/* ===== Insults Tab ===== */
 .insult-settings {
   margin-bottom: 16px;
 }
@@ -1515,6 +1515,85 @@ details.feat[open]>summary::before {
   color: var(--text);
   font-size: 0.9rem;
   font-style: italic;
+}
+
+/* ===== Brutal Dark Jokes section (within Insults tab) ===== */
+.insults-section-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 20px 0 16px;
+}
+.dark-joke-heading {
+  font-size: 0.8rem;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #f87171;
+  margin: 0 0 4px;
+}
+.dark-joke-sub {
+  font-size: 12px;
+  margin: 0 0 10px;
+}
+.dark-joke-display {
+  min-height: 80px;
+  background: rgba(248, 113, 113, 0.04);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  border-radius: 6px;
+  padding: 20px 24px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.dark-joke-placeholder {
+  color: var(--muted);
+  font-style: italic;
+  margin: 0;
+}
+.dark-joke-text {
+  color: #fca5a5;
+  font-size: 0.95rem;
+  line-height: 1.65;
+  margin: 0;
+  animation: insultAppear 0.35s ease-out;
+}
+.dark-joke-error {
+  color: #e85454;
+  font-size: 0.9rem;
+  margin: 0;
+}
+.dark-joke-actions {
+  margin-bottom: 8px;
+}
+.dark-joke-btn {
+  width: 100%;
+  padding: 10px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  color: #fca5a5;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.dark-joke-btn:hover {
+  background: rgba(248, 113, 113, 0.22);
+}
+.dark-joke-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.dark-joke-spinner {
+  width: 22px;
+  height: 22px;
+  border: 3px solid rgba(248, 113, 113, 0.2);
+  border-top-color: #f87171;
+  border-radius: 50%;
+  animation: insultSpin 0.7s linear infinite;
 }
 
 /* ===== NPC Names Tab ===== */

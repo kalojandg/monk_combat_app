@@ -4,7 +4,7 @@
       "Bash(ralph-import:*)",
       "Bash(npm test:*)",
       "Bash(npx playwright test:*)",
-      "Bash(node test/taunts.unit.js)",
+      "Bash(node test/insults.unit.js)",
       "Bash(netstat -ano)",
       "Bash(grep \"test\\\\.skip\" d:/Downloads/monk/monk_combat_app/test/e2e/*.js)",
       "Bash(python3 -c ':*)",

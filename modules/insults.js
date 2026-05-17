@@ -1,4 +1,4 @@
-/* ===== Mild Insults Module (IIFE) ===== */
+/* ===== Insults Module (IIFE) ===== */
 (function () {
 
   /* ---------------------------------------------------------------
@@ -103,7 +103,7 @@
     }
   }
 
-  // --- API key / model settings HTML (was in mild-insults.html):
+  // --- API key / model settings HTML (was in insults.html):
   // <div class="insult-settings">
   //   <label>API Key <input type="password" id="insultApiKey" placeholder="sk-ant-..." class="full-width"></label>
   //   <div class="insult-model-row">
@@ -117,7 +117,7 @@
   //   </div>
   // </div>
   //
-  // --- Enemy type fieldset (was in mild-insults.html):
+  // --- Enemy type fieldset (was in insults.html):
   // <div class="insult-options">
   //   <fieldset class="insult-fieldset">
   //     <legend>Enemy type</legend>
@@ -127,7 +127,7 @@
   //   </fieldset>
   // </div>
   //
-  // --- History section (was in mild-insults.html + JS):
+  // --- History section (was in insults.html + JS):
   // const STORAGE_KEY_HISTORY = 'monkInsult_history';
   // function getHistory() { ... }
   // function pushHistory(text) { ... }
@@ -140,15 +140,15 @@
   // </div>
   * --------------------------------------------------------------- */
 
-  // ===== ACTIVE CODE — random insult from insults.json =====
+  // ===== Insults (insults.json) =====
 
-  let __cache = null;
+  let __insultsCache = null;
 
   async function loadInsults() {
-    if (__cache) return __cache;
+    if (__insultsCache) return __insultsCache;
     const res = await fetch('insults.json', { cache: 'no-store' });
-    __cache = await res.json();
-    return __cache;
+    __insultsCache = await res.json();
+    return __insultsCache;
   }
 
   function showInsult(text, isError) {
@@ -165,7 +165,7 @@
 
   async function pickRandomInsult() {
     const btn = document.getElementById('btnGenerateInsult');
-    if (btn) { btn.disabled = true; }
+    if (btn) btn.disabled = true;
     try {
       const insults = await loadInsults();
       const pick = insults[Math.floor(Math.random() * insults.length)];
@@ -173,14 +173,53 @@
     } catch (e) {
       showInsult('Не можах да заредя обидите.', true);
     } finally {
-      if (btn) { btn.disabled = false; }
+      if (btn) btn.disabled = false;
+    }
+  }
+
+  // ===== Brutal Dark Jokes (dark-jokes.json) =====
+
+  let __darkJokesCache = null;
+
+  async function loadDarkJokes() {
+    if (__darkJokesCache) return __darkJokesCache;
+    const res = await fetch('dark-jokes.json', { cache: 'no-store' });
+    __darkJokesCache = await res.json();
+    return __darkJokesCache;
+  }
+
+  function showDarkJoke(text, isError) {
+    const box = document.getElementById('darkJokeDisplay');
+    if (!box) return;
+    if (text === null) {
+      box.innerHTML = '<div class="dark-joke-spinner"></div>';
+      return;
+    }
+    box.innerHTML = isError
+      ? `<p class="dark-joke-error">${text}</p>`
+      : `<p class="dark-joke-text">${text}</p>`;
+  }
+
+  async function pickRandomDarkJoke() {
+    const btn = document.getElementById('btnGenerateDarkJoke');
+    if (btn) btn.disabled = true;
+    try {
+      const jokes = await loadDarkJokes();
+      const pick = jokes[Math.floor(Math.random() * jokes.length)];
+      showDarkJoke(pick);
+    } catch (e) {
+      showDarkJoke('Failed to load jokes.', true);
+    } finally {
+      if (btn) btn.disabled = false;
     }
   }
 
   /* --- public API --- */
   window.attachInsults = function () {
-    const btnGen = document.getElementById('btnGenerateInsult');
-    if (btnGen) btnGen.addEventListener('click', pickRandomInsult);
+    const btnInsult = document.getElementById('btnGenerateInsult');
+    if (btnInsult) btnInsult.addEventListener('click', pickRandomInsult);
+    const btnJoke = document.getElementById('btnGenerateDarkJoke');
+    if (btnJoke) btnJoke.addEventListener('click', pickRandomDarkJoke);
   };
 
   window.renderInsultsUI = function () {};
