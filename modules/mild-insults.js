@@ -1,11 +1,11 @@
-/* ===== Combat Taunts Module (IIFE) ===== */
+/* ===== Mild Insults Module (IIFE) ===== */
 (function () {
 
   /* ---------------------------------------------------------------
    * AI / BOT SECTION — COMMENTED OUT (kept for possible future use)
    * ---------------------------------------------------------------
-  const STORAGE_KEY_API   = 'monkTaunt_apiKey';
-  const STORAGE_KEY_MODEL = 'monkTaunt_model';
+  const STORAGE_KEY_API   = 'monkInsult_apiKey';
+  const STORAGE_KEY_MODEL = 'monkInsult_model';
 
   const SYSTEM_PROMPT = `Ти си Пийс Ошит — пиян юан-ти монах (Way of the Drunken Master). ...`;
 
@@ -59,16 +59,15 @@
 
   let loading = false;
 
-  async function generateTaunt_AI() {
+  async function generateInsult_AI() {
     const apiKey = getApiKey();
-    if (!apiKey) { showTaunt('Enter your Anthropic API key above first.', true); return; }
+    if (!apiKey) { showInsult('Enter your Anthropic API key above first.', true); return; }
     if (loading) return;
     loading = true;
 
-    const btn = document.getElementById('btnGenerateTaunt');
+    const btn = document.getElementById('btnGenerateInsult');
     if (btn) { btn.disabled = true; btn.textContent = 'Generating...'; }
-    showTaunt(null);
-    updateMoodIndicator();
+    showInsult(null);
 
     try {
       const resp = await fetch('https://api.anthropic.com/v1/messages', {
@@ -89,27 +88,27 @@
 
       if (!resp.ok) {
         const err = await resp.text();
-        showTaunt(`API error (${resp.status}): ${err}`, true);
+        showInsult(`API error (${resp.status}): ${err}`, true);
         return;
       }
 
       const data = await resp.json();
       const text = data.content?.find(b => b.type === 'text')?.text || '...';
-      showTaunt(text);
+      showInsult(text);
     } catch (e) {
-      showTaunt('Even the API avoids me. Wise.', true);
+      showInsult('Even the API avoids me. Wise.', true);
     } finally {
       loading = false;
-      if (btn) { btn.disabled = false; btn.textContent = 'Generate Taunt'; }
+      if (btn) { btn.disabled = false; btn.textContent = 'Generate Insult'; }
     }
   }
 
-  // --- API key / model settings HTML (was in taunts.html):
-  // <div class="taunt-settings">
-  //   <label>API Key <input type="password" id="tauntApiKey" placeholder="sk-ant-..." class="full-width"></label>
-  //   <div class="taunt-model-row">
+  // --- API key / model settings HTML (was in mild-insults.html):
+  // <div class="insult-settings">
+  //   <label>API Key <input type="password" id="insultApiKey" placeholder="sk-ant-..." class="full-width"></label>
+  //   <div class="insult-model-row">
   //     <label>Model
-  //       <select id="tauntModel">
+  //       <select id="insultModel">
   //         <option value="claude-sonnet-4-20250514">Sonnet 4 (recommended)</option>
   //         <option value="claude-haiku-4-5-20251001">Haiku 4.5 (cheap, bad Bulgarian)</option>
   //       </select>
@@ -118,9 +117,9 @@
   //   </div>
   // </div>
   //
-  // --- Enemy type fieldset (was in taunts.html):
-  // <div class="taunt-options">
-  //   <fieldset class="taunt-fieldset">
+  // --- Enemy type fieldset (was in mild-insults.html):
+  // <div class="insult-options">
+  //   <fieldset class="insult-fieldset">
   //     <legend>Enemy type</legend>
   //     <label><input type="radio" name="enemyType" value="melee" checked> Melee</label>
   //     <label><input type="radio" name="enemyType" value="ranged"> Ranged (bow/crossbow)</label>
@@ -128,16 +127,16 @@
   //   </fieldset>
   // </div>
   //
-  // --- History section (was in taunts.html + JS):
-  // const STORAGE_KEY_HISTORY = 'monkTaunt_history';
+  // --- History section (was in mild-insults.html + JS):
+  // const STORAGE_KEY_HISTORY = 'monkInsult_history';
   // function getHistory() { ... }
   // function pushHistory(text) { ... }
   // function clearHistory() { ... }
   // function deleteHistoryItem(idx) { ... }
   // function renderHistory() { ... }
-  // <div id="tauntHistory" class="taunt-history hidden">
-  //   <h3>History <button id="btnClearTauntHistory" class="danger small">Clear</button></h3>
-  //   <ul id="tauntHistoryList"></ul>
+  // <div id="insultHistory" class="insult-history hidden">
+  //   <h3>History <button id="btnClearInsultHistory" class="danger small">Clear</button></h3>
+  //   <ul id="insultHistoryList"></ul>
   // </div>
   * --------------------------------------------------------------- */
 
@@ -152,61 +151,37 @@
     return __cache;
   }
 
-  function getHpPercent() {
-    const st = window.st;
-    if (!st) return 100;
-    const d = window.derived ? window.derived() : null;
-    const maxHP = d ? d.maxHP : 10;
-    return Math.round((st.hpCurrent / maxHP) * 100);
-  }
-
-  function updateMoodIndicator() {
-    const el = document.getElementById('tauntMoodIndicator');
-    if (!el) return;
-    const pct = getHpPercent();
-    let mood, label;
-    if (pct > 50)      { mood = 'high'; label = 'Cocky & Brutal'; }
-    else if (pct >= 30){ mood = 'mid';  label = 'Bloodied but Standing'; }
-    else               { mood = 'low';  label = 'Desperate & Unhinged'; }
-    el.className = 'taunt-mood taunt-mood-' + mood;
-    el.textContent = `HP ${pct}% — ${label}`;
-  }
-
-  function showTaunt(text, isError) {
-    const box = document.getElementById('tauntDisplay');
+  function showInsult(text, isError) {
+    const box = document.getElementById('insultDisplay');
     if (!box) return;
     if (text === null) {
-      box.innerHTML = '<div class="taunt-spinner"></div>';
+      box.innerHTML = '<div class="insult-spinner"></div>';
       return;
     }
     box.innerHTML = isError
-      ? `<p class="taunt-error">${text}</p>`
-      : `<p class="taunt-text">"${text}"</p>`;
+      ? `<p class="insult-error">${text}</p>`
+      : `<p class="insult-text">"${text}"</p>`;
   }
 
-  async function pickRandomTaunt() {
-    const btn = document.getElementById('btnGenerateTaunt');
+  async function pickRandomInsult() {
+    const btn = document.getElementById('btnGenerateInsult');
     if (btn) { btn.disabled = true; }
-    updateMoodIndicator();
     try {
       const insults = await loadInsults();
       const pick = insults[Math.floor(Math.random() * insults.length)];
-      showTaunt(pick);
+      showInsult(pick);
     } catch (e) {
-      showTaunt('Не можах да заредя обидите.', true);
+      showInsult('Не можах да заредя обидите.', true);
     } finally {
       if (btn) { btn.disabled = false; }
     }
   }
 
   /* --- public API --- */
-  window.attachTaunts = function () {
-    const btnGen = document.getElementById('btnGenerateTaunt');
-    if (btnGen) btnGen.addEventListener('click', pickRandomTaunt);
-    updateMoodIndicator();
+  window.attachInsults = function () {
+    const btnGen = document.getElementById('btnGenerateInsult');
+    if (btnGen) btnGen.addEventListener('click', pickRandomInsult);
   };
 
-  window.renderTauntsUI = function () {
-    updateMoodIndicator();
-  };
+  window.renderInsultsUI = function () {};
 })();

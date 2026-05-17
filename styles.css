@@ -1379,80 +1379,58 @@ details.feat[open]>summary::before {
   font-style: italic;
 }
 
-/* ===== Taunts Tab ===== */
-.taunt-settings {
+/* ===== Mild Insults Tab ===== */
+.insult-settings {
   margin-bottom: 16px;
 }
-.taunt-settings label {
+.insult-settings label {
   display: block;
   margin-bottom: 8px;
   font-size: 13px;
   color: var(--muted);
 }
-.taunt-settings input.full-width {
+.insult-settings input.full-width {
   width: 100%;
   margin-top: 4px;
 }
-.taunt-model-row {
+.insult-model-row {
   display: flex;
   gap: 8px;
   align-items: flex-end;
 }
-.taunt-model-row label {
+.insult-model-row label {
   flex: 1;
 }
-.taunt-model-row select {
+.insult-model-row select {
   width: 100%;
   margin-top: 4px;
 }
 
-.taunt-options {
+.insult-options {
   margin-bottom: 12px;
 }
-.taunt-fieldset {
+.insult-fieldset {
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 8px 12px;
   margin: 0;
 }
-.taunt-fieldset legend {
+.insult-fieldset legend {
   font-size: 12px;
   color: var(--muted);
   padding: 0 4px;
 }
-.taunt-fieldset label {
+.insult-fieldset label {
   margin-right: 16px;
   font-size: 13px;
   cursor: pointer;
 }
-.taunt-fieldset input[type="radio"] {
+.insult-fieldset input[type="radio"] {
   margin-right: 4px;
   accent-color: var(--accent);
 }
 
-.taunt-mood {
-  text-align: center;
-  font-size: 12px;
-  font-weight: bold;
-  letter-spacing: 0.05em;
-  padding: 6px 0;
-  margin-bottom: 8px;
-  border-radius: 4px;
-}
-.taunt-mood-high {
-  color: #4ade80;
-  background: rgba(74, 222, 128, 0.08);
-}
-.taunt-mood-mid {
-  color: #fbbf24;
-  background: rgba(251, 191, 36, 0.08);
-}
-.taunt-mood-low {
-  color: #f87171;
-  background: rgba(248, 113, 113, 0.08);
-}
-
-.taunt-display {
+.insult-display {
   min-height: 100px;
   background: var(--panel2);
   border: 1px solid var(--border);
@@ -1464,33 +1442,33 @@ details.feat[open]>summary::before {
   justify-content: center;
   text-align: center;
 }
-.taunt-placeholder {
+.insult-placeholder {
   color: var(--muted);
   font-style: italic;
   margin: 0;
 }
-.taunt-text {
+.insult-text {
   color: #f0d080;
   font-size: 1.15rem;
   line-height: 1.6;
   font-style: italic;
   margin: 0;
-  animation: tauntAppear 0.35s ease-out;
+  animation: insultAppear 0.35s ease-out;
 }
-.taunt-error {
+.insult-error {
   color: #e85454;
   font-size: 0.9rem;
   margin: 0;
 }
-@keyframes tauntAppear {
+@keyframes insultAppear {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.taunt-actions {
+.insult-actions {
   margin-bottom: 16px;
 }
-.taunt-btn {
+.insult-btn {
   width: 100%;
   padding: 12px;
   font-size: 1rem;
@@ -1498,27 +1476,27 @@ details.feat[open]>summary::before {
   letter-spacing: 0.05em;
 }
 
-.taunt-spinner {
+.insult-spinner {
   width: 28px;
   height: 28px;
   border: 3px solid var(--border);
   border-top-color: var(--accent);
   border-radius: 50%;
-  animation: tauntSpin 0.7s linear infinite;
+  animation: insultSpin 0.7s linear infinite;
 }
-@keyframes tauntSpin {
+@keyframes insultSpin {
   to { transform: rotate(360deg); }
 }
 
-.taunt-history.hidden {
+.insult-history.hidden {
   display: none;
 }
-.taunt-history {
+.insult-history {
   margin-top: 16px;
   border-top: 1px solid var(--border);
   padding-top: 12px;
 }
-.taunt-history h3 {
+.insult-history h3 {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1526,12 +1504,12 @@ details.feat[open]>summary::before {
   font-size: 14px;
   color: var(--muted);
 }
-.taunt-history ul {
+.insult-history ul {
   list-style: none;
   padding: 0;
   margin: 0;
 }
-.taunt-history li {
+.insult-history li {
   padding: 8px 0;
   border-bottom: 1px solid var(--border);
   color: var(--text);
