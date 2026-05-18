@@ -1596,6 +1596,80 @@ details.feat[open]>summary::before {
   animation: insultSpin 0.7s linear infinite;
 }
 
+/* ===== Tasha's Hideous Laughter section (within Insults tab) ===== */
+.tasha-heading {
+  font-size: 0.8rem;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #c084fc;
+  margin: 0 0 4px;
+}
+.tasha-sub {
+  font-size: 12px;
+  margin: 0 0 10px;
+}
+.tasha-display {
+  min-height: 80px;
+  background: rgba(192, 132, 252, 0.04);
+  border: 1px solid rgba(192, 132, 252, 0.2);
+  border-radius: 6px;
+  padding: 20px 24px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.tasha-placeholder {
+  color: var(--muted);
+  font-style: italic;
+  margin: 0;
+}
+.tasha-text {
+  color: #e9d5ff;
+  font-size: 0.95rem;
+  line-height: 1.65;
+  margin: 0;
+  animation: insultAppear 0.35s ease-out;
+}
+.tasha-error {
+  color: #e85454;
+  font-size: 0.9rem;
+  margin: 0;
+}
+.tasha-actions {
+  margin-bottom: 8px;
+}
+.tasha-btn {
+  width: 100%;
+  padding: 10px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  background: rgba(192, 132, 252, 0.12);
+  border: 1px solid rgba(192, 132, 252, 0.3);
+  color: #e9d5ff;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.tasha-btn:hover {
+  background: rgba(192, 132, 252, 0.22);
+}
+.tasha-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.tasha-spinner {
+  width: 22px;
+  height: 22px;
+  border: 3px solid rgba(192, 132, 252, 0.2);
+  border-top-color: #c084fc;
+  border-radius: 50%;
+  animation: insultSpin 0.7s linear infinite;
+}
+
 /* ===== NPC Names Tab ===== */
 .npc-options {
   display: flex;

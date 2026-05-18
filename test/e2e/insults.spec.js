@@ -8,6 +8,14 @@ const FAKE_INSULTS = [
   'Толкова си бавен, че зомби ще те надбяга в маратон',
 ];
 
+const FAKE_TASHA_JOKES = [
+  "Why did the scarecrow win an award? Because he was outstanding in his field!",
+  "What's a pirate's favorite letter? You'd think it'd be AARRRR, but it's the 'C'.",
+  "I'm reading a book about anti-gravity. I can't put it down.",
+  "Why don't melons get married? Because they cantaloupe.",
+  "What do you call a sleeping dinosaur? A dino-snore.",
+];
+
 const FAKE_DARK_JOKES = [
   "Why did the man miss the funeral? He wasn't a mourning person.",
   "Dark humor is like food. Not everyone gets it.",
@@ -36,6 +44,16 @@ async function mockDarkJokes(page) {
   );
 }
 
+async function mockTashaJokes(page) {
+  await page.route('**/tasha-jokes.json', route =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(FAKE_TASHA_JOKES),
+    })
+  );
+}
+
 async function openInsultsTab(page) {
   await page.locator('button[data-tab="insults"]').click();
   await expect(page.locator('#tab-insults')).toBeVisible();
@@ -46,6 +64,7 @@ test.describe('Insults - Tab Navigation', () => {
   test.beforeEach(async ({ page }) => {
     await mockInsults(page);
     await mockDarkJokes(page);
+    await mockTashaJokes(page);
     await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
@@ -66,6 +85,8 @@ test.describe('Insults - Tab Navigation', () => {
     await expect(page.locator('#insultDisplay')).toBeVisible();
     await expect(page.locator('#btnGenerateDarkJoke')).toBeVisible();
     await expect(page.locator('#darkJokeDisplay')).toBeVisible();
+    await expect(page.locator('#btnGenerateTasha')).toBeVisible();
+    await expect(page.locator('#tashaDisplay')).toBeVisible();
   });
 
   test('No API key input or model selector present', async ({ page }) => {
@@ -84,6 +105,7 @@ test.describe('Insults - Tab Navigation', () => {
     await openInsultsTab(page);
     await expect(page.locator('#insultDisplay .insult-placeholder')).toBeVisible();
     await expect(page.locator('#darkJokeDisplay .dark-joke-placeholder')).toBeVisible();
+    await expect(page.locator('#tashaDisplay .tasha-placeholder')).toBeVisible();
   });
 
 });
@@ -93,6 +115,7 @@ test.describe('Insults - Generate random insult', () => {
   test.beforeEach(async ({ page }) => {
     await mockInsults(page);
     await mockDarkJokes(page);
+    await mockTashaJokes(page);
     await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
@@ -154,6 +177,7 @@ test.describe('Insults - Generate dark joke', () => {
   test.beforeEach(async ({ page }) => {
     await mockInsults(page);
     await mockDarkJokes(page);
+    await mockTashaJokes(page);
     await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
@@ -214,6 +238,7 @@ test.describe('Insults - insults.json caching', () => {
       });
     });
     await mockDarkJokes(page);
+    await mockTashaJokes(page);
 
     await page.goto('/');
     await page.evaluate(() => localStorage.clear());
@@ -253,6 +278,86 @@ test.describe('Insults - insults.json caching', () => {
     }
 
     expect(fetchCount).toBe(1);
+  });
+
+  test('tasha-jokes.json is fetched only once across multiple generates', async ({ page }) => {
+    let fetchCount = 0;
+    await mockInsults(page);
+    await mockDarkJokes(page);
+    await page.route('**/tasha-jokes.json', route => {
+      fetchCount++;
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(FAKE_TASHA_JOKES),
+      });
+    });
+
+    await page.goto('/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
+    await openInsultsTab(page);
+
+    for (let i = 0; i < 5; i++) {
+      await page.locator('#btnGenerateTasha').click();
+      await page.waitForTimeout(200);
+    }
+
+    expect(fetchCount).toBe(1);
+  });
+
+});
+
+test.describe('Insults - Tasha\'s Hideous Laughter', () => {
+
+  test.beforeEach(async ({ page }) => {
+    await mockInsults(page);
+    await mockDarkJokes(page);
+    await mockTashaJokes(page);
+    await page.goto('/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
+    await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
+    await openInsultsTab(page);
+  });
+
+  test('Clicking Generate Joke shows a joke from the list', async ({ page }) => {
+    await page.locator('#btnGenerateTasha').click();
+    await page.waitForTimeout(300);
+
+    const jokeText = page.locator('#tashaDisplay .tasha-text');
+    await expect(jokeText).toBeVisible();
+
+    const displayed = await jokeText.textContent();
+    expect(FAKE_TASHA_JOKES).toContain(displayed.trim());
+  });
+
+  test('Multiple clicks show different jokes (not stuck)', async ({ page }) => {
+    const results = new Set();
+    for (let i = 0; i < 8; i++) {
+      await page.locator('#btnGenerateTasha').click();
+      await page.waitForTimeout(200);
+      const text = await page.locator('#tashaDisplay .tasha-text').textContent();
+      results.add(text.trim());
+    }
+    expect(results.size).toBeGreaterThanOrEqual(2);
+  });
+
+  test('Tasha button is re-enabled after generating', async ({ page }) => {
+    await page.locator('#btnGenerateTasha').click();
+    await page.waitForTimeout(500);
+    await expect(page.locator('#btnGenerateTasha')).toBeEnabled();
+  });
+
+  test('Shows error message when tasha-jokes.json fails to load', async ({ page }) => {
+    await page.route('**/tasha-jokes.json', route => route.fulfill({ status: 500 }));
+    await page.evaluate(() => window.__tasha_jokes_cache = null);
+    await page.locator('#btnGenerateTasha').click();
+    await page.waitForTimeout(500);
+
+    await expect(page.locator('#tashaDisplay .tasha-error')).toBeVisible();
   });
 
 });

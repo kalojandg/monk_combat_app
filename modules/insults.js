@@ -177,6 +177,43 @@
     }
   }
 
+  // ===== Tasha's Hideous Laughter (tasha-jokes.json) =====
+
+  let __tashaJokesCache = null;
+
+  async function loadTashaJokes() {
+    if (__tashaJokesCache) return __tashaJokesCache;
+    const res = await fetch('tasha-jokes.json', { cache: 'no-store' });
+    __tashaJokesCache = await res.json();
+    return __tashaJokesCache;
+  }
+
+  function showTashaJoke(text, isError) {
+    const box = document.getElementById('tashaDisplay');
+    if (!box) return;
+    if (text === null) {
+      box.innerHTML = '<div class="tasha-spinner"></div>';
+      return;
+    }
+    box.innerHTML = isError
+      ? `<p class="tasha-error">${text}</p>`
+      : `<p class="tasha-text">${text}</p>`;
+  }
+
+  async function pickRandomTashaJoke() {
+    const btn = document.getElementById('btnGenerateTasha');
+    if (btn) btn.disabled = true;
+    try {
+      const jokes = await loadTashaJokes();
+      const pick = jokes[Math.floor(Math.random() * jokes.length)];
+      showTashaJoke(pick);
+    } catch (e) {
+      showTashaJoke('Failed to load jokes.', true);
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
   // ===== Brutal Dark Jokes (dark-jokes.json) =====
 
   let __darkJokesCache = null;
@@ -220,6 +257,8 @@
     if (btnInsult) btnInsult.addEventListener('click', pickRandomInsult);
     const btnJoke = document.getElementById('btnGenerateDarkJoke');
     if (btnJoke) btnJoke.addEventListener('click', pickRandomDarkJoke);
+    const btnTasha = document.getElementById('btnGenerateTasha');
+    if (btnTasha) btnTasha.addEventListener('click', pickRandomTashaJoke);
   };
 
   window.renderInsultsUI = function () {};
