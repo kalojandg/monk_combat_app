@@ -7,7 +7,7 @@ import { test, expect } from '@playwright/test';
 const CANTRIP_DETAILS = {
   'sacred-flame':    { index: 'sacred-flame',    name: 'Sacred Flame',    level: 0, school: { name: 'Evocation' },     casting_time: '1 action', range: '60 feet',   duration: 'Instantaneous',              components: ['V', 'S'], desc: ['Flame-like radiance descends on a creature.'] },
   'thaumaturgy':     { index: 'thaumaturgy',     name: 'Thaumaturgy',     level: 0, school: { name: 'Transmutation' }, casting_time: '1 action', range: '30 feet',   duration: 'Up to 1 minute',             components: ['V'],      desc: ['You manifest a minor wonder.'] },
-  'word-of-radiance':{ index: 'word-of-radiance',name: 'Word of Radiance',level: 0, school: { name: 'Evocation' },     casting_time: '1 action', range: '5 feet',    duration: 'Instantaneous',              components: ['V', 'M'], desc: ['Burning radiance erupts from you.'] },
+  'spare-the-dying':  { index: 'spare-the-dying', name: 'Spare the Dying', level: 0, school: { name: 'Necromancy' },    casting_time: '1 action', range: 'Touch',     duration: 'Instantaneous',              components: ['V', 'S'], desc: ['You touch a living creature that has 0 hit points. The creature becomes stable.'] },
   'chill-touch':     { index: 'chill-touch',     name: 'Chill Touch',     level: 0, school: { name: 'Necromancy' },    casting_time: '1 action', range: '120 feet',  duration: '1 round',                    components: ['V', 'S'], desc: ['You create a ghostly skeletal hand.'] },
   'minor-illusion':  { index: 'minor-illusion',  name: 'Minor Illusion',  level: 0, school: { name: 'Illusion' },      casting_time: '1 action', range: '30 feet',   duration: '1 minute',                   components: ['S', 'M'], desc: ['You create a sound or image.'] },
   'invisibility':    { index: 'invisibility',     name: 'Invisibility',    level: 2, school: { name: 'Illusion' },      casting_time: '1 action', range: 'Touch',     duration: 'Concentration, up to 1 hour', components: ['V', 'S', 'M'], concentration: true, desc: ['A creature you touch becomes invisible.'] },
@@ -53,10 +53,10 @@ test.describe('WIS Cantrips Section', () => {
     expect((await page.locator('#wis-cantrips-root').textContent()).toLowerCase()).toContain('thaumaturgy');
   });
 
-  test('Word of Radiance in WIS section', async ({ page }) => {
+  test('Spare the Dying in WIS section', async ({ page }) => {
     await setupApiMocks(page);
     await gotoResurrection(page);
-    expect((await page.locator('#wis-cantrips-root').textContent()).toLowerCase()).toContain('word of radiance');
+    expect((await page.locator('#wis-cantrips-root').textContent()).toLowerCase()).toContain('spare the dying');
   });
 
   test('Chill Touch in WIS section', async ({ page }) => {

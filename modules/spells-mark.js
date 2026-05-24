@@ -51,13 +51,6 @@ const API_BASE = 'https://www.dnd5eapi.co';
 const _spellCache = {};
 
 const _LOCAL_SPELLS = {
-  'word-of-radiance': {
-    name: 'Word of Radiance', level: 0,
-    casting_time: '1 action', range: '5 feet', duration: 'Instantaneous',
-    components: ['V', 'M'], material: 'holy symbol',
-    desc: ['You utter a divine word, and burning radiance erupts from you. Each creature of your choice that you can see within range must succeed on a Constitution saving throw or take 1d6 radiant damage.'],
-    higher_level: ['The damage increases by 1d6 when you reach 5th level (2d6), 11th level (3d6), and 17th level (4d6).'],
-  },
   'ray-of-sickness': {
     name: 'Ray of Sickness', level: 1,
     casting_time: '1 action', range: '60 feet', duration: 'Instantaneous',
@@ -100,7 +93,7 @@ const CLERIC_SPELL_SLOTS = {
 const WIS_CANTRIPS = [
   { index: 'sacred-flame',     name: 'Holy Word',        source: 'Cleric',              ability: 'WIS' },
   { index: 'thaumaturgy',      name: 'Thaumaturgy',      source: 'Cleric',              ability: 'WIS' },
-  { index: 'word-of-radiance', name: 'Word of Radiance', source: 'Cleric',              ability: 'WIS' },
+  { index: 'spare-the-dying',  name: 'Spare the Dying',  source: 'Cleric',              ability: 'WIS' },
   { index: 'chill-touch',      name: 'Chill Touch',      source: 'Death Domain (Reaper)', ability: 'WIS' },
 ];
 
