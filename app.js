@@ -278,8 +278,8 @@ function derived() {
 window.derived = derived;
 
 // ===== Skills =====
-const CUNNING_INTUITION_SKILLS = ['Performance', 'Sleight of Hand'];
-const CUNNING_INTUITION_TEXT = 'Cunning Intuition: When you make a Charisma (Performance) or Dexterity (Sleight of Hand) check, you can roll a d4 and add the number rolled to the ability check.';
+const CUNNING_INTUITION_SKILLS = ['Performance', 'Stealth'];
+const CUNNING_INTUITION_TEXT = 'Cunning Intuition: When you make a Charisma (Performance) or Dexterity (Stealth) check, you can roll a d4 and add the number rolled to the ability check.';
 
 const SKILLS = [
   ["Acrobatics", "dex"],

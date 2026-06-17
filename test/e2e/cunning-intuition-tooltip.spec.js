@@ -26,9 +26,9 @@ test.describe('Cunning Intuition Info Icons', () => {
     await expect(row.locator('.skill-info-btn')).toBeAttached();
   });
 
-  test('Sleight of Hand row has info icon', async ({ page }) => {
+  test('Stealth row has info icon', async ({ page }) => {
     await gotoPassiveSkills(page);
-    const row = page.locator('#subtab-passiveskills #skillsBody tr', { hasText: 'Sleight of Hand' });
+    const row = page.locator('#subtab-passiveskills #skillsBody tr', { hasText: 'Stealth' });
     await expect(row.locator('.skill-info-btn')).toBeAttached();
   });
 
@@ -38,10 +38,10 @@ test.describe('Cunning Intuition Info Icons', () => {
     expect(await acrobaticsRow.locator('.skill-info-btn').count()).toBe(0);
   });
 
-  test('Stealth row does NOT have info icon', async ({ page }) => {
+  test('Sleight of Hand row does NOT have info icon', async ({ page }) => {
     await gotoPassiveSkills(page);
-    const stealthRow = page.locator('#subtab-passiveskills #skillsBody tr', { hasText: 'Stealth' });
-    expect(await stealthRow.locator('.skill-info-btn').count()).toBe(0);
+    const row = page.locator('#subtab-passiveskills #skillsBody tr', { hasText: 'Sleight of Hand' });
+    expect(await row.locator('.skill-info-btn').count()).toBe(0);
   });
 
   test('Info icon has green styling', async ({ page }) => {
@@ -72,7 +72,7 @@ test.describe('Cunning Intuition Tooltip Behaviour', () => {
 
   test('Tooltip text contains d4', async ({ page }) => {
     await gotoPassiveSkills(page);
-    await page.locator('#subtab-passiveskills #skillsBody tr', { hasText: 'Sleight of Hand' }).locator('.skill-info-btn').click();
+    await page.locator('#subtab-passiveskills #skillsBody tr', { hasText: 'Stealth' }).locator('.skill-info-btn').click();
     const text = await page.locator('#skill-tooltip').textContent();
     expect(text.toLowerCase()).toContain('d4');
   });
