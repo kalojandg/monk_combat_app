@@ -278,8 +278,8 @@ function derived() {
 window.derived = derived;
 
 // ===== Skills =====
-// [Reborn - disabled] const CUNNING_INTUITION_SKILLS = ['Performance', 'Stealth'];
-// [Reborn - disabled] const CUNNING_INTUITION_TEXT = 'Cunning Intuition: When you make a Charisma (Performance) or Dexterity (Stealth) check, you can roll a d4 and add the number rolled to the ability check.';
+const CUNNING_INTUITION_SKILLS = ['Performance', 'Sleight of Hand'];
+const CUNNING_INTUITION_TEXT = 'Cunning Intuition: When you make a Charisma (Performance) or Dexterity (Sleight of Hand) check, you can roll a d4 and add the number rolled to the ability check.';
 
 const SKILLS = [
   ["Acrobatics", "dex"],
@@ -323,10 +323,9 @@ function _renderSkillsTable(body, mods, prof) {
   SKILLS.forEach(([name, abil]) => {
     const profChecked = !!st.skillProfs[name];
     const bonus = (mods[abil] || 0) + (profChecked ? prof : 0);
-    // [Reborn - disabled] const infoBtn = CUNNING_INTUITION_SKILLS.includes(name)
-    //   ? `<button class="skill-info-btn" data-tooltip="${CUNNING_INTUITION_TEXT}" aria-label="Cunning Intuition info">i</button>`
-    //   : '';
-    const infoBtn = '';
+    const infoBtn = CUNNING_INTUITION_SKILLS.includes(name)
+      ? `<button class="skill-info-btn" data-tooltip="${CUNNING_INTUITION_TEXT}" aria-label="Cunning Intuition info">i</button>`
+      : '';
     const tr = document.createElement("tr");
     tr.innerHTML = `<td>${name}${infoBtn}</td>
       <td>${abil.toUpperCase()}</td>
@@ -341,7 +340,7 @@ function _renderSkillsTable(body, mods, prof) {
       save();
     });
   });
-  // [Reborn - disabled] _attachSkillInfoTooltips(body);
+  _attachSkillInfoTooltips(body);
 }
 
 // Main skills table in Stats tab
@@ -353,32 +352,31 @@ function renderSkillsInSubtab(mods, prof) {
   _renderSkillsTable(document.querySelector('#subtab-passiveskills #skillsBody'), mods, prof);
 }
 
-// [Reborn - disabled]
-// function _attachSkillInfoTooltips(container) {
-//   container.querySelectorAll('.skill-info-btn').forEach(btn => {
-//     btn.addEventListener('click', (e) => {
-//       e.stopPropagation();
-//       const tooltip = document.getElementById('skill-tooltip');
-//       if (!tooltip) return;
-//       if (tooltip.classList.contains('visible') && tooltip._sourceBtn === btn) {
-//         tooltip.classList.remove('visible');
-//         tooltip._sourceBtn = null;
-//         return;
-//       }
-//       tooltip.textContent = btn.dataset.tooltip || '';
-//       tooltip.classList.add('visible');
-//       tooltip._sourceBtn = btn;
-//       const rect = btn.getBoundingClientRect();
-//       tooltip.style.top = (rect.bottom + 6 + window.scrollY) + 'px';
-//       tooltip.style.left = Math.max(8, rect.left + window.scrollX - 100) + 'px';
-//     });
-//   });
-// }
-//
-// document.addEventListener('click', () => {
-//   const tooltip = document.getElementById('skill-tooltip');
-//   if (tooltip) { tooltip.classList.remove('visible'); tooltip._sourceBtn = null; }
-// });
+function _attachSkillInfoTooltips(container) {
+  container.querySelectorAll('.skill-info-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const tooltip = document.getElementById('skill-tooltip');
+      if (!tooltip) return;
+      if (tooltip.classList.contains('visible') && tooltip._sourceBtn === btn) {
+        tooltip.classList.remove('visible');
+        tooltip._sourceBtn = null;
+        return;
+      }
+      tooltip.textContent = btn.dataset.tooltip || '';
+      tooltip.classList.add('visible');
+      tooltip._sourceBtn = btn;
+      const rect = btn.getBoundingClientRect();
+      tooltip.style.top = (rect.bottom + 6 + window.scrollY) + 'px';
+      tooltip.style.left = Math.max(8, rect.left + window.scrollX - 100) + 'px';
+    });
+  });
+}
+
+document.addEventListener('click', () => {
+  const tooltip = document.getElementById('skill-tooltip');
+  if (tooltip) { tooltip.classList.remove('visible'); tooltip._sourceBtn = null; }
+});
 
 // ===== Tabs =====
 document.addEventListener("click", (e) => {

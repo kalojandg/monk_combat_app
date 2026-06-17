@@ -51,6 +51,13 @@ const API_BASE = 'https://www.dnd5eapi.co';
 const _spellCache = {};
 
 const _LOCAL_SPELLS = {
+  'sacred-flame': {
+    name: 'Holy Word', level: 0,
+    casting_time: '1 action', range: '60 feet', duration: 'Instantaneous',
+    components: ['V', 'S'],
+    desc: ['You mutter a word of the divine under your breath, being careful not to speak it any louder, for such celestial power is not for the tainted and unworthy. Make a ranged spell attack against the target. On a hit, the target takes 1d8 radiant damage. If you hit an undead, fiend, or fey, then its speed is reduced by 10 feet and it cannot take reactions until the end of its next turn.'],
+    higher_level: ['This spell\'s damage increases by 1d8 when you reach 5th level (2d8), 11th level (3d8), and 17th level (4d8).'],
+  },
   'ray-of-sickness': {
     name: 'Ray of Sickness', level: 1,
     casting_time: '1 action', range: '60 feet', duration: 'Instantaneous',

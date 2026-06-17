@@ -5,7 +5,7 @@ import { test, expect } from '@playwright/test';
  */
 
 const CANTRIP_DETAILS = {
-  'sacred-flame':    { index: 'sacred-flame',    name: 'Sacred Flame',    level: 0, school: { name: 'Evocation' },     casting_time: '1 action', range: '60 feet',   duration: 'Instantaneous',              components: ['V', 'S'], desc: ['Flame-like radiance descends on a creature.'] },
+  'sacred-flame':    { index: 'sacred-flame',    name: 'Holy Word',       level: 0, school: { name: 'Evocation' },     casting_time: '1 action', range: '60 feet',   duration: 'Instantaneous',              components: ['V', 'S'], desc: ['Make a ranged spell attack against the target. On a hit, the target takes 1d8 radiant damage. If you hit an undead, fiend, or fey, then its speed is reduced by 10 feet and it cannot take reactions until the end of its next turn.'] },
   'thaumaturgy':     { index: 'thaumaturgy',     name: 'Thaumaturgy',     level: 0, school: { name: 'Transmutation' }, casting_time: '1 action', range: '30 feet',   duration: 'Up to 1 minute',             components: ['V'],      desc: ['You manifest a minor wonder.'] },
   'spare-the-dying':  { index: 'spare-the-dying', name: 'Spare the Dying', level: 0, school: { name: 'Necromancy' },    casting_time: '1 action', range: 'Touch',     duration: 'Instantaneous',              components: ['V', 'S'], desc: ['You touch a living creature that has 0 hit points. The creature becomes stable.'] },
   'chill-touch':     { index: 'chill-touch',     name: 'Chill Touch',     level: 0, school: { name: 'Necromancy' },    casting_time: '1 action', range: '120 feet',  duration: '1 round',                    components: ['V', 'S'], desc: ['You create a ghostly skeletal hand.'] },
