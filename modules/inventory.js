@@ -4,6 +4,7 @@
   'use strict';
 
   let __invEditIndex = null; // null => Add, число => Edit
+  let __invAttached = false;
 
   function invOpenModal(editIndex = null, item = null) {
     __invEditIndex = (typeof editIndex === 'number') ? editIndex : null;
@@ -241,6 +242,8 @@
   }
 
   function attachInventory() {
+    if (__invAttached) return;
+    __invAttached = true;
     const addBtn = document.getElementById('btnInvAdd');
     const saveBtn = document.getElementById('invSave');
     const cancelBtn = document.getElementById('invCancel');
