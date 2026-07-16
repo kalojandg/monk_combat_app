@@ -1,256 +1,256 @@
 [
   {
-    "race": "Човек",
+    "race": "Human",
     "key": "human",
     "genders": [
       {
         "key": "male",
-        "label": "Мъж",
+        "label": "Male",
         "names": [
-          "Артурий Фалкрест",
-          "Барандис Лофтхар",
-          "Даремир Стоунбридж",
-          "Еледор Уайтхейл",
-          "Галмир Блекстоун",
-          "Келвин Рейвмор",
-          "Маркориан Тандерлейн",
-          "Орикс Силвършард",
-          "Таргом Драгонфорд",
-          "Ферикс Дускбрингър"
+          "Artutius Falcrest",
+          "Barandis Lofthar",
+          "Daremir Stonebridge",
+          "Eldor Whitehill",
+          "Galmir Blackstone",
+          "Kelvin Rayvorm",
+          "Marcorian Thunderlane",
+          "Orix Silverward",
+          "Targon Dragonford",
+          "Feric Duskbringer"
         ]
       },
       {
         "key": "female",
-        "label": "Жена",
+        "label": "Female",
         "names": [
-          "Алирея Уиндспир",
-          "Бериона Фоксглейд",
-          "Калеста Мунфлейм",
-          "Елианта Голдънлайт",
-          "Жарелла Шадоукрест",
-          "Ливериа Старбрук",
-          "Морвена Дрехарст",
-          "Серинда Вилоуглен",
-          "Талира Фростмейн",
-          "Фиора Бладстоун"
+          "Aleria Windspirit",
+          "Berion Foxglead",
+          "Calesta Munfleym",
+          "Elantha Goldenlight",
+          "Jarella Shadower",
+          "Liveria Starbrook",
+          "Morvena Dryheart",
+          "Serinda Vloowgreen",
+          "Talia Frostmain",
+          "Fiora Blackstone"
         ]
       }
     ]
   },
   {
-    "race": "Елф",
+    "race": "Elf",
     "key": "elf",
     "genders": [
       {
         "key": "male",
-        "label": "Мъж",
+        "label": "Male",
         "names": [
-          "Аелинор Лайтблейд",
-          "Каелдриан Фейспир",
-          "Елдарион Силвърглейд",
-          "Фенрил Лунстрайк",
-          "Иллианос Виндсингър",
-          "Лориандер Старфрост",
-          "Равенор Глоумфийлд",
-          "Силенар Шадоутемпест",
-          "Теанвил Скайбрингър",
-          "Ваниор Флеймглейв"
+          "Aelinor Lightblade",
+          "Caeldrian Feyspring",
+          "Eldarion Silverglead",
+          "Fenril Lunstrike",
+          "Illianos Windsinger",
+          "Loriander Starfrost",
+          "Ravenor Glumfield",
+          "Selanar Shadowtempest",
+          "Teanvil Skybridge",
+          "Vanior Fleamgleave"
         ]
       },
       {
         "key": "female",
-        "label": "Жена",
+        "label": "Female",
         "names": [
-          "Алириел Сънчейм",
-          "Елияна Фростглейд",
-          "Иллирина Дъстбрингър",
-          "Кеариса Миствейл",
-          "Ларейна Дейстар",
-          "Мирианис Дримспир",
-          "Офелия Твилайнд",
-          "Серенаия Найтбрингър",
-          "Таелина Старвиспер",
-          "Фиелор Мунгрейс"
+          "Alriel Sunchaim",
+          "Elia Frostglead",
+          "Illirin Dusterbringer",
+          "Kearis Mistlefield",
+          "Lareina Daistar",
+          "Miranis Dreamspring",
+          "Ophelia Twilight",
+          "Serenya Nightbringer",
+          "Taeline Starvisper",
+          "Fiora Mungrease"
         ]
       }
     ]
   },
   {
-    "race": "Джудже",
+    "race": "Dwarf",
     "key": "dwarf",
     "genders": [
       {
         "key": "male",
-        "label": "Мъж",
+        "label": "Male",
         "names": [
-          "Бардрун Айрънфист",
-          "Дурмаг Гроувхолм",
-          "Гаримбалд Хардстоун",
-          "Кромдал Дългобрад",
-          "Моргрим Фламефордж",
-          "Нардуин Стоунгард",
-          "Рокхолд Тъндершард",
-          "Торбраг Шилдбейр",
-          "Ундар Стилфордж",
-          "Волдин Дийпхолм"
+          "Barandun Ironforge",
+          "Durmag Gruffholm",
+          "Garibald Hardstone",
+          "Kromdal Longbeard",
+          "Morgrim Flameforge",
+          "Narduin Stoneguard",
+          "Rockhold Thundershard",
+          "Torbrag Shieldbearer",
+          "Undar Stilforge",
+          "Voldin Dipholm"
         ]
       },
       {
         "key": "female",
-        "label": "Жена",
+        "label": "Female",
         "names": [
-          "Брагарда Сторммаул",
-          "Дурила Айръншайн",
-          "Гарелда Силвъртъмбл",
-          "Каргрина Рокбрингър",
-          "Марбелла Голдмайн",
-          "Нордрина Файрблейз",
-          "Тормина Дългорун",
-          "Улдера Дийпфордж",
-          "Виргора Глоумхелм",
-          "Зормила Хамърспир"
+          "Bragard Stormmaul",
+          "Durilah Ironshard",
+          "Garalda Silverthumb",
+          "Kargra Rockbringer",
+          "Marbella Goldmain",
+          "Nordin Fireblayze",
+          "Tormina Longrun",
+          "Uldar Dipforge",
+          "Virgo Gloomhelm",
+          "Zormilla Hammerspear"
         ]
       }
     ]
   },
   {
-    "race": "Халфлинг",
+    "race": "Halfling",
     "key": "halfling",
     "genders": [
       {
         "key": "male",
-        "label": "Мъж",
+        "label": "Male",
         "names": [
-          "Бендлбрук Уотърсприн",
-          "Кромби Лайтфут",
-          "Делвин Силвърспот",
-          "Ферриг Толклиф",
-          "Гринкъл Мъдрич",
-          "Мардън Джойхоп",
-          "Перрин Уиндхейл",
-          "Ролбин Хайхилл",
-          "Толфин Глоустар",
-          "Уилдрик Дъстстеп"
+          "Bendlebrook Waterspring",
+          "Cobmly Lightfoot",
+          "Delvin Silverspot",
+          "Ferrig Tolciff",
+          "Greenclod Mudditch",
+          "Mardun Joyhop",
+          "Perrin Windhaven",
+          "Rolbin Highhill",
+          "Tolfin Gloustar",
+          "Uldrick Dusterstep"
         ]
       },
       {
         "key": "female",
-        "label": "Жена",
+        "label": "Female",
         "names": [
-          "Амелия Хънибрук",
-          "Белина Мъглтоп",
-          "Каланта Фейсприн",
-          "Делвани Лайтспот",
-          "Флори Дриймвейл",
-          "Джемина Браунфийлд",
-          "Лириел Хилсънг",
-          "Мелида Уилдгрейс",
-          "Пруна Лофтспир",
-          "Сели Мистглейд"
+          "Amelia Hunibruck",
+          "Belina Muggletop",
+          "Calanta Facespring",
+          "Delvani Lightspot",
+          "Flori Dreamwell",
+          "Gemina Brownfield",
+          "Lireil Hillsong",
+          "Melida Wildgrass",
+          "Pruna Loftspring",
+          "Selie Mistglead"
         ]
       }
     ]
   },
   {
-    "race": "Тийфлинг",
+      "race": "Tiefling",
     "key": "tiefling",
     "genders": [
       {
         "key": "male",
-        "label": "Мъж",
+        "label": "Male",
         "names": [
-          "Азмодий Шадоусмарк",
-          "Балиус Хелблейз",
-          "Даркан Флеймфордж",
-          "Екзариус Бладвейл",
-          "Фериос Дриймбрингър",
-          "Инферн Найтшадоус",
-          "Каелтос Стийлгрийн",
-          "Ламиан Гримстоун",
-          "Равикс Темпестбрингър",
-          "Зерик Фростмар"
+          "Azmodius Shadowmark",
+          "Balius Helblease",
+          "Darcan Fleamfield",
+          "Exarius Blackwell",
+          "Fiora Dreambringer",
+          "Infern Nightshadow",
+          "Kaeltos Stygrian",
+          "Lamian Grimstone",
+          "Ravix Tempestbridge",
+          "Zeric Frostmark"
         ]
       },
       {
         "key": "female",
-        "label": "Жена",
+        "label": "Female",
         "names": [
-          "Анавия Бладмарк",
-          "Белмира Шадоуглейд",
-          "Даркса Флеймспир",
-          "Елириз Найтбрингър",
-          "Фалора Хелрейн",
-          "Инфирия Дрехост",
-          "Калиса Скарлетшард",
-          "Ламора Старфлейм",
-          "Морина Войспир",
-          "Заралия Лундарк"
+          "Anavia Blackmark",
+          "Belmira Shadowglead",
+          "Darxa Fleamspell",
+          "Eliriz Nightbringer",
+          "Falar Helraine",
+          "Inferia Drehst",
+          "Kalis Scarletshard",
+          "Lamora Starflee",
+          "Morina Wisper",
+          "Zaralia Lundark"
         ]
       }
     ]
   },
   {
-    "race": "Орк",
+    "race": "Orc",
     "key": "orc",
     "genders": [
       {
         "key": "male",
-        "label": "Мъж",
+        "label": "Male",
         "names": [
-          "Гронар Блъдмаул",
-          "Дуркхан Бонкърш",
-          "Каргул Уарфанг",
-          "Магторн Стомпрейдж",
-          "Торгаш Айрънтуск",
-          "Волгрим Шадоуклейв",
-          "Зоргак Блейдскар",
-          "Урган Бракбрингър",
-          "Бракнор Глоумфанг",
-          "Хантар Стоунбрекър"
+          "Gronar Bludmaul",
+          "Durkhan Bonkercorn",
+          "Kargul Warfang",
+          "Magtorn Stoneprey",
+          "Torga Irontusk",
+          "Volgrim Shadowcloak",
+          "Zorgak Bloodscar",
+          "Urgan Bracbringer",
+          "Bracnor Gloumfang",
+          "Hantar Stonebreaker"
         ]
       },
       {
         "key": "female",
-        "label": "Жена",
+        "label": "Female",
         "names": [
-          "Агратка Файрхолм",
-          "Брогна Скарглейв",
-          "Дулгра Блъдспайн",
-          "Гартина Бонефист",
-          "Карша Шадоутънд",
-          "Моргха Вайлдблейд",
-          "Нургра Стоунмаул",
-          "Оргатка Айрънгрийн",
-          "Талгра Стормрейдж",
-          "Вурга Дъскхолм"
+          "Agra Firehold",
+          "Bronna Scargleave",
+          "Durkhan Bludspain",
+          "Gartina Bonefist",
+          "Karsha Shadowturn",
+          "Morgha Wildblade",
+          "Nurgra Stonemaul",
+          "Orgata Airngrain",
+          "Talgra Stormreach",
+          "Wurga Duskhold"
         ]
       }
     ]
   },
   {
-    "race": "Тоблин",
+    "race": "Toblin",
     "key": "toblin",
     "genders": [
       {
         "key": "any",
         "label": null,
         "names": [
-          "Нак",
-          "Ворк",
-          "Зип",
-          "Клуг",
-          "Ригг",
-          "Тазз",
-          "Мук",
-          "Скрик",
-          "Круг",
-          "Виск",
-          "Джап",
-          "Хрог",
-          "Зуб",
-          "Крогг",
-          "Ворн",
-          "Трок"
+          "Nac",
+          "Work",
+          "Zip",
+          "Kluk",
+          "Rig",
+          "Tazz",
+          "Muck",
+          "Screek",
+          "Krug",
+          "Visk",
+          "Japp",
+          "Xrog",
+          "Zub",
+          "Krogg",
+          "Vorn",
+          "Trock"
         ]
       }
     ]
