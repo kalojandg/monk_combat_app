@@ -75,7 +75,6 @@ test.describe('Tabs - Basic Navigation', () => {
       'inventory',
       'shenanigans',
       'flavor',
-      'excuses',
       'familiars',
       'skills',
       'sessionNotes'
@@ -131,14 +130,21 @@ test.describe('Tabs - Content Smoke Check', () => {
     }
   });
 
-  test('Excuses tab shows all excuses categories', async ({ page }) => {
-    await page.locator('button[data-tab="excuses"]').click();
-    await expect(page.locator('#tab-excuses')).toBeVisible();
-    await expect(page.locator('#exLifeWisdom')).toBeVisible();
-    await expect(page.locator('#exGameCheating')).toBeVisible();
-    await expect(page.locator('#exExcuses')).toBeVisible();
-    await expect(page.locator('#exStorytime')).toBeVisible();
-    await expect(page.locator('#exSlipaway')).toBeVisible();
+  test('Flavor tab shows all excuses categories', async ({ page }) => {
+    // Excuses live in the consolidated Flavor tab now.
+    await page.locator('button[data-tab="flavor"]').click();
+    await expect(page.locator('#tab-flavor')).toBeVisible();
+    await expect(page.locator('#flavorOutput')).toBeVisible();
+    const excusesIds = [
+      'life-wisdom',
+      'game-cheating',
+      'excuses',
+      'storytime',
+      'slipaway'
+    ];
+    for (const id of excusesIds) {
+      await expect(page.locator(`#tab-flavor [data-flavor="${id}"]`)).toBeVisible();
+    }
   });
 
   test('Familiars tab shows fam groups and log', async ({ page }) => {
