@@ -2038,3 +2038,47 @@ details[open] .prep-level-summary::before { content: '▼ '; }
 .skill-tooltip.visible {
   display: block;
 }
+
+/* ===== Flavor tab ===== */
+#flavorOutput {
+  width: 100%;
+  min-height: 200px;
+  font-size: 1.15rem;
+  line-height: 1.5;
+  padding: 14px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.flavor-section-title {
+  margin-top: 18px;
+}
+
+.flavor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 10px;
+}
+
+.flavor-btn {
+  min-height: 48px;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  background: var(--pill2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.flavor-btn:hover {
+  border-color: var(--accent);
+  background: #1b2340;
+}
+
+.flavor-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
