@@ -458,11 +458,18 @@ test.describe('Critical Path - Rest Mechanics', () => {
   });
 
   test('[POSITIVE] Long rest fully restores HP, Ki, and HD', async ({ page }) => {
-    // Setup: Set to Level 5 (XP = 6500)
+    // Setup: Set to Level 5 (XP = 6500).
+    // Нивата се сетват ДИРЕКТНО (level/monkLevel/clericLevel), не само през xp: от
+    // multiclass фичата насам Long Rest при xp > level отваря level-up модал
+    // (chooseLevelUpClass) и рестът не продължава без избор. Този тест покрива REST
+    // механиката; level-up потокът си има собствен spec (levelup-modal.spec.js).
     await page.evaluate(() => {
       const raw = localStorage.getItem('monkSheet_v3');
       const st = raw ? JSON.parse(raw) : { xp: 0, hpCurrent: 10, kiCurrent: 1, hdAvail: 1 };
       st.xp = 6500; // Level 5
+      st.level = 5;
+      st.monkLevel = 5;
+      st.clericLevel = 0;
       st.hpCurrent = 20;
       st.kiCurrent = 2;
       st.hdAvail = 2;
