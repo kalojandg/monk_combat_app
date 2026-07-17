@@ -1404,7 +1404,7 @@ aliases: [
 
 JSON-ите се fetch-ват lazy и се кешират per URL (типовете от един файл си делят fetch).
 
-### 5.7. Familiar Names Tab
+### 5.6. Familiar Names Tab
 
 **Групи от `familiars.json`:**
 - Feline
@@ -1429,7 +1429,7 @@ familiars: [
 3. Записва се с категория и timestamp
 4. Показва се в таблица
 
-### 5.8. Skills Tab
+### 5.7. Skills Tab
 
 **Class Features & Abilities** според level от `skills-and-features.json`
 
@@ -1455,7 +1455,7 @@ items.filter(feature => feature.level <= current_level)
 
 **Бутон "Collapse All":** затваря всички отворени accordions.
 
-### 5.9. Session Notes Tab
+### 5.8. Session Notes Tab
 
 **File System Access API - Folder Mode:**
 
