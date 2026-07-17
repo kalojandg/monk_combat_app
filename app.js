@@ -12,7 +12,6 @@ async function loadTabs() {
     'skills': 'tabs/skills.html',
     'sessionNotes': 'tabs/sessionNotes.html',
     // 'quests': 'tabs/quests.html', // moved to shared-inventory app
-    'insults': 'tabs/insults.html',
     'npc-names': 'tabs/npc-names.html'
   };
 
@@ -203,7 +202,6 @@ function save() {
   renderAll();
   window.renderAliasTable?.();      // ← безопасно, ще се изпълни ако функцията съществува
   window.renderFamTable?.();
-  window.renderInsultsUI?.();
   window.renderNpcNamesUI?.();
 
   cloudSchedule();           // ← остава си
@@ -2362,7 +2360,6 @@ window.addEventListener('beforeunload', (e) => {
     if (typeof window.attachAliasLog === 'function') attachAliasLog();
     // attachInventory will be called when inventory tab is shown (in showTab function)
     if (typeof window.attachPCChar === 'function') attachPCChar();
-    if (typeof window.attachInsults === 'function') attachInsults();
     if (typeof window.attachNpcNames === 'function') attachNpcNames();
     if (typeof window.attachNewChar === 'function') attachNewChar();
 
