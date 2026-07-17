@@ -74,7 +74,7 @@ test.describe('Tabs - Basic Navigation', () => {
       'pcchar',
       'inventory',
       'shenanigans',
-      'liners',
+      'flavor',
       'excuses',
       'familiars',
       'skills',
@@ -110,18 +110,25 @@ test.describe('Tabs - Content Smoke Check', () => {
     await expect(page.locator('#aliasLog')).toBeVisible();
   });
 
-  test('One-Liners tab shows all one-liner categories', async ({ page }) => {
-    await page.locator('button[data-tab="liners"]').click();
-    await expect(page.locator('#tab-liners')).toBeVisible();
-    await expect(page.locator('#olCritMiss')).toBeVisible();
-    await expect(page.locator('#olMissAttack')).toBeVisible();
-    await expect(page.locator('#olCritAttack')).toBeVisible();
-    await expect(page.locator('#olSufferCrit')).toBeVisible();
-    await expect(page.locator('#olTease')).toBeVisible();
-    await expect(page.locator('#olMagic')).toBeVisible();
-    await expect(page.locator('#olQA')).toBeVisible();
-    await expect(page.locator('#olSocial')).toBeVisible();
-    await expect(page.locator('#olCoctailMagic')).toBeVisible();
+  test('Flavor tab shows all one-liner categories', async ({ page }) => {
+    // One-Liners live in the consolidated Flavor tab now.
+    await page.locator('button[data-tab="flavor"]').click();
+    await expect(page.locator('#tab-flavor')).toBeVisible();
+    await expect(page.locator('#flavorOutput')).toBeVisible();
+    const oneLinerIds = [
+      'crit-miss',
+      'miss-attack',
+      'crit-attack',
+      'suffer-crit',
+      'combat-tease',
+      'magic',
+      'qa',
+      'social',
+      'magic-cocktails'
+    ];
+    for (const id of oneLinerIds) {
+      await expect(page.locator(`#tab-flavor [data-flavor="${id}"]`)).toBeVisible();
+    }
   });
 
   test('Excuses tab shows all excuses categories', async ({ page }) => {
@@ -179,8 +186,13 @@ test.describe('Tabs - Content Persistence', () => {
     // Level should still be 1 (level up happens on Long Rest)
     await expect(page.locator('#subtab-basicinfo #levelSpan')).toHaveText('1');
     
-    // Long rest to trigger level up to 3
+    // Long rest to trigger level up to 3 (multiclass modal: pick a class per gained level)
     await page.locator('#btnLongRest').click();
+    for (let i = 0; i < 2; i++) {
+      await page.waitForSelector('#levelUpModal:not(.hidden)', { timeout: 4000 });
+      await page.locator('#cardMonk').click();
+      await page.waitForTimeout(200);
+    }
     await page.locator('button[data-tab="stats"]').click();
     await page.waitForTimeout(300);
     await page.locator('button[data-subtab="basicinfo"]').click();
