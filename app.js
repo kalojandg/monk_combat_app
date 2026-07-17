@@ -7,6 +7,7 @@ async function loadTabs() {
     'resurrection': 'tabs/resurrection.html',
     'inventory': 'tabs/inventory.html',
     'shenanigans': 'tabs/shenanigans.html',
+    'flavor': 'tabs/flavor.html',
     'liners': 'tabs/liners.html',
     'excuses': 'tabs/excuses.html',
     'familiars': 'tabs/familiars.html',
@@ -2444,6 +2445,7 @@ window.addEventListener('beforeunload', (e) => {
     renderAll();
     // Module functions are now loaded from separate files (modules/*.js)
     if (typeof window.attachShenanigans === 'function') attachShenanigans();
+    if (typeof window.attachFlavor === 'function') attachFlavor();
     if (typeof window.attachOneLiners === 'function') attachOneLiners();
     if (typeof window.attachExcuses === 'function') attachExcuses();
     if (typeof window.attachFamiliars === 'function') attachFamiliars();
