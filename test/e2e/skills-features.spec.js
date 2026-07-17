@@ -75,9 +75,11 @@ test.describe('Skills & Features Tab', () => {
     await page.waitForSelector('#featuresAccordion details.feat', { timeout: 5000 });
     const initialCount = await page.locator('#featuresAccordion details.feat').count();
 
-    // Level up to 5
+    // Level up to 5 (multiclass: monkLevel drives the monk feature list, set it too)
     await page.evaluate(() => {
       window.st.level = 5;
+      window.st.monkLevel = 5;
+      window.st.clericLevel = 0;
       window.save();
     });
     // Re-open skills tab to trigger re-render
@@ -94,6 +96,8 @@ test.describe('Skills & Features Tab', () => {
   test('Features at level 20 show maximum features', async ({ page }) => {
     await page.evaluate(() => {
       window.st.level = 20;
+      window.st.monkLevel = 20;
+      window.st.clericLevel = 0;
       window.save();
     });
     await page.locator('button[data-tab="stats"]').click();
