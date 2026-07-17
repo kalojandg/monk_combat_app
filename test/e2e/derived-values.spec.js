@@ -1,5 +1,20 @@
 import { test, expect } from '@playwright/test';
 
+// These specs predate the multiclass level-up modal: their xp+long-rest flows expect
+// silent auto-leveling. Auto-pick Monk whenever the modal appears so the flows level up
+// as pure Monk (the old behavior). expect() polling absorbs the extra ~100ms per level.
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    setInterval(() => {
+      const m = document.getElementById('levelUpModal');
+      if (m && !m.classList.contains('hidden')) {
+        const c = document.getElementById('cardMonk');
+        if (c) c.click();
+      }
+    }, 50);
+  });
+});
+
 /**
  * DERIVED VALUES TESTS
  * 
