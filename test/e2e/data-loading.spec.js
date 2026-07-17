@@ -209,59 +209,64 @@ test.describe('Data Loading - One-Liners', () => {
 });
 
 test.describe('Data Loading - Excuses', () => {
-  
+  // Excuses are now served from the consolidated Flavor tab, but the data
+  // still comes from excuses.json — these checks verify it loads through Flavor.
+  const output = (page) => page.locator('#flavorOutput');
+  const flavorBtn = (page, id) => page.locator(`#tab-flavor [data-flavor="${id}"]`);
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
-    
-    // Open Excuses tab
-    await page.locator('button[data-tab="excuses"]').click();
+
+    // Open Flavor tab (hosts the former Excuses generators)
+    await page.locator('button[data-tab="flavor"]').click();
+    await page.waitForTimeout(300);
   });
 
   test('excuses.json loads - Life Wisdom', async ({ page }) => {
-    await page.locator('#btnExLifeWisdom').click();
+    await flavorBtn(page, 'life-wisdom').click();
     await page.waitForTimeout(500);
-    
-    const result = await page.locator('#exLifeWisdom').inputValue();
+
+    const result = await output(page).inputValue();
     expect(result).toBeTruthy();
     expect(result.length).toBeGreaterThan(0);
     expect(result).not.toContain('undefined');
   });
 
   test('excuses.json loads - Game Cheating', async ({ page }) => {
-    await page.locator('#btnExGameCheating').click();
+    await flavorBtn(page, 'game-cheating').click();
     await page.waitForTimeout(500);
-    
-    const result = await page.locator('#exGameCheating').inputValue();
+
+    const result = await output(page).inputValue();
     expect(result).toBeTruthy();
     expect(result.length).toBeGreaterThan(0);
   });
 
   test('excuses.json loads - Excuses', async ({ page }) => {
-    await page.locator('#btnExExcuses').click();
+    await flavorBtn(page, 'excuses').click();
     await page.waitForTimeout(500);
-    
-    const result = await page.locator('#exExcuses').inputValue();
+
+    const result = await output(page).inputValue();
     expect(result).toBeTruthy();
     expect(result.length).toBeGreaterThan(0);
   });
 
   test('excuses.json loads - Storytime', async ({ page }) => {
-    await page.locator('#btnExStorytime').click();
+    await flavorBtn(page, 'storytime').click();
     await page.waitForTimeout(500);
-    
-    const result = await page.locator('#exStorytime').inputValue();
+
+    const result = await output(page).inputValue();
     expect(result).toBeTruthy();
     expect(result.length).toBeGreaterThan(0);
   });
 
   test('excuses.json loads - Slip Away', async ({ page }) => {
-    await page.locator('#btnExSlipaway').click();
+    await flavorBtn(page, 'slipaway').click();
     await page.waitForTimeout(500);
-    
-    const result = await page.locator('#exSlipaway').inputValue();
+
+    const result = await output(page).inputValue();
     expect(result).toBeTruthy();
     expect(result.length).toBeGreaterThan(0);
   });
@@ -397,17 +402,20 @@ test.describe('Data Loading - Variety & Randomness', () => {
   });
 
   test('Excuses generate different results', async ({ page }) => {
-    await page.locator('button[data-tab="excuses"]').click();
-    
+    // Excuses now generate from the Flavor tab.
+    await page.locator('button[data-tab="flavor"]').click();
+    await page.waitForTimeout(300);
+
     const results = new Set();
-    
-    // Generate Excuses 3 times
-    for (let i = 0; i < 3; i++) {
-      await page.locator('#btnExExcuses').click();
-      const text = await page.locator('#exExcuses').inputValue();
+
+    // Generate Excuses several times
+    for (let i = 0; i < 6; i++) {
+      await page.locator('#tab-flavor [data-flavor="excuses"]').click();
+      await page.waitForTimeout(100);
+      const text = await page.locator('#flavorOutput').inputValue();
       results.add(text);
     }
-    
+
     // Should have variety
     expect(results.size).toBeGreaterThanOrEqual(2);
   });
