@@ -8,7 +8,6 @@ async function loadTabs() {
     'inventory': 'tabs/inventory.html',
     'shenanigans': 'tabs/shenanigans.html',
     'flavor': 'tabs/flavor.html',
-    'liners': 'tabs/liners.html',
     'excuses': 'tabs/excuses.html',
     'familiars': 'tabs/familiars.html',
     'skills': 'tabs/skills.html',
@@ -1213,55 +1212,9 @@ async function loadShenanigans() {
   return __sh_names;
 }
 
-// --- One-Liners (lazy load JSON) ---
-let __ol_cache = null;
-
-// смени пътя ако файлът ти е в поддиректория
-const OL_URL = 'one-liners.json';
-
-async function loadOneLiners() {
-  if (__ol_cache) return __ol_cache;
-  const res = await fetch(OL_URL, { cache: 'no-store' });
-  if (!res.ok) throw new Error('Cannot load one-liners.json');
-  __ol_cache = await res.json();
-  return __ol_cache;
-}
-
+// --- Shared random helper (used by Shenanigans; One-Liners now live in the Flavor tab) ---
 function pickRandom(arr) {
   return arr && arr.length ? arr[Math.floor(Math.random() * arr.length)] : '';
-}
-
-function attachOneLiners() {
-  // мап: бутон → { секция от JSON, изходно поле }
-  const wiring = [
-    { btn: 'btnCritMiss', out: 'olCritMiss', key: 'crit_miss' },
-    { btn: 'btnMissAttack', out: 'olMissAttack', key: 'miss_attack' },
-    { btn: 'btnCritAttack', out: 'olCritAttack', key: 'crit_attack' },
-    { btn: 'btnSufferCrit', out: 'olSufferCrit', key: 'suffer_crit' },
-    { btn: 'btnTease', out: 'olTease', key: 'combat_tease' },
-    { btn: 'btnMagic', out: 'olMagic', key: 'magic' },
-    { btn: 'btnQA', out: 'olQA', key: 'Q&A' },
-    { btn: 'btnSocial', out: 'olSocial', key: 'social' },
-    { btn: 'btnCoctailMagic', out: 'olCoctailMagic', key: 'magic_cocktails' }
-  ];
-
-  wiring.forEach(({ btn, out, key }) => {
-    const b = document.getElementById(btn);
-    if (!b) return; // табът може да липсва в някои билдове
-    b.addEventListener('click', async () => {
-      try {
-        const data = await loadOneLiners();
-        const list = Array.isArray(data[key]) ? data[key] : [];
-        const line = (pickRandom(list) || '(empty)').trim();
-        const outEl = document.getElementById(out);
-        if (outEl) outEl.value = line;
-      } catch (e) {
-        console.error(e);
-        const outEl = document.getElementById(out);
-        if (outEl) outEl.value = '(failed to load one-liners.json)';
-      }
-    });
-  });
 }
 
 // --- Excuses (lazy load JSON) ---
@@ -2446,7 +2399,6 @@ window.addEventListener('beforeunload', (e) => {
     // Module functions are now loaded from separate files (modules/*.js)
     if (typeof window.attachShenanigans === 'function') attachShenanigans();
     if (typeof window.attachFlavor === 'function') attachFlavor();
-    if (typeof window.attachOneLiners === 'function') attachOneLiners();
     if (typeof window.attachExcuses === 'function') attachExcuses();
     if (typeof window.attachFamiliars === 'function') attachFamiliars();
     if (typeof window.attachAliasLog === 'function') attachAliasLog();

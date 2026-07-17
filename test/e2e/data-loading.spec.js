@@ -108,96 +108,100 @@ test.describe('Data Loading - Familiars', () => {
 });
 
 test.describe('Data Loading - One-Liners', () => {
-  
+  // One-Liners are now served from the consolidated Flavor tab, but the data
+  // still comes from one-liners.json — these checks verify it loads through Flavor.
+  const output = (page) => page.locator('#flavorOutput');
+  const flavorBtn = (page, id) => page.locator(`#tab-flavor [data-flavor="${id}"]`);
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
-    
-    // Open One-Liners tab
-    await page.locator('button[data-tab="liners"]').click();
+
+    // Open Flavor tab (hosts the former One-Liners generators)
+    await page.locator('button[data-tab="flavor"]').click();
+    await page.waitForTimeout(300);
   });
 
   test('one-liners.json loads - Critical Miss', async ({ page }) => {
-    // Generate Critical Miss
-    await page.locator('#btnCritMiss').click();
+    await flavorBtn(page, 'crit-miss').click();
     await page.waitForTimeout(500);
-    
-    const result = await page.locator('#olCritMiss').inputValue();
+
+    const result = await output(page).inputValue();
     expect(result).toBeTruthy();
     expect(result.length).toBeGreaterThan(0);
     expect(result).not.toContain('undefined');
   });
 
   test('one-liners.json loads - Miss Attack', async ({ page }) => {
-    await page.locator('#btnMissAttack').click();
+    await flavorBtn(page, 'miss-attack').click();
     await page.waitForTimeout(500);
-    
-    const result = await page.locator('#olMissAttack').inputValue();
+
+    const result = await output(page).inputValue();
     expect(result).toBeTruthy();
     expect(result.length).toBeGreaterThan(0);
   });
 
   test('one-liners.json loads - Critical Attack', async ({ page }) => {
-    await page.locator('#btnCritAttack').click();
+    await flavorBtn(page, 'crit-attack').click();
     await page.waitForTimeout(500);
-    
-    const result = await page.locator('#olCritAttack').inputValue();
+
+    const result = await output(page).inputValue();
     expect(result).toBeTruthy();
     expect(result.length).toBeGreaterThan(0);
   });
 
   test('one-liners.json loads - Suffer Critical', async ({ page }) => {
-    await page.locator('#btnSufferCrit').click();
+    await flavorBtn(page, 'suffer-crit').click();
     await page.waitForTimeout(500);
-    
-    const result = await page.locator('#olSufferCrit').inputValue();
+
+    const result = await output(page).inputValue();
     expect(result).toBeTruthy();
     expect(result.length).toBeGreaterThan(0);
   });
 
   test('one-liners.json loads - Combat Tease', async ({ page }) => {
-    await page.locator('#btnTease').click();
+    await flavorBtn(page, 'combat-tease').click();
     await page.waitForTimeout(500);
-    
-    const result = await page.locator('#olTease').inputValue();
+
+    const result = await output(page).inputValue();
     expect(result).toBeTruthy();
     expect(result.length).toBeGreaterThan(0);
   });
 
   test('one-liners.json loads - Magic', async ({ page }) => {
-    await page.locator('#btnMagic').click();
+    await flavorBtn(page, 'magic').click();
     await page.waitForTimeout(500);
-    
-    const result = await page.locator('#olMagic').inputValue();
+
+    const result = await output(page).inputValue();
     expect(result).toBeTruthy();
     expect(result.length).toBeGreaterThan(0);
   });
 
   test('one-liners.json loads - Q&A', async ({ page }) => {
-    await page.locator('#btnQA').click();
+    await flavorBtn(page, 'qa').click();
     await page.waitForTimeout(500);
-    
-    const result = await page.locator('#olQA').inputValue();
+
+    const result = await output(page).inputValue();
     expect(result).toBeTruthy();
     expect(result.length).toBeGreaterThan(0);
   });
 
   test('one-liners.json loads - Social', async ({ page }) => {
-    await page.locator('#btnSocial').click();
+    await flavorBtn(page, 'social').click();
     await page.waitForTimeout(500);
-    
-    const result = await page.locator('#olSocial').inputValue();
+
+    const result = await output(page).inputValue();
     expect(result).toBeTruthy();
     expect(result.length).toBeGreaterThan(0);
   });
 
   test('one-liners.json loads - Coctail Magic', async ({ page }) => {
-    await page.locator('#btnCoctailMagic').click();
+    await flavorBtn(page, 'magic-cocktails').click();
     await page.waitForTimeout(500);
-    
-    const result = await page.locator('#olCoctailMagic').inputValue();
+
+    const result = await output(page).inputValue();
     expect(result).toBeTruthy();
     expect(result.length).toBeGreaterThan(0);
   });
@@ -298,9 +302,15 @@ test.describe('Data Loading - Skills & Features', () => {
     // Level should still be 1 (level up happens on Long Rest)
     await expect(page.locator('#subtab-basicinfo #levelSpan')).toHaveText('1');
     
-    // Long rest to trigger level up
+    // Long rest to trigger level up (multiclass modal: pick Monk for each of the
+    // 4 gained levels so monkLevel reaches 5 and the Monk L5 "Extra Attack" appears)
     await page.locator('#btnLongRest').click();
-    
+    for (let i = 0; i < 4; i++) {
+      await page.waitForSelector('#levelUpModal:not(.hidden)', { timeout: 4000 });
+      await page.locator('#cardMonk').click();
+      await page.waitForTimeout(200);
+    }
+
     // Verify level is now 5
     await page.locator('button[data-tab="stats"]').click();
     await page.waitForTimeout(300);
@@ -314,8 +324,11 @@ test.describe('Data Loading - Skills & Features', () => {
     // Wait for features to render
     await page.waitForTimeout(500);
     
-    // Should display features for Level 5
-    await expect(page.locator('text=Extra Attack')).toBeVisible();
+    // Should display features for Level 5 (scope to the accordion — the hidden
+    // level-up modal also contains the "Extra Attack" feature label)
+    await expect(
+      page.locator('#featuresAccordion details.feat summary', { hasText: 'Extra Attack' })
+    ).toBeVisible();
   });
 
   test('skills-and-features.json collapse/expand works', async ({ page }) => {
@@ -365,18 +378,21 @@ test.describe('Data Loading - Variety & Randomness', () => {
   });
 
   test('One-liners generate different results', async ({ page }) => {
-    await page.locator('button[data-tab="liners"]').click();
-    
+    // One-Liners now generate from the Flavor tab.
+    await page.locator('button[data-tab="flavor"]').click();
+    await page.waitForTimeout(300);
+
     const results = new Set();
-    
-    // Generate Critical Miss 3 times
-    for (let i = 0; i < 3; i++) {
-      await page.locator('#btnCritMiss').click();
-      const text = await page.locator('#olCritMiss').inputValue();
+
+    // Generate Critical Miss several times
+    for (let i = 0; i < 6; i++) {
+      await page.locator('#tab-flavor [data-flavor="crit-miss"]').click();
+      await page.waitForTimeout(100);
+      const text = await page.locator('#flavorOutput').inputValue();
       results.add(text);
     }
-    
-    // Should have some variety (at least 2 different in 3 tries)
+
+    // Should have some variety
     expect(results.size).toBeGreaterThanOrEqual(2);
   });
 
