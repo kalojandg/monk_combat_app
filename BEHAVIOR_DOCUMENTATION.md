@@ -1380,33 +1380,29 @@ aliases: [
 4. Записва се в aliases масив
 5. Показва се в таблица с timestamp
 
-### 5.5. One-Liners Tab
+### 5.5. Flavor Tab
 
-**9 категории фрази от `one-liners.json`:**
-- Critical Miss (`miss_attack`)
-- Miss Attack (`miss_attack`)
-- Critical Attack (`crit_attack`)
-- Suffer Critical Hit (`suffer_crit`)
-- Combat Tease (`combat_tease`)
-- Magic (`magic`)
-- Q&A (`Q&A`)
-- Social (`social`)
-- Cocktail Magic (`magic_cocktails`)
+Консолидиран таб — обединява всички **17 флейвър типа** от петте JSON файла в
+един registry (`modules/flavor.js`) с една обща изходна зона.
 
-**Всяка има:**
-- readonly textarea
-- "Get" бутон → показва random фраза от масива
+**Механизъм:** едно readonly `#flavorOutput` textarea + грид от бутони (`.flavor-btn`).
+Клик върху бутон:
+1. **clear** — изчиства текущия изход,
+2. **random line** — показва случаен ред от съответния масив,
+3. **active** — маркира натиснатия бутон като `.active` (само един активен наведнъж).
 
-### 5.6. Excuses Tab
+**Източници (5 JSON файла) и 17-те типа:**
 
-**5 категории от `excuses.json`:**
-- Life Wisdom (`life_wisdom`)
-- Game Cheating (`game_cheating`)
-- Excuses (`excuses`)
-- Storytime (`storytime`)
-- Slip Away (`slipaway`)
+- **One-Liners** (`one-liners.json`): Critical Miss (`crit_miss`), Miss Attack
+  (`miss_attack`), Critical Attack (`crit_attack`), Suffer Critical (`suffer_crit`),
+  Combat Tease (`combat_tease`), Magic (`magic`), Q&A (`Q&A`), Social (`social`),
+  Cocktail Magic (`magic_cocktails`)
+- **Excuses** (`excuses.json`): Life Wisdom (`life_wisdom`), Game Cheating
+  (`game_cheating`), Excuses (`excuses`), Storytime (`storytime`), Slip Away (`slipaway`)
+- **Insults & Jokes** (плоски масиви): Insult (`insults.json`), Dark Joke
+  (`dark-jokes.json`), Tasha's Joke (`tasha-jokes.json`)
 
-**Същия механизъм като One-Liners.**
+JSON-ите се fetch-ват lazy и се кешират per URL (типовете от един файл си делят fetch).
 
 ### 5.7. Familiar Names Tab
 
@@ -2055,6 +2051,7 @@ btnInstall.click(() => {
   "magic_cocktails": [...]
 }
 ```
+**Използва се за:** One-Liners бутоните във Flavor tab
 
 ### 15.3. excuses.json
 ```json
@@ -2066,6 +2063,13 @@ btnInstall.click(() => {
   "slipaway": [...]
 }
 ```
+**Използва се за:** Excuses бутоните във Flavor tab
+
+### 15.3.1. insults.json / dark-jokes.json / tasha-jokes.json
+```json
+["Line 1", "Line 2", ...]
+```
+Плоски масиви — по един файл на тип. **Използва се за:** Insults & Jokes бутоните във Flavor tab.
 
 ### 15.4. familiars.json
 ```json
@@ -2177,8 +2181,7 @@ debounce(fn, ms):
 
 ### 19.2. Lazy Loading
 - Skills/Features JSON (14KB) зарежда се само при отваряне на tab
-- One-liners JSON (8KB) - lazy
-- Excuses JSON (10KB) - lazy
+- Flavor JSON-и (one-liners, excuses, insults, dark-jokes, tasha-jokes) - lazy, кеш per URL
 - Familiars JSON (4KB) - lazy
 
 ### 19.3. Render Optimization
@@ -2303,8 +2306,7 @@ const maxHP = baseHP(level, con_mod) + ...  // recalculating
 - [ ] PC Characteristics - add/edit/delete
 - [ ] Inventory - add/edit/delete
 - [ ] Shenanigans - get name, save alias
-- [ ] One-Liners - всички категории
-- [ ] Excuses - всички категории
+- [ ] Flavor - всички 17 типа (One-Liners / Excuses / Insults & Jokes)
 - [ ] Familiar Names - всички групи
 - [ ] Skills - lazy load, collapse all
 - [ ] Session Notes - folder link, auto-save

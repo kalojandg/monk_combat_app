@@ -52,6 +52,17 @@ test.describe('Tabs - Basic Navigation', () => {
     await expect(page.locator('#invModal')).toBeVisible({ visible: false });
   });
 
+  test('Can click Flavor tab', async ({ page }) => {
+    // Click Flavor tab
+    await page.locator('button[data-tab="flavor"]').click();
+
+    // Verify Flavor content is visible (consolidated One-Liners / Excuses / Insults)
+    const tabContent = page.locator('#tab-flavor');
+    await expect(tabContent).toBeVisible();
+    await expect(page.locator('#flavorOutput')).toBeVisible();
+    await expect(page.locator('#tab-flavor .flavor-btn').first()).toBeVisible();
+  });
+
   test('Can switch between tabs', async ({ page }) => {
     // Start at Stats
     await page.locator('button[data-tab="stats"]').click();
@@ -69,17 +80,20 @@ test.describe('Tabs - Basic Navigation', () => {
   });
 
   test('All tabs are clickable', async ({ page }) => {
+    // 1:1 with the real tab-nav in index.html (Quests is commented out).
     const tabs = [
       'stats',
       'pcchar',
+      'resurrection',
       'inventory',
       'shenanigans',
       'flavor',
       'familiars',
       'skills',
-      'sessionNotes'
+      'sessionNotes',
+      'npc-names'
     ];
-    
+
     for (const tabName of tabs) {
       await page.locator(`button[data-tab="${tabName}"]`).click();
       // Just verify no crash, no need to check content
