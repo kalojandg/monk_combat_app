@@ -137,12 +137,6 @@ const defaultState = {
   kiSaveDcMagic: 0
 };
 
-// --- bundle helpers ---
-function stripTransientState(s) {
-  const { aliases, familiars, ...rest } = s; // ако все още съществуват – игнорирай
-  return rest;
-}
-
 // ===== Load/save =====
 let st = load();
 // Export st to global scope for modules

@@ -361,7 +361,7 @@ test.describe('Import / Export - Bundle v2', () => {
     await page.locator('#genAliasConfirm').click();
     await page.waitForTimeout(200);
 
-    // Familiars – един запис (същия Name Gen таб, тип Familiar → localStorage)
+    // Familiars – един запис (същия Name Gen таб, тип Familiar → st.familiars)
     await page.locator('#genTypeButtons [data-gentype="familiar"]').click();
     await page.waitForTimeout(200);
     await page.locator('#genFamGroups [data-famcat="avian"]').click();
@@ -437,6 +437,58 @@ test.describe('Import / Export - Bundle v2', () => {
     expect(unarmedValue).toBe('1');
     expect(weaponValue).toBe('3');
     expect(rangedValue).toBe('2');
+  });
+
+  test('familiar записите round-trip-ват през bundle като alias/npc', async ({ page }) => {
+    // 1) Запиши familiar през Names таба (тип Familiar → st.familiars)
+    await page.locator('button[data-tab="namegen"]').click();
+    await page.waitForTimeout(300);
+    await page.locator('#genTypeButtons [data-gentype="familiar"]').click();
+    await page.waitForTimeout(200);
+    await page.locator('#genFamGroups [data-famcat="feline"]').click();
+    await page.waitForTimeout(300);
+    const famName = await page.locator('#genOutput').inputValue();
+    expect(famName.length).toBeGreaterThan(0);
+    await page.locator('#genSave').click();
+    await page.waitForTimeout(100);
+    await page.locator('#genFamNoteInput').fill('Спътник за bundle теста.');
+    await page.locator('#genFamConfirm').click();
+    await page.waitForTimeout(200);
+
+    // 2) bundle.state.familiars съдържа записа (вече е в st, не в отделен ключ)
+    const bundle = await page.evaluate(() => window.buildBundle());
+    expect(bundle).toBeTruthy();
+    expect(Array.isArray(bundle.state.familiars)).toBe(true);
+    const bundled = bundle.state.familiars.find(r => r && r.name === famName);
+    expect(bundled).toBeTruthy();
+    expect(bundled.cat).toBe('feline');
+    expect(bundled.note).toBe('Спътник за bundle теста.');
+
+    // 3) "Изтриване": чист localStorage + reload → записът го няма
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
+    let famsNow = await page.evaluate(() => window.st.familiars || []);
+    expect(famsNow.find(r => r && r.name === famName)).toBeFalsy();
+
+    // 4) "Import": applyBundle връща записа в st.familiars
+    await page.evaluate(b => window.applyBundle(b), bundle);
+    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
+    await page.waitForTimeout(300);
+
+    famsNow = await page.evaluate(() => window.st.familiars || []);
+    const restored = famsNow.find(r => r && r.name === famName);
+    expect(restored).toBeTruthy();
+    expect(restored.cat).toBe('feline');
+    expect(restored.note).toBe('Спътник за bundle теста.');
+
+    // 5) И се вижда като ред в Names таба (тип Familiar)
+    await page.locator('button[data-tab="namegen"]').click();
+    await page.waitForTimeout(300);
+    await page.locator('#genTypeButtons [data-gentype="familiar"]').click();
+    await page.waitForTimeout(200);
+    await expect(page.locator('#genLog')).toContainText(famName);
+    await expect(page.locator('#genLog')).toContainText('Спътник за bundle теста.');
   });
 
 });
