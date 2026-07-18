@@ -113,9 +113,16 @@ test.describe('Attack Bonuses - Calculations', () => {
     // Level should still be 1 (level up happens on Long Rest)
     await expect(page.locator('#subtab-basicinfo #levelSpan')).toHaveText('1');
     
-    // Long rest to trigger level up
+    // Long rest to trigger level up. Multiclass level-up shows a class-choice
+    // modal once per level gained (1 → 5 = 4 choices); pick Monk each time.
+    // Class choice does not affect character-level proficiency/attack bonuses.
     await page.locator('#btnLongRest').click();
-    
+    for (let i = 0; i < 4; i++) {
+      await expect(page.locator('#levelUpModal')).toBeVisible({ timeout: 5000 });
+      await page.locator('#levelUpModal #cardMonk').click();
+    }
+    await expect(page.locator('#levelUpModal')).toBeHidden({ timeout: 5000 });
+
     // Verify level and prof after long rest
     await page.locator('button[data-tab="stats"]').click();
     await page.waitForTimeout(300);
