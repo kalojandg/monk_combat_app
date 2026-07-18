@@ -115,6 +115,55 @@ test.describe('Data Loading - Familiars', () => {
 
 });
 
+test.describe('Data Loading - NPC Names (npc-names.json via Name Gen)', () => {
+  // NPC name generation lives in the consolidated Name Gen tab now, but the data
+  // still comes from npc-names.json — these checks verify it loads through Name Gen.
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
+
+    // Open Name Gen tab and switch to the NPC type (shows the race/gender options)
+    await page.locator('button[data-tab="namegen"]').click();
+    await page.waitForTimeout(300);
+    await page.locator('#genTypeButtons [data-gentype="npc"]').click();
+    await page.waitForTimeout(200);
+  });
+
+  test('npc-names.json loads successfully', async ({ page }) => {
+    // Generate an NPC name - should not error
+    await page.locator('#genGenerate').click();
+
+    // Wait for async load
+    await page.waitForTimeout(500);
+
+    // Should display a name (from npc-names.json)
+    const result = await page.locator('#genOutput').inputValue();
+    expect(result).toBeTruthy();
+    expect(result.length).toBeGreaterThan(0);
+    expect(result).not.toContain('undefined');
+    expect(result).not.toContain('null');
+  });
+
+  test('Can generate multiple different NPC names', async ({ page }) => {
+    const names = new Set();
+
+    // Generate 5 times
+    for (let i = 0; i < 5; i++) {
+      await page.locator('#genGenerate').click();
+      await page.waitForTimeout(300);
+      const name = await page.locator('#genOutput').inputValue();
+      names.add(name);
+    }
+
+    // Should have variety (at least 2 different names in 5 tries)
+    expect(names.size).toBeGreaterThanOrEqual(2);
+  });
+
+});
+
 test.describe('Data Loading - One-Liners', () => {
   // One-Liners are now served from the consolidated Flavor tab, but the data
   // still comes from one-liners.json — these checks verify it loads through Flavor.
