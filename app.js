@@ -11,7 +11,6 @@ async function loadTabs() {
     'skills': 'tabs/skills.html',
     'sessionNotes': 'tabs/sessionNotes.html',
     // 'quests': 'tabs/quests.html', // moved to shared-inventory app
-    'npc-names': 'tabs/npc-names.html'
   };
 
   const loadPromises = Object.entries(tabMap).map(async ([tabId, url]) => {
@@ -199,7 +198,6 @@ function save() {
   _featuresDirty = true;  // ensure accordion re-renders on next tab visit
   localStorage.setItem("monkSheet_v3", JSON.stringify(st));
   renderAll();
-  window.renderNpcNamesUI?.();
 
   cloudSchedule();           // ← остава си
 }
@@ -2038,7 +2036,6 @@ window.addEventListener('beforeunload', (e) => {
     if (typeof window.attachNamegen === 'function') attachNamegen();
     // attachInventory will be called when inventory tab is shown (in showTab function)
     if (typeof window.attachPCChar === 'function') attachPCChar();
-    if (typeof window.attachNpcNames === 'function') attachNpcNames();
     if (typeof window.attachNewChar === 'function') attachNewChar();
 
     // Attach collapse button if skills tab is visible

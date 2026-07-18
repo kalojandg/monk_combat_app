@@ -89,8 +89,7 @@ test.describe('Tabs - Basic Navigation', () => {
       'flavor',
       'namegen',
       'skills',
-      'sessionNotes',
-      'npc-names'
+      'sessionNotes'
     ];
 
     for (const tabName of tabs) {
