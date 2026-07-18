@@ -1361,24 +1361,39 @@ inventory: [
 - Edit Item (modal)
 - Delete Item (confirm)
 
-### 5.4. Shenanigans Tab
+### 5.4. Names Tab (Name Gen)
 
-**Функция:** Генериране на фалшиви имена от `shenanigans.json`
+Консолидиран таб — обединява **три генератора на имена** (Alias / Familiar / NPC)
+в един registry (`modules/namegen.js`) с една обща изходна зона (`#genOutput`).
+Бутонът в навигацията е с етикет **"Names"** (`data-tab="namegen"`).
 
-**Aliases Log:**
-```javascript
-aliases: [
-  { name: "Zsik'rass", to: "На стражата при портата", ts: 1234567890 },
-  ...
-]
-```
+**Механизъм:** три type бутона (`#genTypeButtons [data-gentype="alias|familiar|npc"]`)
+превключват активния генератор. Смяна на тип:
+1. **clear** — изчиства `#genOutput`,
+2. **disable Save** — `#genSave` става disabled до ново генериране,
+3. **swap sub-UI + log** — показва под-UI-то и таблицата (`#genLog`) на активния тип.
+
+**Save РУТИРА към СЪЩИТЕ хранилища като старите три таба (без миграция, схемите непроменени):**
+
+| Тип | Под-UI | Хранилище | Формат на запис |
+|-----|--------|-----------|-----------------|
+| **Alias** | Generate бутон, данни от `shenanigans.json` | `st.aliases` (+ `window.save()`) | `{ name, to, ts }` |
+| **Familiar** | 7 групови бутона (`#genFamGroups .fam-btn`), данни от `familiars.json` | `localStorage['familiars_v1']` (FAM_LS_KEY, извън bundle-а) | `{ name, cat, note, ts }` |
+| **NPC** | раса/пол radios (`#genNpcOptions`), данни от `npc-names.json` | `st.npcNames` (+ `window.save()`) | `{ name, note, ts }` |
+
+**Модали за контекст при Save (по един на тип):**
+- Alias — `#genAliasModal` „На кого си се представил така?“
+- Familiar — `#genFamModal` „На кого/какво е това име?“
+- NPC — `#genNpcModal` „Who is this?“
 
 **Workflow:**
-1. Click "Get Name" → взема random име от JSON
-2. Click "Save" → отваря modal
-3. Въвеждаш на кого си се представил така
-4. Записва се в aliases масив
-5. Показва се в таблица с timestamp
+1. Избери тип (Alias по подразбиране).
+2. За Alias/NPC → click "Generate"; за Familiar → click групов бутон. `#genOutput` се пълни, Save се enable-ва.
+3. Click "Save" → отваря съответния модал за бележка.
+4. Потвърждение → нов ред най-отгоре в `#genLog` (с timestamp) + запис в правилното хранилище.
+5. Изтриване на ред (`.gen-del`) маха записа от активното хранилище.
+
+> NPC race `toblin` няма пол → gender групата (`#genNpcGenderGroup`) се скрива.
 
 ### 5.5. Flavor Tab
 
@@ -1404,32 +1419,7 @@ aliases: [
 
 JSON-ите се fetch-ват lazy и се кешират per URL (типовете от един файл си делят fetch).
 
-### 5.6. Familiar Names Tab
-
-**Групи от `familiars.json`:**
-- Feline
-- Canine
-- Avian
-- Rodentia
-- Creepycrawlies
-- Aquatic
-- Arcane
-
-**Формат:**
-```javascript
-familiars: [
-  { name: "Furmidable", cat: "feline", note: "Котката на кръчмаря", ts: 123456 },
-  ...
-]
-```
-
-**Workflow:**
-1. Click група (напр. "Feline") → random име
-2. Click "Save" → modal за бележка
-3. Записва се с категория и timestamp
-4. Показва се в таблица
-
-### 5.7. Skills Tab
+### 5.6. Skills Tab
 
 **Class Features & Abilities** според level от `skills-and-features.json`
 
@@ -1455,7 +1445,7 @@ items.filter(feature => feature.level <= current_level)
 
 **Бутон "Collapse All":** затваря всички отворени accordions.
 
-### 5.8. Session Notes Tab
+### 5.7. Session Notes Tab
 
 **File System Access API - Folder Mode:**
 
@@ -2036,7 +2026,7 @@ btnInstall.click(() => {
 ```json
 ["Name1", "Name2", ...]
 ```
-**Използва се за:** Get Name бутон в Shenanigans tab
+**Използва се за:** Alias генератора в Names (Name Gen) tab
 
 ### 15.2. one-liners.json
 ```json
@@ -2083,6 +2073,16 @@ btnInstall.click(() => {
   "arcane": [...]
 }
 ```
+**Използва се за:** Familiar генератора (груповите бутони) в Names (Name Gen) tab
+
+### 15.4.1. npc-names.json
+```json
+[
+  { "key": "human", "label": "Human", "genders": [ { "key": "male", "names": [...] }, ... ] },
+  ...
+]
+```
+**Използва се за:** NPC генератора (раса/пол) в Names (Name Gen) tab
 
 ### 15.5. skills-and-features.json
 ```json
@@ -2305,9 +2305,8 @@ const maxHP = baseHP(level, con_mod) + ...  // recalculating
 - [ ] Stats - всички полета
 - [ ] PC Characteristics - add/edit/delete
 - [ ] Inventory - add/edit/delete
-- [ ] Shenanigans - get name, save alias
 - [ ] Flavor - всички 17 типа (One-Liners / Excuses / Insults & Jokes)
-- [ ] Familiar Names - всички групи
+- [ ] Names (Name Gen) - Alias / Familiar / NPC генератори, save routing, per-type лог
 - [ ] Skills - lazy load, collapse all
 - [ ] Session Notes - folder link, auto-save
 
