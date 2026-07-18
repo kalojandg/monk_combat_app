@@ -1,4 +1,16 @@
 import { test, expect } from '@playwright/test';
+import fs from 'fs';
+import path from 'path';
+
+// Name pools are read from the REAL npc-names.json instead of hardcoded copies -
+// the hardcoded lists went stale when the data file was anglicized (commit 9b4eae3).
+const npcData = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'npc-names.json'), 'utf8'));
+function namePool(raceKey, genderKey) {
+  const race = npcData.find(r => r.key === raceKey);
+  if (!race || !Array.isArray(race.genders)) return [];
+  const gs = genderKey ? race.genders.filter(g => g.key === genderKey) : race.genders;
+  return gs.flatMap(g => g.names || []);
+}
 
 /**
  * NPC NAMES TAB TESTS
@@ -116,11 +128,7 @@ test.describe('NPC Names - Generate', () => {
     await page.locator('input[name="npcRace"][value="human"]').check();
     await page.locator('input[name="npcGender"][value="male"]').check();
 
-    const humanMaleNames = [
-      'Артурий Фалкрест', 'Барандис Лофтхар', 'Даремир Стоунбридж',
-      'Еледор Уайтхейл', 'Галмир Блекстоун', 'Келвин Рейвмор',
-      'Маркориан Тандерлейн', 'Орикс Силвършард', 'Таргом Драгонфорд', 'Ферикс Дускбрингър'
-    ];
+    const humanMaleNames = namePool('human', 'male');
 
     // Generate several times and verify each result is from the correct pool
     const seen = new Set();
@@ -136,7 +144,7 @@ test.describe('NPC Names - Generate', () => {
   test('Generates toblin names (no gender needed)', async ({ page }) => {
     await page.locator('input[name="npcRace"][value="toblin"]').check();
 
-    const toblinNames = ['Нак','Ворк','Зип','Клуг','Ригг','Тазз','Мук','Скрик','Круг','Виск','Джап','Хрог','Зуб','Крогг','Ворн','Трок'];
+    const toblinNames = namePool('toblin');
 
     await page.locator('#btnGenerateName').click();
     await page.waitForTimeout(200);
@@ -151,11 +159,7 @@ test.describe('NPC Names - Generate', () => {
     await page.waitForTimeout(300);
     const name = await page.locator('#npcNameOutput').inputValue();
 
-    const dwarfFemaleNames = [
-      'Брагарда Сторммаул', 'Дурила Айръншайн', 'Гарелда Силвъртъмбл',
-      'Каргрина Рокбрингър', 'Марбелла Голдмайн', 'Нордрина Файрблейз',
-      'Тормина Дългорун', 'Улдера Дийпфордж', 'Виргора Глоумхелм', 'Зормила Хамърспир'
-    ];
+    const dwarfFemaleNames = namePool('dwarf', 'female');
     expect(dwarfFemaleNames).toContain(name);
   });
 

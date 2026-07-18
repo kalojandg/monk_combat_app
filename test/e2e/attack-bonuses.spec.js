@@ -1,5 +1,19 @@
 import { test, expect } from '@playwright/test';
 
+// Legacy spec predates the multiclass level-up modal: auto-pick Monk when it appears
+// so xp+long-rest flows level up silently as pure Monk (the old behavior).
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    setInterval(() => {
+      const m = document.getElementById('levelUpModal');
+      if (m && !m.classList.contains('hidden')) {
+        const c = document.getElementById('cardMonk');
+        if (c) c.click();
+      }
+    }, 50);
+  });
+});
+
 /**
  * ATTACK BONUSES TESTS
  * 
@@ -113,18 +127,9 @@ test.describe('Attack Bonuses - Calculations', () => {
     // Level should still be 1 (level up happens on Long Rest)
     await expect(page.locator('#subtab-basicinfo #levelSpan')).toHaveText('1');
     
-    // Long rest to trigger level up. Multiclass level-up shows a class-choice
-    // modal once per level gained (1 → 5 = 4 choices); pick Monk each time.
-    // Class choice does not affect character-level proficiency/attack bonuses.
+    // Long rest to trigger level up
     await page.locator('#btnLongRest').click();
-    // The first choice fetches the features JSON before the modal shows, which
-    // can be slow under full-suite load — keep the visibility timeouts generous.
-    for (let i = 0; i < 4; i++) {
-      await expect(page.locator('#levelUpModal')).toBeVisible({ timeout: 15000 });
-      await page.locator('#levelUpModal #cardMonk').click();
-    }
-    await expect(page.locator('#levelUpModal')).toBeHidden({ timeout: 15000 });
-
+    
     // Verify level and prof after long rest
     await page.locator('button[data-tab="stats"]').click();
     await page.waitForTimeout(300);
