@@ -1791,3 +1791,18 @@ details[open] .prep-level-summary::before { content: '▼ '; }
   border-color: var(--accent);
   color: #fff;
 }
+
+/* ===== Name Gen tab ===== */
+#genOutput {
+  width: 100%;
+  font-size: 1.15rem;
+  line-height: 1.5;
+  padding: 14px;
+  margin: 14px 0 10px;
+  box-sizing: border-box;
+}
+
+#genNpcOptions,
+#genFamGroups {
+  margin-top: 14px;
+}
