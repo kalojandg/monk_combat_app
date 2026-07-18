@@ -22,7 +22,7 @@
 12. [Export/Import](#12-exportimport)
 13. [Inventory](#13-inventory)
 14. [PC Characteristics](#14-pc-characteristics)
-15. [Aliases & Familiars](#15-aliases--familiars)
+15. [Names Tab (Name Gen)](#15-names-tab-name-gen)
 16. [Flavor Tab](#16-flavor-tab)
 17. [Edge Cases](#17-edge-cases)
 18. [Integration Tests](#18-integration-tests)
@@ -1868,106 +1868,115 @@
 
 ---
 
-## 15. ALIASES & FAMILIARS
+## 15. NAMES TAB (NAME GEN)
 
-### Test Case 15.1: Generate Shenanigan Name
+The Names tab (`data-tab="namegen"`, label **"Names"**) consolidates the former
+Shenanigans, Familiar Names and NPC Names tabs into a single tab: three name
+generators (Alias / Familiar / NPC) served through one registry
+(`modules/namegen.js`) and one shared output field (`#genOutput`). Save **routes to
+the same stores as the old tabs, unchanged schema**: alias → `st.aliases`, familiar
+→ `localStorage['familiars_v1']`, npc → `st.npcNames`.
+
+### Test Case 15.1: Open Names Tab
 **Type:** Positive  
-**Description:** Verify random name generation  
-**Preconditions:** shenanigans.json loaded  
+**Description:** Verify the Names tab opens with 3 type buttons, empty output, Save disabled  
 **Steps:**
-1. Open Shenanigans tab
-2. Click "Get Name"
+1. Click the "Names" tab button (`button[data-tab="namegen"]`)
 
 **Expected:**
-- Random name appears in field
-- Name is from shenanigans.json
-- "Save" button enabled
+- `#genTypeButtons` shows Alias / Familiar / NPC buttons
+- `#genOutput` is empty and readonly
+- `#genSave` is disabled
 
 **Actual:** ___  
 **Status:** ⬜ Pass | ⬜ Fail
 
 ---
 
-### Test Case 15.2: Save Alias
+### Test Case 15.2: Generate & Save Alias
 **Type:** Positive  
-**Description:** Verify saving alias with context  
-**Preconditions:** Name generated  
+**Description:** Verify alias generation routes to `st.aliases`  
+**Preconditions:** shenanigans.json loaded, Alias is the default type  
 **Steps:**
-1. Click "Save"
-2. Enter "На стражата при северната порта"
-3. Click "Запази"
+1. Click "Generate" (`#genGenerate`)
+2. Click "Save" (`#genSave`) → `#genAliasModal` opens
+3. Enter "На стражата при северната порта", confirm (`#genAliasConfirm`)
 
 **Expected:**
-- Alias saved with name, to, and timestamp
-- Appears in table
-- "Save" button disabled
+- Random name from shenanigans.json appears in `#genOutput`, Save enabled
+- Row added to `#genLog`; record saved to `window.st.aliases` as `{ name, to, ts }`
+- Save button disabled again after save
 
 **Actual:** ___  
 **Status:** ⬜ Pass | ⬜ Fail
 
 ---
 
-### Test Case 15.3: Delete Alias
+### Test Case 15.3: Generate & Save Familiar
 **Type:** Positive  
-**Description:** Verify deleting alias  
-**Steps:**
-1. Click 🗑️ on alias
-
-**Expected:**
-- Alias removed from table
-- State saved
-
-**Actual:** ___  
-**Status:** ⬜ Pass | ⬜ Fail
-
----
-
-### Test Case 15.4: Generate Familiar Name (Category)
-**Type:** Positive  
-**Description:** Verify familiar name generation by category  
+**Description:** Verify familiar generation routes to the `familiars_v1` localStorage key  
 **Preconditions:** familiars.json loaded  
 **Steps:**
-1. Open Familiar Names tab
-2. Click "Feline" button
+1. Switch type to Familiar (`#genTypeButtons [data-gentype="familiar"]`) → group buttons show, Generate hides
+2. Click a category (e.g. `#genFamGroups [data-famcat="feline"]`)
+3. Save + confirm (`#genFamModal`, note "Котката на кръчмаря")
 
 **Expected:**
-- Random name from feline array
-- Name appears in field
-- "Save" button enabled
+- Random name from the chosen category fills `#genOutput`
+- Record saved to `localStorage['familiars_v1']` as `{ name, cat, note, ts }`
+- All 7 categories (feline, canine, avian, rodentia, creepycrawlies, aquatic, arcane) produce valid names
 
 **Actual:** ___  
 **Status:** ⬜ Pass | ⬜ Fail
 
 ---
 
-### Test Case 15.5: Save Familiar with Note
+### Test Case 15.4: Generate & Save NPC Name
 **Type:** Positive  
-**Description:** Verify saving familiar  
+**Description:** Verify NPC generation routes to `st.npcNames`  
+**Preconditions:** npc-names.json loaded  
 **Steps:**
-1. Generate name (e.g., "Furmidable")
-2. Click "Save"
-3. Enter note: "Котката на кръчмаря"
-4. Save
+1. Switch type to NPC (`#genTypeButtons [data-gentype="npc"]`) → race/gender radios show (`#genNpcOptions`)
+2. Pick race/gender, click "Generate"
+3. Save + confirm (`#genNpcModal`, note "Town guard")
 
 **Expected:**
-- Familiar saved with name, category, note, timestamp
-- Appears in table
+- Random name for the selected race/gender fills `#genOutput`
+- Record saved to `window.st.npcNames` as `{ name, note, ts }`
+- Selecting race `toblin` hides the gender group (`#genNpcGenderGroup`)
 
 **Actual:** ___  
 **Status:** ⬜ Pass | ⬜ Fail
 
 ---
 
-### Test Case 15.6: All Familiar Categories
+### Test Case 15.5: Switch Type Clears State
 **Type:** Positive  
-**Description:** Verify all 7 categories work  
+**Description:** Verify switching type resets output, Save and the visible log table  
 **Steps:**
-1. Click each category button:
-   - Feline, Canine, Avian, Rodentia, Creepycrawlies, Aquatic, Arcane
-2. Check name output
+1. Generate + save an alias
+2. Switch to Familiar
 
 **Expected:**
-- Each category produces valid name from its array
+- `#genOutput` cleared, `#genSave` disabled
+- `#genLog` swaps to the familiar log (alias row no longer shown)
+- Active type button carries the `.active` class
+
+**Actual:** ___  
+**Status:** ⬜ Pass | ⬜ Fail
+
+---
+
+### Test Case 15.6: Delete Log Row
+**Type:** Positive  
+**Description:** Verify deleting a row removes it from the active store  
+**Steps:**
+1. Save a record for the active type
+2. Click 🗑️ (`.gen-del`) on its row
+
+**Expected:**
+- Row removed from `#genLog`
+- Record removed from the active store (e.g. `window.st.aliases` length decreases)
 
 **Actual:** ___  
 **Status:** ⬜ Pass | ⬜ Fail
@@ -2414,7 +2423,7 @@ single tab: 17 flavor types served from five JSON files through one registry
 - Export/Import: 10
 - Inventory: 6
 - PC Characteristics: 5
-- Aliases & Familiars: 6
+- Names Tab (Name Gen): 6
 - Edge Cases: 10
 - Integration Tests: 10
 

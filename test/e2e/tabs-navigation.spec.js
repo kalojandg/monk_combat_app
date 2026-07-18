@@ -81,15 +81,16 @@ test.describe('Tabs - Basic Navigation', () => {
 
   test('All tabs are clickable', async ({ page }) => {
     // 1:1 with the real tab-nav in index.html (Quests is commented out).
+    // Final order after the Name Gen consolidation: Names is the last tab.
     const tabs = [
       'stats',
       'pcchar',
       'resurrection',
       'inventory',
       'flavor',
-      'namegen',
       'skills',
-      'sessionNotes'
+      'sessionNotes',
+      'namegen'
     ];
 
     for (const tabName of tabs) {
@@ -97,6 +98,20 @@ test.describe('Tabs - Basic Navigation', () => {
       // Just verify no crash, no need to check content
       await page.waitForTimeout(100);
     }
+  });
+
+  test('Names tab button carries the renamed label', async ({ page }) => {
+    // The consolidated names tab keeps data-tab="namegen" but its label is now "Names".
+    await expect(page.locator('button[data-tab="namegen"]')).toHaveText('Names');
+  });
+
+  test('Can click Names tab', async ({ page }) => {
+    // Consolidated Alias / Familiar / NPC generators live in the Names tab.
+    await page.locator('button[data-tab="namegen"]').click();
+    const tabContent = page.locator('#tab-namegen');
+    await expect(tabContent).toBeVisible();
+    await expect(page.locator('#genOutput')).toBeVisible();
+    await expect(page.locator('#genTypeButtons [data-gentype="alias"]')).toBeVisible();
   });
 
 });

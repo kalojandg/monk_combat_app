@@ -349,22 +349,27 @@ test.describe('Import / Export - Bundle v2', () => {
     await page.locator('#invSave').click();
     await page.waitForTimeout(200); // Wait for save to complete
 
-    // Aliases – един запис
-    await page.locator('button[data-tab="shenanigans"]').click();
-    await page.locator('#btnGetName').click();
+    // Aliases – един запис (през консолидирания Name Gen таб → st.aliases)
+    await page.locator('button[data-tab="namegen"]').click();
+    await page.waitForTimeout(300);
+    await page.locator('#genGenerate').click();
     await page.waitForTimeout(500);
-    const aliasName = await page.locator('#fakeNameOutput').inputValue();
-    await page.locator('#btnSaveAlias').click();
-    await page.locator('#aliasToInput').fill('Псевдоним за тайни мисии.');
-    await page.locator('#aliasConfirm').click();
+    const aliasName = await page.locator('#genOutput').inputValue();
+    await page.locator('#genSave').click();
+    await page.waitForTimeout(100);
+    await page.locator('#genAliasToInput').fill('Псевдоним за тайни мисии.');
+    await page.locator('#genAliasConfirm').click();
+    await page.waitForTimeout(200);
 
-    // Familiars – един запис
-    await page.locator('button[data-tab="familiars"]').click();
-    await page.locator('.fam-btn[data-famcat="avian"]').click();
+    // Familiars – един запис (същия Name Gen таб, тип Familiar → localStorage)
+    await page.locator('#genTypeButtons [data-gentype="familiar"]').click();
+    await page.waitForTimeout(200);
+    await page.locator('#genFamGroups [data-famcat="avian"]').click();
     await page.waitForTimeout(500);
-    await page.locator('#btnFamSave').click();
-    await page.locator('#famNoteInput').fill('Ястреб наблюдател.');
-    await page.locator('#famConfirm').click();
+    await page.locator('#genSave').click();
+    await page.waitForTimeout(100);
+    await page.locator('#genFamNoteInput').fill('Ястреб наблюдател.');
+    await page.locator('#genFamConfirm').click();
 
     // Изчакваме всичко да се запише/rendere-не
     await page.waitForTimeout(500);
