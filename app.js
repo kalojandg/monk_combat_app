@@ -6,7 +6,6 @@ async function loadTabs() {
     'pcchar': 'tabs/pcchar.html',
     'resurrection': 'tabs/resurrection.html',
     'inventory': 'tabs/inventory.html',
-    'shenanigans': 'tabs/shenanigans.html',
     'flavor': 'tabs/flavor.html',
     'namegen': 'tabs/namegen.html',
     'familiars': 'tabs/familiars.html',
@@ -201,7 +200,6 @@ function save() {
   _featuresDirty = true;  // ensure accordion re-renders on next tab visit
   localStorage.setItem("monkSheet_v3", JSON.stringify(st));
   renderAll();
-  window.renderAliasTable?.();      // ← безопасно, ще се изпълни ако функцията съществува
   window.renderFamTable?.();
   window.renderNpcNamesUI?.();
 
@@ -814,7 +812,6 @@ function applyBundle(data) {
   if (typeof window.renderLangTable === 'function') window.renderLangTable();
   if (typeof window.renderToolTable === 'function') window.renderToolTable();
   if (typeof window.renderInventoryTable === 'function') window.renderInventoryTable();
-  if (typeof window.renderAliasTable === 'function') window.renderAliasTable();
   if (typeof window.renderFamTable === 'function') window.renderFamTable();
   // if (typeof window.renderQuests === 'function') window.renderQuests(); // moved to shared-inventory app
 
@@ -899,7 +896,6 @@ async function importBundleFromFile(file) {
   renderAll();
 
   // ако поддържаш и отделни „логове“, обнови ги от state
-  if (typeof saveAliases === 'function' && Array.isArray(st.aliases)) saveAliases(st.aliases);
   if (typeof saveFamiliars === 'function' && Array.isArray(st.familiars)) saveFamiliars(st.familiars);
 
   alert('Импортът мина успешно.');
@@ -1191,30 +1187,6 @@ async function cloudRestore() {
   }
 }
 
-// --- Shenanigans (lazy load JSON) ---
-let __sh_names = null;
-
-async function loadShenanigans() {
-  if (__sh_names) return __sh_names;
-  try {
-    const res = await fetch('shenanigans.json', { cache: 'no-store' });
-    const data = await res.json();
-    // Поддържа три формата: плосък масив или обект с ключ
-    if (Array.isArray(data)) __sh_names = data;
-    else if (Array.isArray(data.names)) __sh_names = data.names;
-    else if (Array.isArray(data.fakeNames)) __sh_names = data.fakeNames;
-    else __sh_names = [];
-  } catch {
-    __sh_names = [];
-  }
-  return __sh_names;
-}
-
-// --- Shared random helper (used by Shenanigans; One-Liners now live in the Flavor tab) ---
-function pickRandom(arr) {
-  return arr && arr.length ? arr[Math.floor(Math.random() * arr.length)] : '';
-}
-
 // --- Familiar Names (lazy load JSON) ---
 let __fam_names = null;
 const FAM_URL = 'familiars.json';
@@ -1349,163 +1321,11 @@ function attachFamiliars() {
   famSetSaveEnabled(false);
 }
 
-function attachShenanigans() {
-  const btn = document.getElementById('btnGetName');
-  if (!btn) return;
-  btn.addEventListener('click', async () => {
-    const list = await loadShenanigans();
-    const name = pickRandom(list).trim();
-    const out = document.getElementById('fakeNameOutput');
-    if (out) {
-      out.value = name || '(no names found)';
-      // >>> Тук добавяме тези два реда:
-      _lastRandomName = (out.value || '').trim();
-      setSaveEnabled(!!_lastRandomName);
-    }
-  });
-}
-
-// ---------- Shenanigans aliases log ----------
-const ALIAS_LS_KEY = 'aliases_v1';  // localStorage
-
-let _lastRandomName = null;
-
-// helpers
-// ---------- Shenanigans aliases log ----------
-// ПРЕПИШИ тези две функции така:
-function loadAliases() {
-  if (!Array.isArray(st.aliases)) st.aliases = [];
-  return st.aliases;
-}
-function saveAliases(arr) {
-  st.aliases = Array.isArray(arr) ? arr : [];
-  save();                // ← пазим през твоята save(), за да тръгне cloud/рендър
-}
-
-
-function renderAliasTable() {
-  const list = loadAliases();
-  const root = document.getElementById('aliasLog');
-  if (!root) return;
-  if (!list.length) {
-    root.innerHTML = '<small>Няма запазени представяния още.</small>';
-    return;
-  }
-  const rows = list.map((rec, i) => {
-    const d = new Date(rec.ts || Date.now());
-    const when = d.toLocaleString();
-    return `<tr>
-      <td>${i + 1}</td>
-      <td>${escapeHtml(rec.name || '')}</td>
-      <td>${escapeHtml(rec.to || '')}</td>
-      <td style="white-space:nowrap">${when}</td>
-      <td style="text-align:center">
-        <button class="alias-del" data-idx="${i}">🗑️</button>
-      </td>
-    </tr>`;
-  }).join('');
-  root.innerHTML = `<table class="alias-table">
-    <thead>
-      <tr>
-        <th>#</th><th>Име</th><th>На кого</th><th>Кога</th><th></th>
-      </tr>
-    </thead>
-    <tbody>${rows}</tbody>
-  </table>`;
-
-  // вързваме event за триене
-  root.querySelectorAll(".alias-del").forEach(btn => {
-    btn.addEventListener("click", e => {
-      const idx = parseInt(e.currentTarget.dataset.idx, 10);
-      const list = loadAliases();
-      list.splice(idx, 1);
-      saveAliases(list);
-      renderAliasTable();
-    });
-  });
-}
-
-
-function deleteAliasAt(index) {
-  if (!Array.isArray(st.aliases)) st.aliases = [];
-  st.aliases.splice(index, 1);
-  save();
-}
-
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
 }
 
-// hook Save button enable/disable
-function setSaveEnabled(on) {
-  const b = document.getElementById('btnSaveAlias');
-  if (b) b.disabled = !on;
-}
-
-// modal controls
-function openAliasModal() {
-  const m = document.getElementById('aliasModal');
-  document.getElementById('aliasToInput').value = '';
-  m.classList.remove('hidden');
-  setTimeout(() => document.getElementById('aliasToInput').focus(), 0);
-}
-
-function closeAliasModal() {
-  const m = document.getElementById('aliasModal');
-  if (m) m.classList.add('hidden');
-}
-
-document.getElementById('aliasModal')?.addEventListener('click', (e) => {
-  if (e.target.id === 'aliasModal') {
-    closeAliasModal();
-
-    document.getElementById('aliasToInput').value = '';
-    document.getElementById('fakeNameOutput').value = '';
-    document.getElementById('btnSaveAlias').disabled = true;
-  }
-});
-
 // PC Modal functions moved to modules/pcchar.js
-
-// attach
-function attachAliasLog() {
-  const getBtn = document.getElementById('btnGetName');
-  const saveBtn = document.getElementById('btnSaveAlias');
-  const out = document.getElementById('fakeNameOutput');
-
-  if (saveBtn) {
-    saveBtn.addEventListener('click', () => {
-      if (!_lastRandomName) return;
-      openAliasModal();
-    });
-  }
-
-  // modal buttons
-  const cancelBtn = document.getElementById('aliasCancel');
-  const okBtn = document.getElementById('aliasConfirm');
-  const textArea = document.getElementById('aliasToInput');
-
-  cancelBtn && cancelBtn.addEventListener('click', closeAliasModal);
-  okBtn && okBtn.addEventListener('click', () => {
-    const toWhom = (textArea && textArea.value || '').trim();
-    const rec = { name: _lastRandomName, to: toWhom, ts: Date.now() };
-    const arr = loadAliases();
-    arr.unshift(rec);      // новите най-отгоре
-    saveAliases(arr);
-    renderAliasTable();
-    setSaveEnabled(false);
-    closeAliasModal();
-
-
-    document.getElementById('aliasToInput').value = '';
-    document.getElementById('fakeNameOutput').value = '';
-    document.getElementById('btnSaveAlias').disabled = true;
-  });
-
-  // init
-  renderAliasTable();
-  setSaveEnabled(false);
-}
 
 // ===== Class Badges (header) =====
 
@@ -2355,11 +2175,9 @@ window.addEventListener('beforeunload', (e) => {
 
     renderAll();
     // Module functions are now loaded from separate files (modules/*.js)
-    if (typeof window.attachShenanigans === 'function') attachShenanigans();
     if (typeof window.attachFlavor === 'function') attachFlavor();
     if (typeof window.attachNamegen === 'function') attachNamegen();
     if (typeof window.attachFamiliars === 'function') attachFamiliars();
-    if (typeof window.attachAliasLog === 'function') attachAliasLog();
     // attachInventory will be called when inventory tab is shown (in showTab function)
     if (typeof window.attachPCChar === 'function') attachPCChar();
     if (typeof window.attachNpcNames === 'function') attachNpcNames();
