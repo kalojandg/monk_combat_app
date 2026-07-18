@@ -1,5 +1,19 @@
 import { test, expect } from '@playwright/test';
 
+// Legacy spec predates the multiclass level-up modal: auto-pick Monk when it appears
+// so xp+long-rest flows level up silently as pure Monk (the old behavior).
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    setInterval(() => {
+      const m = document.getElementById('levelUpModal');
+      if (m && !m.classList.contains('hidden')) {
+        const c = document.getElementById('cardMonk');
+        if (c) c.click();
+      }
+    }, 50);
+  });
+});
+
 /**
  * ATTACK BONUSES TESTS
  * 
