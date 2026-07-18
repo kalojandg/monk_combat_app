@@ -117,11 +117,13 @@ test.describe('Attack Bonuses - Calculations', () => {
     // modal once per level gained (1 → 5 = 4 choices); pick Monk each time.
     // Class choice does not affect character-level proficiency/attack bonuses.
     await page.locator('#btnLongRest').click();
+    // The first choice fetches the features JSON before the modal shows, which
+    // can be slow under full-suite load — keep the visibility timeouts generous.
     for (let i = 0; i < 4; i++) {
-      await expect(page.locator('#levelUpModal')).toBeVisible({ timeout: 5000 });
+      await expect(page.locator('#levelUpModal')).toBeVisible({ timeout: 15000 });
       await page.locator('#levelUpModal #cardMonk').click();
     }
-    await expect(page.locator('#levelUpModal')).toBeHidden({ timeout: 5000 });
+    await expect(page.locator('#levelUpModal')).toBeHidden({ timeout: 15000 });
 
     // Verify level and prof after long rest
     await page.locator('button[data-tab="stats"]').click();
