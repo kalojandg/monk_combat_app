@@ -1704,11 +1704,16 @@ details[open] .prep-level-summary::before { content: '▼ '; }
 #flavorOutput {
   width: 100%;
   min-height: 200px;
-  font-size: 1.15rem;
+  font-size: 1.25rem;
   line-height: 1.5;
   padding: 14px;
   resize: vertical;
   box-sizing: border-box;
+  /* тъмна клетка като старите one-liner полета (#1e1e2f) — бялата default textarea вади очите */
+  background-color: #1e1e2f;
+  color: #f5f5f5;
+  border: 1px solid #333;
+  border-radius: 6px;
 }
 
 .flavor-section-title {
@@ -1747,11 +1752,16 @@ details[open] .prep-level-summary::before { content: '▼ '; }
 /* ===== Name Gen tab ===== */
 #genOutput {
   width: 100%;
-  font-size: 1.15rem;
+  font-size: 1.25rem;
   line-height: 1.5;
   padding: 14px;
   margin: 14px 0 10px;
   box-sizing: border-box;
+  /* тъмна клетка като flavorOutput — иначе бял default input */
+  background-color: #1e1e2f;
+  color: #f5f5f5;
+  border: 1px solid #333;
+  border-radius: 6px;
 }
 
 #genNpcOptions,
