@@ -8,6 +8,7 @@ async function loadTabs() {
     'inventory': 'tabs/inventory.html',
     'shenanigans': 'tabs/shenanigans.html',
     'flavor': 'tabs/flavor.html',
+    'namegen': 'tabs/namegen.html',
     'familiars': 'tabs/familiars.html',
     'skills': 'tabs/skills.html',
     'sessionNotes': 'tabs/sessionNotes.html',
@@ -2356,6 +2357,7 @@ window.addEventListener('beforeunload', (e) => {
     // Module functions are now loaded from separate files (modules/*.js)
     if (typeof window.attachShenanigans === 'function') attachShenanigans();
     if (typeof window.attachFlavor === 'function') attachFlavor();
+    if (typeof window.attachNamegen === 'function') attachNamegen();
     if (typeof window.attachFamiliars === 'function') attachFamiliars();
     if (typeof window.attachAliasLog === 'function') attachAliasLog();
     // attachInventory will be called when inventory tab is shown (in showTab function)
