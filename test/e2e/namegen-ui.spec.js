@@ -2,7 +2,9 @@ import { test, expect } from '@playwright/test';
 
 // Консолидиран Name Gen таб: Alias / Familiar / NPC през един registry.
 // Save-ът РУТИРА към СЪЩИТЕ хранилища като старите табове:
-//   alias → st.aliases · familiar → localStorage['familiars_v1'] · npc → st.npcNames
+//   alias → st.aliases · familiar → st.familiars · npc → st.npcNames
+// (familiar записите вече живеят в st.familiars, за да round-trip-ват през bundle-а;
+//  старият localStorage['familiars_v1'] се мигрира еднократно при attach.)
 
 const FAM_LS_KEY = 'familiars_v1';
 
@@ -59,7 +61,7 @@ test.describe('Name Gen - consolidated UI', () => {
   });
 
   // (в) familiar
-  test('familiar: group click fills output, Save routes to localStorage key', async ({ page }) => {
+  test('familiar: group click fills output, Save routes to st.familiars and log', async ({ page }) => {
     await page.locator('#genTypeButtons [data-gentype="familiar"]').click();
     await page.waitForTimeout(200);
 
@@ -83,12 +85,41 @@ test.describe('Name Gen - consolidated UI', () => {
     await expect(page.locator('#genLog')).toContainText(name);
     await expect(page.locator('#genLog')).toContainText('Друидският вълк');
 
-    // записът е в localStorage под СЪЩИЯ ключ, схема { name, cat, note, ts }
-    const recs = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) || '[]'), FAM_LS_KEY);
+    // записът е в st.familiars, непроменена схема { name, cat, note, ts }
+    const recs = await page.evaluate(() => window.st.familiars);
     expect(recs.length).toBe(1);
     expect(recs[0].name).toBe(name);
     expect(recs[0].cat).toBe('feline');
     expect(recs[0].note).toBe('Друидският вълк');
+    expect(typeof recs[0].ts).toBe('number');
+  });
+
+  // (б-миграция) стар familiars_v1 ключ се мигрира в st.familiars при attach
+  test('familiar: legacy familiars_v1 records migrate into st.familiars on load', async ({ page }) => {
+    // seed-ни стар запис ПРЕДИ да отворим таба (симулира жив персонаж)
+    await page.evaluate((key) => {
+      localStorage.setItem(key, JSON.stringify([
+        { name: 'Legacy Cat', cat: 'feline', note: 'от стария ключ', ts: 1710000000000 }
+      ]));
+    }, FAM_LS_KEY);
+    await page.reload();
+    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
+    await page.locator('button[data-tab="namegen"]').click();
+    await page.waitForTimeout(300);
+
+    // превключи към familiar → редът се вижда в таблицата
+    await page.locator('#genTypeButtons [data-gentype="familiar"]').click();
+    await page.waitForTimeout(200);
+    await expect(page.locator('#genLog')).toContainText('Legacy Cat');
+    await expect(page.locator('#genLog')).toContainText('от стария ключ');
+
+    // записът е в st.familiars, а старият ключ е изтрит
+    const recs = await page.evaluate(() => window.st.familiars);
+    expect(recs.length).toBe(1);
+    expect(recs[0].name).toBe('Legacy Cat');
+    expect(recs[0].cat).toBe('feline');
+    const oldKey = await page.evaluate((key) => localStorage.getItem(key), FAM_LS_KEY);
+    expect(oldKey).toBeNull();
   });
 
   // (г) npc

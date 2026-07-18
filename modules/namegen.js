@@ -2,9 +2,12 @@
 // Консолидиран таб: Alias / Familiar / NPC генератори през един registry и една
 // изходна зона. Save-ът РУТИРА към СЪЩИТЕ хранилища като старите табове:
 //   alias    → st.aliases        (+ window.save)   rec: { name, to, ts }
-//   familiar → localStorage[FAM_LS_KEY]            rec: { name, cat, note, ts }
+//   familiar → st.familiars       (+ window.save)   rec: { name, cat, note, ts }
 //   npc      → st.npcNames        (+ window.save)   rec: { name, note, ts }
 // Никаква промяна на схемите — записаните данни на живия персонаж се виждат 1:1.
+// ЕДНОКРАТНА МИГРАЦИЯ: старите familiar записи от localStorage[FAM_LS_KEY] се
+// преместват в st.familiars при първи attach (виж migrateFamiliars по-долу), за да
+// round-trip-ват през bundle-а (export/import) като alias/npc.
 (function () {
   'use strict';
 
@@ -48,8 +51,38 @@
     return __npc;
   }
 
-  // Familiar records живеят в localStorage под СЪЩИЯ ключ като modules/familiars.js
+  // Стар ключ за familiar записи (преди унификацията в st.familiars).
   const FAM_LS_KEY = 'familiars_v1';
+
+  // ---------- еднократна миграция familiars_v1 → st.familiars ----------
+  // Живите фамилиари на персонажа са в отделен localStorage ключ ИЗВЪН st, така че
+  // не round-trip-ват през bundle-а. Преместваме ги в st.familiars еднократно.
+  // Защитно: невалиден JSON → не пипаме и не трием стария ключ.
+  function migrateFamiliars() {
+    if (typeof window.st === 'undefined' || typeof window.save === 'undefined') return;
+
+    let old;
+    try {
+      const raw = localStorage.getItem(FAM_LS_KEY);
+      if (raw === null) return;            // няма стар ключ — нищо за миграция
+      old = JSON.parse(raw);
+    } catch { return; }                    // невалиден JSON — не трием, защитно
+    if (!Array.isArray(old) || old.length === 0) return;
+
+    if (!Array.isArray(window.st.familiars)) window.st.familiars = [];
+
+    if (window.st.familiars.length === 0) {
+      // Обичайният случай: st.familiars е празно → просто преместваме.
+      window.st.familiars = old.slice();
+    } else {
+      // И двете имат данни (не би трябвало) → обединяваме без дубликати по ts.
+      const seen = new Set(window.st.familiars.map(r => r && r.ts));
+      old.forEach(r => { if (r && !seen.has(r.ts)) { window.st.familiars.push(r); seen.add(r.ts); } });
+    }
+
+    window.save();                         // персистираме преди да трием
+    try { localStorage.removeItem(FAM_LS_KEY); } catch { }
+  }
 
   // ---------- store адаптери (КЪМ СЪЩИТЕ хранилища) ----------
   const stores = {
@@ -67,11 +100,14 @@
     },
     familiar: {
       load() {
-        try { return JSON.parse(localStorage.getItem(FAM_LS_KEY)) || []; }
-        catch { return []; }
+        if (typeof window.st === 'undefined') return [];
+        if (!Array.isArray(window.st.familiars)) window.st.familiars = [];
+        return window.st.familiars;
       },
       save(arr) {
-        try { localStorage.setItem(FAM_LS_KEY, JSON.stringify(arr)); } catch { }
+        if (typeof window.st === 'undefined' || typeof window.save === 'undefined') return;
+        window.st.familiars = Array.isArray(arr) ? arr : [];
+        window.save();
       }
     },
     npc: {
@@ -301,6 +337,9 @@
   window.attachNamegen = function () {
     const wrap = document.getElementById('genTypeButtons');
     if (!wrap) return;
+
+    // еднократна миграция на живите familiar записи в st.familiars
+    migrateFamiliars();
 
     // type бутони
     wrap.querySelectorAll('[data-gentype]').forEach(btn => {
