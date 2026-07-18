@@ -7,27 +7,30 @@ import { test, expect } from '@playwright/test';
  * Важно за regression след преместване/рефакториране на код!
  */
 
-test.describe('Data Loading - Shenanigans', () => {
-  
+test.describe('Data Loading - Aliases (shenanigans.json via Name Gen)', () => {
+  // Alias generation lives in the consolidated Name Gen tab now, but the data
+  // still comes from shenanigans.json — these checks verify it loads through Name Gen.
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
-    
-    // Open Shenanigans tab
-    await page.locator('button[data-tab="shenanigans"]').click();
+
+    // Open Name Gen tab (Alias is the default type)
+    await page.locator('button[data-tab="namegen"]').click();
+    await page.waitForTimeout(300);
   });
 
   test('shenanigans.json loads successfully', async ({ page }) => {
-    // Click button - should not error
-    await page.locator('#btnGetName').click();
-    
+    // Generate an alias - should not error
+    await page.locator('#genGenerate').click();
+
     // Wait for async load
     await page.waitForTimeout(500);
-    
+
     // Should display a name (from shenanigans.json)
-    const result = await page.locator('#fakeNameOutput').inputValue();
+    const result = await page.locator('#genOutput').inputValue();
     expect(result).toBeTruthy();
     expect(result.length).toBeGreaterThan(0);
     expect(result).not.toContain('undefined');
@@ -37,25 +40,25 @@ test.describe('Data Loading - Shenanigans', () => {
 
   test('Can generate multiple different shenanigans names', async ({ page }) => {
     const names = new Set();
-    
+
     // Generate 5 times
     for (let i = 0; i < 5; i++) {
-      await page.locator('#btnGetName').click();
+      await page.locator('#genGenerate').click();
       await page.waitForTimeout(300);
-      const name = await page.locator('#fakeNameOutput').inputValue();
+      const name = await page.locator('#genOutput').inputValue();
       names.add(name);
     }
-    
+
     // Should have variety (at least 2 different names in 5 tries)
     expect(names.size).toBeGreaterThanOrEqual(2);
   });
 
   test('Shenanigans names are not empty', async ({ page }) => {
     // Generate name
-    await page.locator('#btnGetName').click();
+    await page.locator('#genGenerate').click();
     await page.waitForTimeout(300);
-    const name = await page.locator('#fakeNameOutput').inputValue();
-    
+    const name = await page.locator('#genOutput').inputValue();
+
     // Should have content
     expect(name.trim().length).toBeGreaterThan(0);
     expect(name).not.toBe('');
@@ -64,26 +67,31 @@ test.describe('Data Loading - Shenanigans', () => {
 });
 
 test.describe('Data Loading - Familiars', () => {
-  
+  // Familiar generation lives in the consolidated Name Gen tab now, but the data
+  // still comes from familiars.json — these checks verify it loads through Name Gen.
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
-    
-    // Open Familiars tab
-    await page.locator('button[data-tab="familiars"]').click();
+
+    // Open Name Gen tab and switch to the Familiar type (shows the group buttons)
+    await page.locator('button[data-tab="namegen"]').click();
+    await page.waitForTimeout(300);
+    await page.locator('#genTypeButtons [data-gentype="familiar"]').click();
+    await page.waitForTimeout(200);
   });
 
   test('familiars.json loads successfully', async ({ page }) => {
     // Click button - should not error (use one of the category buttons)
-    await page.locator('.fam-btn[data-famcat="feline"]').click();
-    
+    await page.locator('#genFamGroups [data-famcat="feline"]').click();
+
     // Wait for async load
     await page.waitForTimeout(500);
-    
+
     // Should display a name (from familiars.json)
-    const result = await page.locator('#famNameOutput').inputValue();
+    const result = await page.locator('#genOutput').inputValue();
     expect(result).toBeTruthy();
     expect(result.length).toBeGreaterThan(0);
     expect(result).not.toContain('undefined');
@@ -92,15 +100,15 @@ test.describe('Data Loading - Familiars', () => {
 
   test('Can generate multiple different familiar names', async ({ page }) => {
     const names = new Set();
-    
+
     // Generate 5 times from same category
     for (let i = 0; i < 5; i++) {
-      await page.locator('.fam-btn[data-famcat="avian"]').click();
+      await page.locator('#genFamGroups [data-famcat="avian"]').click();
       await page.waitForTimeout(300);
-      const name = await page.locator('#famNameOutput').inputValue();
+      const name = await page.locator('#genOutput').inputValue();
       names.add(name);
     }
-    
+
     // Should have variety
     expect(names.size).toBeGreaterThanOrEqual(2);
   });

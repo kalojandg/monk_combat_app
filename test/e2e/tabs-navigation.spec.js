@@ -88,7 +88,6 @@ test.describe('Tabs - Basic Navigation', () => {
       'inventory',
       'flavor',
       'namegen',
-      'familiars',
       'skills',
       'sessionNotes',
       'npc-names'
@@ -150,17 +149,6 @@ test.describe('Tabs - Content Smoke Check', () => {
     for (const id of excusesIds) {
       await expect(page.locator(`#tab-flavor [data-flavor="${id}"]`)).toBeVisible();
     }
-  });
-
-  test('Familiars tab shows fam groups and log', async ({ page }) => {
-    await page.locator('button[data-tab="familiars"]').click();
-    await expect(page.locator('#tab-familiars')).toBeVisible();
-    await expect(page.locator('#famNameOutput')).toBeVisible();
-    await expect(page.locator('#btnFamSave')).toBeVisible();
-    // Scope to the familiars tab: the Name Gen tab reuses .fam-groups/.fam-btn.
-    await expect(page.locator('#tab-familiars .fam-groups')).toBeVisible();
-    await expect(page.locator('#tab-familiars .fam-btn').first()).toBeVisible();
-    await expect(page.locator('#famLog')).toBeVisible();
   });
 
   // Stats tab now hosts second-level navigation; see dedicated describe below.
