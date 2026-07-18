@@ -22,7 +22,7 @@ test.describe('Familiars - Add & Delete', () => {
 
   test('Can generate random familiar name and save it', async ({ page }) => {
     // Generate random name (click one of the category buttons, e.g., Feline)
-    await page.locator('.fam-btn[data-famcat="feline"]').click();
+    await page.locator('#tab-familiars .fam-btn[data-famcat="feline"]').click();
     
     // Wait for async load
     await page.waitForTimeout(500);
@@ -52,7 +52,7 @@ test.describe('Familiars - Add & Delete', () => {
 
   test('Familiar persists across reload', async ({ page }) => {
     // Generate and save
-    await page.locator('.fam-btn[data-famcat="avian"]').click();
+    await page.locator('#tab-familiars .fam-btn[data-famcat="avian"]').click();
     await page.waitForTimeout(500);
     const name = await page.locator('#famNameOutput').inputValue();
     
@@ -72,7 +72,7 @@ test.describe('Familiars - Add & Delete', () => {
 
   test('Can delete familiar', async ({ page }) => {
     // Add familiar
-    await page.locator('.fam-btn[data-famcat="canine"]').click();
+    await page.locator('#tab-familiars .fam-btn[data-famcat="canine"]').click();
     await page.waitForTimeout(500);
     await page.locator('#btnFamSave').click();
     await page.locator('#famNoteInput').fill('To be deleted');
@@ -90,7 +90,7 @@ test.describe('Familiars - Add & Delete', () => {
   });
 
   test('Can cancel saving familiar', async ({ page }) => {
-    await page.locator('.fam-btn[data-famcat="rodentia"]').click();
+    await page.locator('#tab-familiars .fam-btn[data-famcat="rodentia"]').click();
     await page.waitForTimeout(500);
     await page.locator('#btnFamSave').click();
     await page.locator('#famNoteInput').fill('Should not save');
