@@ -23,8 +23,9 @@
 13. [Inventory](#13-inventory)
 14. [PC Characteristics](#14-pc-characteristics)
 15. [Aliases & Familiars](#15-aliases--familiars)
-16. [Edge Cases](#16-edge-cases)
-17. [Integration Tests](#17-integration-tests)
+16. [Flavor Tab](#16-flavor-tab)
+17. [Edge Cases](#17-edge-cases)
+18. [Integration Tests](#18-integration-tests)
 
 ---
 
@@ -1973,7 +1974,80 @@
 
 ---
 
-## 16. EDGE CASES
+## 16. FLAVOR TAB
+
+The Flavor tab consolidates the former One-Liners, Excuses and Insults tabs into a
+single tab: 17 flavor types served from five JSON files through one registry
+(`modules/flavor.js`) and one shared output area (`#flavorOutput`).
+
+### Test Case 16.1: All 17 Flavor Buttons Visible
+**Type:** Positive  
+**Description:** Verify the Flavor tab renders all 17 type buttons  
+**Steps:**
+1. Open the Flavor tab
+2. Count `.flavor-btn` buttons
+
+**Expected:**
+- Exactly 17 `.flavor-btn` buttons are visible, grouped One-Liners (9) / Excuses (5) / Insults & Jokes (3)
+
+**Actual:** ___  
+**Status:** ⬜ Pass | ⬜ Fail
+
+---
+
+### Test Case 16.2: Click Fills Output and Marks Active
+**Type:** Positive  
+**Description:** Verify click behaviour: clear + random line + active button  
+**Steps:**
+1. Open the Flavor tab
+2. Click any flavor button (e.g. `data-flavor="crit-miss"`)
+
+**Expected:**
+- `#flavorOutput` is cleared then filled with a random, non-empty line
+- The clicked button gains `.active`; no other button stays active (max 1 active)
+
+**Actual:** ___  
+**Status:** ⬜ Pass | ⬜ Fail
+
+---
+
+### Test Case 16.3: Data Sources Load (5 JSON files)
+**Type:** Positive  
+**Description:** Verify each source file loads through the Flavor tab  
+**Steps:**
+1. Open the Flavor tab
+2. Click a button backed by each source:
+   - One-Liners → `one-liners.json`
+   - Excuses → `excuses.json`
+   - Insult → `insults.json`
+   - Dark Joke → `dark-jokes.json`
+   - Tasha's Joke → `tasha-jokes.json`
+
+**Expected:**
+- Each click produces a valid line (no `(empty)` and no `(failed to load ...)`)
+
+**Actual:** ___  
+**Status:** ⬜ Pass | ⬜ Fail
+
+---
+
+### Test Case 16.4: Switching Type Refills and Moves Active
+**Type:** Positive  
+**Description:** Verify switching between types refills output and moves `.active`  
+**Steps:**
+1. Open the Flavor tab
+2. Click one type, then a different type
+
+**Expected:**
+- Output refills with a new line
+- `.active` moves to the newly clicked button; exactly one button is active
+
+**Actual:** ___  
+**Status:** ⬜ Pass | ⬜ Fail
+
+---
+
+## 17. EDGE CASES
 
 ### Test Case 16.1: Level 0 (XP negative)
 **Type:** Negative  
@@ -2136,7 +2210,7 @@
 
 ---
 
-## 17. INTEGRATION TESTS
+## 18. INTEGRATION TESTS
 
 ### Test Case 17.1: Full Combat Scenario
 **Type:** Integration  

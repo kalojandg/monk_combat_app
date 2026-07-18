@@ -273,6 +273,56 @@ test.describe('Data Loading - Excuses', () => {
 
 });
 
+test.describe('Data Loading - Insults & Jokes', () => {
+  // Insults and jokes are served from the consolidated Flavor tab. Each type is a
+  // flat-array JSON file — these checks verify each one loads through Flavor.
+  const output = (page) => page.locator('#flavorOutput');
+  const flavorBtn = (page, id) => page.locator(`#tab-flavor [data-flavor="${id}"]`);
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
+
+    // Open Flavor tab (hosts the former Insults generators + jokes)
+    await page.locator('button[data-tab="flavor"]').click();
+    await page.waitForTimeout(300);
+  });
+
+  test('insults.json loads - Insult', async ({ page }) => {
+    await flavorBtn(page, 'insult').click();
+    await page.waitForTimeout(500);
+
+    const result = await output(page).inputValue();
+    expect(result).toBeTruthy();
+    expect(result.length).toBeGreaterThan(0);
+    expect(result).not.toContain('undefined');
+    expect(result).not.toContain('(failed to load');
+  });
+
+  test('dark-jokes.json loads - Dark Joke', async ({ page }) => {
+    await flavorBtn(page, 'dark-joke').click();
+    await page.waitForTimeout(500);
+
+    const result = await output(page).inputValue();
+    expect(result).toBeTruthy();
+    expect(result.length).toBeGreaterThan(0);
+    expect(result).not.toContain('(failed to load');
+  });
+
+  test('tasha-jokes.json loads - Tasha\'s Joke', async ({ page }) => {
+    await flavorBtn(page, 'tasha').click();
+    await page.waitForTimeout(500);
+
+    const result = await output(page).inputValue();
+    expect(result).toBeTruthy();
+    expect(result.length).toBeGreaterThan(0);
+    expect(result).not.toContain('(failed to load');
+  });
+
+});
+
 test.describe('Data Loading - Skills & Features', () => {
   
   test.beforeEach(async ({ page }) => {
