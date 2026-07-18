@@ -86,8 +86,8 @@ test.describe('Tabs - Basic Navigation', () => {
       'pcchar',
       'resurrection',
       'inventory',
-      'shenanigans',
       'flavor',
+      'namegen',
       'familiars',
       'skills',
       'sessionNotes',
@@ -112,15 +112,6 @@ test.describe('Tabs - Content Smoke Check', () => {
     // Wait for tabs to load
     await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
-  });
-
-  test('Shenanigans tab shows alias generator controls', async ({ page }) => {
-    await page.locator('button[data-tab="shenanigans"]').click();
-    await expect(page.locator('#tab-shenanigans')).toBeVisible();
-    await expect(page.locator('#fakeNameOutput')).toBeVisible();
-    await expect(page.locator('#btnGetName')).toBeVisible();
-    await expect(page.locator('#btnSaveAlias')).toBeVisible();
-    await expect(page.locator('#aliasLog')).toBeVisible();
   });
 
   test('Flavor tab shows all one-liner categories', async ({ page }) => {
@@ -166,8 +157,9 @@ test.describe('Tabs - Content Smoke Check', () => {
     await expect(page.locator('#tab-familiars')).toBeVisible();
     await expect(page.locator('#famNameOutput')).toBeVisible();
     await expect(page.locator('#btnFamSave')).toBeVisible();
-    await expect(page.locator('.fam-groups')).toBeVisible();
-    await expect(page.locator('.fam-btn').first()).toBeVisible();
+    // Scope to the familiars tab: the Name Gen tab reuses .fam-groups/.fam-btn.
+    await expect(page.locator('#tab-familiars .fam-groups')).toBeVisible();
+    await expect(page.locator('#tab-familiars .fam-btn').first()).toBeVisible();
     await expect(page.locator('#famLog')).toBeVisible();
   });
 
