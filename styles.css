@@ -1716,48 +1716,6 @@ details[open] .prep-level-summary::before { content: '▼ '; }
   border-radius: 6px;
 }
 
-.flavor-actions {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin: 10px 0 4px;
-}
-
-.flavor-speak {
-  min-height: 48px;
-  font-size: 1rem;
-  font-weight: 600;
-  padding: 10px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-  background: var(--pill2);
-  color: var(--text);
-  border: 1px solid var(--border);
-}
-
-.flavor-speak:hover:not(:disabled) {
-  border-color: var(--accent);
-  background: #1b2340;
-}
-
-.flavor-speak.speaking {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-}
-
-.flavor-speak:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.flavor-voice-note {
-  font-size: 0.85rem;
-  color: var(--muted);
-  flex: 1 1 220px;
-}
-
 .flavor-section-title {
   margin-top: 18px;
 }

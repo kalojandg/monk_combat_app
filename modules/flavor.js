@@ -55,66 +55,7 @@
     if (btn) btn.classList.add('active');
   }
 
-  // ----- Speak (Web Speech API през modules/speech.js) -----
-  const SPEAK_LABEL = '🔊 Произнеси';
-  const STOP_LABEL  = '⏹ Спри';
-
-  function speakBtn() {
-    return document.getElementById('btnSpeakFlavor');
-  }
-
-  function resetSpeakBtn() {
-    const btn = speakBtn();
-    if (!btn) return;
-    btn.textContent = SPEAK_LABEL;
-    btn.classList.remove('speaking');
-  }
-
-  function stopSpeaking() {
-    if (window.MonkSpeech) window.MonkSpeech.stop();
-    resetSpeakBtn();
-  }
-
-  function showVoiceNote(lang) {
-    const note = document.getElementById('flavorVoiceNote');
-    if (!note) return;
-    const missing = !window.MonkSpeech.hasVoiceFor(lang);
-    note.classList.toggle('hidden', !missing);
-    if (missing) {
-      note.textContent = lang === 'bg-BG'
-        ? 'Няма български глас на устройството — инсталирай го от Настройки → Text-to-speech.'
-        : 'Няма подходящ глас за ' + lang + ' — ползва се системният default.';
-    }
-  }
-
-  function attachSpeak() {
-    const btn = speakBtn();
-    if (!btn) return;
-
-    const S = window.MonkSpeech;
-    if (!S || !S.isSupported()) {
-      btn.disabled = true;
-      btn.title = 'Устройството/браузърът не поддържа speechSynthesis';
-      return;
-    }
-
-    btn.addEventListener('click', () => {
-      if (S.isSpeaking()) { stopSpeaking(); return; }
-
-      const out = document.getElementById('flavorOutput');
-      const text = out ? (out.value || '').trim() : '';
-      if (!text) return;
-
-      showVoiceNote(S.detectLang(text));
-      btn.textContent = STOP_LABEL;
-      btn.classList.add('speaking');
-      // speak() е синхронен спрямо клика — Android/iOS искат речта в user gesture-а.
-      if (!S.speak(text, { onend: resetSpeakBtn })) resetSpeakBtn();
-    });
-  }
-
   async function showLine(type, btn) {
-    stopSpeaking(); // нова реплика ⇒ старата спира да се говори
     setOutput('');
     setActive(btn);
     try {
@@ -135,7 +76,6 @@
       if (!btn) return; // табът може да липсва в някои билдове
       btn.addEventListener('click', () => showLine(type, btn));
     });
-    attachSpeak();
   };
 
   window.renderFlavorUI = function () {};
