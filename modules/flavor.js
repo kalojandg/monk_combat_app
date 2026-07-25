@@ -57,6 +57,26 @@
 
   const SPEAK_IDLE = '🔊 Произнеси';
   const SPEAK_STOP = '⏹ Спри';
+  const NOTE_NO_KEY = 'Липсва API ключ — чете вграденият глас.';
+  const NOTE_NETWORK = 'Няма връзка с TTS — чете вграденият глас.';
+
+  function noteEl() {
+    return document.getElementById('flavorTtsNote');
+  }
+
+  function hideNote() {
+    const n = noteEl();
+    if (!n) return;
+    n.textContent = '';
+    n.classList.add('hidden');
+  }
+
+  function showNote(reason) {
+    const n = noteEl();
+    if (!n) return;
+    n.textContent = reason === 'no-key' ? NOTE_NO_KEY : NOTE_NETWORK;
+    n.classList.remove('hidden');
+  }
 
   function resetSpeakBtn() {
     const btn = document.getElementById('btnSpeakFlavor');
@@ -65,11 +85,20 @@
     btn.classList.remove('speaking');
   }
 
+  // Извиква се при край на речта: показва бележка само ако сме паднали към
+  // вградения глас (no-key/network), иначе я скрива.
+  function onSpeakEnd(reason) {
+    resetSpeakBtn();
+    if (reason === 'no-key' || reason === 'network') showNote(reason);
+    else hideNote();
+  }
+
   function stopSpeaking() {
     if (window.MonkTTS && typeof window.MonkTTS.stop === 'function') {
       window.MonkTTS.stop();
     }
     resetSpeakBtn();
+    hideNote();
   }
 
   function attachSpeak() {
@@ -87,9 +116,10 @@
       const out = document.getElementById('flavorOutput');
       const text = out ? out.value.trim() : '';
       if (!text) return;
+      hideNote();
       btn.textContent = SPEAK_STOP;
       btn.classList.add('speaking');
-      window.MonkTTS.speak(text, { onend: resetSpeakBtn });
+      window.MonkTTS.speak(text, { onend: onSpeakEnd });
     });
   }
 

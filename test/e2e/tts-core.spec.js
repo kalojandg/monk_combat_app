@@ -8,6 +8,7 @@ async function installStubs(page) {
     // малък валиден base64 (16 нулеви байта) — стига за Blob/Audio
     const TINY_MP3 = 'AAAAAAAAAAAAAAAAAAAAAA==';
     window.__ttsFetchCalls = [];
+    window.__ttsSignals = []; // AbortSignal обектите (не сериализуеми — четат се in-page)
     window.__ttsMock = { status: 200, audioContent: TINY_MP3 };
 
     const realFetch = window.fetch.bind(window);
@@ -16,6 +17,7 @@ async function installStubs(page) {
       if (url.indexOf('texttospeech.googleapis.com') !== -1) {
         let body = null;
         try { body = JSON.parse(init && init.body); } catch (e) { body = null; }
+        window.__ttsSignals.push((init && init.signal) || null);
         window.__ttsFetchCalls.push({
           url: url,
           method: (init && init.method) || 'GET',
@@ -154,5 +156,62 @@ test.describe('TTS core (MonkTTS + Google Cloud TTS contract)', () => {
     }));
     const n = await page.evaluate(() => window.__ttsFetchCalls.length);
     expect(n).toBe(0);
+  });
+
+  test('(и) priming: play() отхвърля с NotAllowedError -> UI се възстановява, onend', async ({ page }) => {
+    const result = await page.evaluate(() => new Promise((resolve) => {
+      // Симулираме заключена autoplay политика: play() винаги отхвърля.
+      const err = new DOMException('blocked', 'NotAllowedError');
+      window.HTMLMediaElement.prototype.play = function () { return Promise.reject(err); };
+      window.MonkTTS.speak('Не мърдай!', {
+        onend: function (reason) {
+          resolve({ ended: true, speaking: window.MonkTTS.isSpeaking(), reason: reason });
+        }
+      });
+      setTimeout(function () {
+        resolve({ ended: false, speaking: window.MonkTTS.isSpeaking(), reason: 'timeout' });
+      }, 3000);
+    }));
+    expect(result.ended).toBe(true);
+    expect(result.speaking).toBe(false);
+  });
+
+  test('(й) втори speak abort-ва заявката на първия в полет', async ({ page }) => {
+    const res = await page.evaluate(() => new Promise((resolve) => {
+      // Забавен fetch, който УВАЖАВА signal-а (базовият стъб го игнорира).
+      const TINY = 'AAAAAAAAAAAAAAAAAAAAAA==';
+      window.__ttsSignals = [];
+      window.fetch = function (input, init) {
+        const url = typeof input === 'string' ? input : (input && input.url) || '';
+        if (url.indexOf('texttospeech.googleapis.com') !== -1) {
+          const signal = init && init.signal;
+          window.__ttsSignals.push(signal || null);
+          return new Promise(function (ok, bad) {
+            if (signal) signal.addEventListener('abort', function () {
+              bad(new DOMException('aborted', 'AbortError'));
+            });
+            setTimeout(function () {
+              ok(new Response(JSON.stringify({ audioContent: TINY }),
+                { status: 200, headers: { 'Content-Type': 'application/json' } }));
+            }, 500);
+          });
+        }
+        return Promise.resolve(new Response('{}', { status: 200 }));
+      };
+
+      window.MonkTTS.speak('Първо');
+      setTimeout(function () {
+        window.MonkTTS.speak('Второ');
+        setTimeout(function () {
+          const s0 = window.__ttsSignals[0];
+          resolve({
+            count: window.__ttsSignals.length,
+            firstAborted: !!(s0 && s0.aborted)
+          });
+        }, 150);
+      }, 100);
+    }));
+    expect(res.count).toBeGreaterThanOrEqual(2);
+    expect(res.firstAborted).toBe(true);
   });
 });

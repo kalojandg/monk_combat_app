@@ -22,12 +22,28 @@
   const ENDPOINT = 'https://texttospeech.googleapis.com/v1/text:synthesize';
   const PLACEHOLDER_KEYS = ['', 'YOUR_API_KEY', 'API_KEY'];
 
-  let currentAudio = null;
+  let primeEl = null;       // ЕДИН преизползван <audio> — priming за autoplay policy
   let currentUrl = null;
   let speaking = false;
+  let controller = null;    // AbortController за заявката в полет
+
+  // Ключът се чете тук, за да може тест да го замести с window.__ttsApiKeyOverride
+  // (напр. празен → no-key пътят). В прод override няма → комитнатият ключ.
+  function activeKey() {
+    return (typeof window !== 'undefined' && window.__ttsApiKeyOverride != null)
+      ? window.__ttsApiKeyOverride : TTS_CONFIG.apiKey;
+  }
 
   function isPlaceholderKey() {
-    return !TTS_CONFIG.apiKey || PLACEHOLDER_KEYS.indexOf(TTS_CONFIG.apiKey) !== -1;
+    const k = activeKey();
+    return !k || PLACEHOLDER_KEYS.indexOf(k) !== -1;
+  }
+
+  // Един и същ <audio> се преизползва за всяка реплика — на Android/iOS новосъздаден
+  // Audio() на всеки клик не наследява user-gesture отключването.
+  function getAudioEl() {
+    if (!primeEl) primeEl = new Audio();
+    return primeEl;
   }
 
   function detectLang(text) {
@@ -75,17 +91,18 @@
     return '<speak>' + out + '</speak>';
   }
 
-  async function synthesize(text) {
+  async function synthesize(text, signal) {
     const lang = detectLang(text);
     const body = {
       input: { ssml: buildSsml(text) },
       voice: { languageCode: lang, name: TTS_CONFIG.voices[lang], ssmlGender: 'MALE' },
       audioConfig: { audioEncoding: 'MP3', speakingRate: TTS_CONFIG.speakingRate }
     };
-    const res = await fetch(ENDPOINT + '?key=' + encodeURIComponent(TTS_CONFIG.apiKey), {
+    const res = await fetch(ENDPOINT + '?key=' + encodeURIComponent(activeKey()), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
+      body: JSON.stringify(body),
+      signal: signal
     });
     if (!res.ok) throw new Error('TTS HTTP ' + res.status);
     const data = await res.json();
@@ -117,51 +134,69 @@
   async function speak(text, opts) {
     opts = opts || {};
     const clean = (text == null ? '' : String(text)).trim();
-    if (!clean) { if (opts.onend) opts.onend(); return; }
+    if (!clean) { if (opts.onend) opts.onend(null); return; }
 
     stop();
     speaking = true;
     if (opts.onstart) opts.onstart();
 
     let ended = false;
-    const finish = function () {
+    // reason: null (успех/тишина), 'no-key' (липсва ключ), 'network' (мрежа/HTTP)
+    const finish = function (reason) {
       if (ended) return;
       ended = true;
       speaking = false;
       releaseUrl();
-      currentAudio = null;
-      if (opts.onend) opts.onend();
+      if (opts.onend) opts.onend(reason || null);
     };
 
+    // PRIMING: синхронно, още в user-gesture-а, „отключваме" преизползвания елемент,
+    // за да не отхвърли play() с NotAllowedError, когато асинхронният отговор дойде.
+    const audio = getAudioEl();
+    try {
+      const pp = audio.play();
+      if (pp && typeof pp.catch === 'function') pp.catch(function () { /* noop */ });
+    } catch (e) { /* noop */ }
+
     if (isPlaceholderKey()) {
-      fallbackSpeak(clean, finish);
+      fallbackSpeak(clean, function () { finish('no-key'); });
       return;
     }
 
+    const ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
+    controller = ctrl;
+
     try {
-      const blob = await synthesize(clean);
+      const blob = await synthesize(clean, ctrl ? ctrl.signal : undefined);
+      // Прекъснат в полет (нова реплика / stop) → не пускаме остарялото аудио.
+      if (ended || (ctrl && ctrl.signal.aborted)) return;
+      if (controller === ctrl) controller = null;
       const url = URL.createObjectURL(blob);
       currentUrl = url;
-      const audio = new Audio(url);
-      currentAudio = audio;
-      audio.addEventListener('ended', finish);
-      audio.addEventListener('error', finish);
+      audio.addEventListener('ended', function () { finish(null); });
+      audio.addEventListener('error', function () { finish(null); });
+      audio.src = url;
       const p = audio.play();
-      if (p && typeof p.catch === 'function') p.catch(function () { finish(); });
+      if (p && typeof p.catch === 'function') p.catch(function () { finish(null); });
     } catch (e) {
-      fallbackSpeak(clean, finish);
+      // Нарочно прекъсване — тихо, без лог, без fallback към speechSynthesis.
+      if (e && e.name === 'AbortError') return;
+      fallbackSpeak(clean, function () { finish('network'); });
     }
   }
 
   function stop() {
-    if (currentAudio) {
-      try { currentAudio.pause(); } catch (e) { /* noop */ }
+    if (controller) {
+      try { controller.abort(); } catch (e) { /* noop */ }
+      controller = null;
+    }
+    if (primeEl) {
+      try { primeEl.pause(); } catch (e) { /* noop */ }
     }
     if (window.speechSynthesis) {
       try { window.speechSynthesis.cancel(); } catch (e) { /* noop */ }
     }
     releaseUrl();
-    currentAudio = null;
     speaking = false;
   }
 

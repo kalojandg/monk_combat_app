@@ -55,6 +55,7 @@ async function installStubs(page) {
 
 const output = (page) => page.locator('#flavorOutput');
 const speakBtn = (page) => page.locator('#btnSpeakFlavor');
+const ttsNote = (page) => page.locator('#flavorTtsNote');
 
 test.describe('Flavor - Speak button (MonkTTS)', () => {
 
@@ -119,5 +120,41 @@ test.describe('Flavor - Speak button (MonkTTS)', () => {
 
     await expect(speakBtn(page)).not.toHaveClass(/\bspeaking\b/);
     await expect(speakBtn(page)).toContainText('Произнеси');
+  });
+
+  test('(ж) мрежова грешка (403) -> бележката е видима и непразна', async ({ page }) => {
+    await page.evaluate(() => { window.__ttsMock.status = 403; });
+    await page.evaluate(() => { document.getElementById('flavorOutput').value = 'Не мърдай'; });
+    await speakBtn(page).click();
+    await expect(ttsNote(page)).toBeVisible();
+    await expect(ttsNote(page)).not.toHaveText('');
+    await expect(speakBtn(page)).not.toHaveClass(/\bspeaking\b/);
+  });
+
+  test('(з) успешен fetch -> бележката остава скрита', async ({ page }) => {
+    await page.evaluate(() => { document.getElementById('flavorOutput').value = 'Не мърдай'; });
+    await speakBtn(page).click();
+    await page.waitForFunction(() => window.__ttsFetchCalls.length > 0, { timeout: 5000 });
+    await page.waitForTimeout(200);
+    await expect(ttsNote(page)).toBeHidden();
+  });
+
+  test('(и) липсващ ключ -> различно съобщение от мрежовата грешка', async ({ page }) => {
+    await page.evaluate(() => { window.__ttsApiKeyOverride = ''; });
+    await page.evaluate(() => { document.getElementById('flavorOutput').value = 'Не мърдай'; });
+    await speakBtn(page).click();
+    await expect(ttsNote(page)).toBeVisible();
+    const noKeyText = await ttsNote(page).textContent();
+
+    // network съобщението за сравнение
+    await page.evaluate(() => { window.__ttsApiKeyOverride = undefined; window.__ttsMock.status = 403; });
+    await page.locator('#tab-flavor [data-flavor="insult"]').click();
+    await page.evaluate(() => { document.getElementById('flavorOutput').value = 'Пак нещо'; });
+    await speakBtn(page).click();
+    await expect(ttsNote(page)).toBeVisible();
+    const netText = await ttsNote(page).textContent();
+
+    expect(noKeyText.trim().length).toBeGreaterThan(0);
+    expect(noKeyText).not.toBe(netText);
   });
 });
