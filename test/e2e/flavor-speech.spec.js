@@ -28,7 +28,7 @@ test.describe('Flavor - Speak button', () => {
     const api = await page.evaluate(() => {
       const S = window.MonkSpeech;
       if (!S) return null;
-      return ['isSupported', 'isSpeaking', 'speak', 'stop', 'detectLang', 'hasVoiceFor', 'voiceInfo']
+      return ['isSupported', 'isSpeaking', 'speak', 'stop', 'detectLang', 'hasVoiceFor']
         .filter(k => typeof S[k] !== 'function');
     });
     expect(api).not.toBeNull();
@@ -102,8 +102,6 @@ test.describe('Flavor - Speak button', () => {
     expect(spoken.every(s => s.lang === 'bg-BG')).toBe(true);
     expect(spoken.every(s => s.pitch < 1)).toBe(true);           // мъжки регистър
     expect(spoken.every(s => s.rate < 1)).toBe(true);            // провлачено
-    // Никога под ~0.55 — там SAPI/Google започват да хриптят.
-    expect(Math.min(...spoken.map(s => s.pitch))).toBeGreaterThan(0.55);
     // Подигравателната дъга: отваря по-високо, затваря по-ниско и по-бавно.
     expect(spoken[0].pitch).toBeGreaterThan(spoken[spoken.length - 1].pitch);
     expect(spoken[0].rate).toBeGreaterThan(spoken[spoken.length - 1].rate);

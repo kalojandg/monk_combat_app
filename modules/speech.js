@@ -14,18 +14,13 @@
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
 
   // --- Профилът на Пийс ---
-  // ВАЖНО: питчът НЕ превръща женски глас в мъжки. TTS движките местят височината,
-  // но не и формантите — свален питч върху женски глас звучи като прегракнала жаба,
-  // не като мъж. Затова тук няма „компенсация по пол": ако устройството няма мъжки
-  // глас за езика, единственото решение е да се инсталира такъв (виж hasMaleVoice).
-  const PITCH = 0.70;   // дълбоко, но в границите, в които SAPI/Google не хриптят
+  const PITCH = 0.62;   // дълбоко
   const RATE  = 0.82;   // бавно и провлачено
   const GAP   = 320;    // мълчание между парчетата (ms) — драматичната пауза
   // Множители за първото и последното парче: отваря нагоре и живо, затваря надолу
   // и провлачено — това е интонацията на „дааа, браавооо".
-  // Подигравката идва оттук и от паузите — работи еднакво на мъжки и женски глас.
-  const HEAD_PITCH = 1.10, HEAD_RATE = 1.08;
-  const TAIL_PITCH = 0.88, TAIL_RATE = 0.80;
+  const HEAD_PITCH = 1.12, HEAD_RATE = 1.08;
+  const TAIL_PITCH = 0.84, TAIL_RATE = 0.80;
 
   // API-то не излага пол на гласа — познаваме по име. Това са реалните имена на
   // bg/en гласовете по платформи (Windows bg: Ivan ♂ / Kalina ♀), плюс общите
@@ -33,6 +28,10 @@
   // Женското се проверява първо — "female" съдържа "male".
   const FEMALE_RE = /(^|[^a-z])(female|woman)([^a-z]|$)|#female|\b(kalina|maria|ivana|elena|nadia|zara|samantha|victoria|karen|moira|tessa|fiona|serena|allison|ava|susan|zoe|joanna|salli|kendra|kimberly|amy|emma|hazel|heera|sonia|catherine|linda|michelle|jenny|aria|nicole|natasha|ana|sofia)\b/i;
   const MALE_RE = /(^|[^a-z])(male|man)([^a-z]|$)|#male|\b(ivan|borislav|georgi|dimitar|nikolay|todor|stefan|daniel|david|george|mark|alex|fred|guy|ryan|thomas|james|arthur|oliver|liam|eric|brian|rishi|aaron|nathan|gordon|reed|roger|steffan|tom|matthew|justin|joey|russell|christopher)\b/i;
+
+  // Google TTS на Android има само един български глас и той е женски. Няма как
+  // да го сменим — сваляме питча още, за да излезе мъжки регистър.
+  const NO_MALE_PITCH_DROP = 0.22;
 
   let voices = [];
   let current = null;    // държим реф. — иначе Chrome GC-ва utterance-а насред репликата
@@ -84,19 +83,6 @@
     return !voices.length || !!pickVoice(lang);
   }
 
-  // Диагностика за UI-а: гласовете са per-device, а на телефон няма конзола под ръка.
-  function voiceInfo(lang) {
-    const list = voicesFor(lang);
-    const picked = pickVoice(lang);
-    return {
-      lang: lang,
-      count: list.length,
-      name: picked ? picked.name : null,
-      male: picked ? isMale(picked) : false,
-      names: list.map(v => v.name)
-    };
-  }
-
   // ---------- chunking ----------
   const STRONG = '.!?…';
   const SOFT = ',;:—–';
@@ -134,8 +120,8 @@
 
   const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
 
-  function prosodyFor(i, n) {
-    let p = PITCH, r = RATE;
+  function prosodyFor(i, n, basePitch) {
+    let p = basePitch, r = RATE;
     if (n > 1) {
       if (i === 0) { p *= HEAD_PITCH; r *= HEAD_RATE; }
       else if (i === n - 1) { p *= TAIL_PITCH; r *= TAIL_RATE; }
@@ -185,6 +171,8 @@
     const myGen = ++gen;
     const lang = detectLang(str);
     const voice = pickVoice(lang);
+    // Няма мъжки глас за езика ⇒ сваляме питча, за да влезе в мъжки регистър.
+    const basePitch = clamp(PITCH - (voice && isMale(voice) ? 0 : NO_MALE_PITCH_DROP), 0, 2);
     const parts = chunkText(str);
     let started = false;
 
@@ -202,7 +190,7 @@
       const u = new SpeechSynthesisUtterance(parts[i]);
       u.lang = lang;
       if (voice) u.voice = voice;              // без voice движката ползва системния default
-      const pr = prosodyFor(i, parts.length);
+      const pr = prosodyFor(i, parts.length, basePitch);
       u.pitch = pr.pitch;
       u.rate = pr.rate;
       u.volume = 1;
@@ -255,7 +243,6 @@
     stop: stop,
     detectLang: detectLang,
     hasVoiceFor: hasVoiceFor,
-    voiceInfo: voiceInfo,
     // за тестове
     __chunk: chunkText,
     __pickVoice: pickVoice

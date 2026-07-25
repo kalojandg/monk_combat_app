@@ -75,23 +75,15 @@
     resetSpeakBtn();
   }
 
-  // Гласовете са per-device и на телефон няма конзола под ръка — затова, когато
-  // не сме намерили мъжки глас, казваме кой чете и какво да се направи.
   function showVoiceNote(lang) {
     const note = document.getElementById('flavorVoiceNote');
     if (!note) return;
-
-    const info = window.MonkSpeech.voiceInfo(lang);
-    if (info.male) { note.classList.add('hidden'); return; }
-
-    note.classList.remove('hidden');
-    if (!info.count) {
-      note.textContent = 'Няма глас за ' + lang + ' — чете системният default. '
-        + 'Инсталирай гласови данни от Настройки → Text-to-speech.';
-    } else {
-      note.textContent = 'Чете „' + info.name + '" — на устройството няма мъжки глас за '
-        + lang + '. Питчът не превръща женски глас в мъжки; трябва друг TTS движок '
-        + '(напр. eSpeak NG) от Настройки → Text-to-speech.';
+    const missing = !window.MonkSpeech.hasVoiceFor(lang);
+    note.classList.toggle('hidden', !missing);
+    if (missing) {
+      note.textContent = lang === 'bg-BG'
+        ? 'Няма български глас на устройството — инсталирай го от Настройки → Text-to-speech.'
+        : 'Няма подходящ глас за ' + lang + ' — ползва се системният default.';
     }
   }
 
