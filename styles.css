@@ -1749,6 +1749,45 @@ details[open] .prep-level-summary::before { content: '▼ '; }
   color: #fff;
 }
 
+.flavor-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0 4px;
+}
+
+.flavor-speak {
+  min-height: 48px;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  background: var(--pill2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.flavor-speak:hover {
+  border-color: var(--accent);
+}
+
+.flavor-speak.speaking {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.flavor-speak:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.flavor-tts-note {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
 /* ===== Name Gen tab ===== */
 #genOutput {
   width: 100%;
