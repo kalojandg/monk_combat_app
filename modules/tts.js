@@ -69,9 +69,17 @@
     for (let i = 0; i < raw.length; i++) {
       const ch = raw[i];
       buf += ch;
-      const strong = '.!?…'.indexOf(ch) !== -1;
+      let strong = '.!?…'.indexOf(ch) !== -1;
       const weak = ',;:'.indexOf(ch) !== -1;
-      if (strong || (weak && buf.trim().length >= 18)) {
+      if (!strong && !weak) continue;
+      // Поредица от пунктуация ("...", "?!", "!.") е ЕДИН знак за пауза, не три.
+      // Иначе всяка точка от многоточието ражда отделно парче — включително
+      // парчета, които са само точка — и репликата заеква с тройна пауза.
+      while (i + 1 < raw.length && '.!?…,;:'.indexOf(raw[i + 1]) !== -1) {
+        if ('.!?…'.indexOf(raw[i + 1]) !== -1) strong = true;
+        buf += raw[++i];
+      }
+      if (strong || buf.trim().length >= 18) {
         pieces.push({ text: buf.trim(), pause: strong });
         buf = '';
       }
