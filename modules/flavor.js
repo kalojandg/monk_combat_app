@@ -55,7 +55,46 @@
     if (btn) btn.classList.add('active');
   }
 
+  const SPEAK_IDLE = '🔊 Произнеси';
+  const SPEAK_STOP = '⏹ Спри';
+
+  function resetSpeakBtn() {
+    const btn = document.getElementById('btnSpeakFlavor');
+    if (!btn) return;
+    btn.textContent = SPEAK_IDLE;
+    btn.classList.remove('speaking');
+  }
+
+  function stopSpeaking() {
+    if (window.MonkTTS && typeof window.MonkTTS.stop === 'function') {
+      window.MonkTTS.stop();
+    }
+    resetSpeakBtn();
+  }
+
+  function attachSpeak() {
+    const btn = document.getElementById('btnSpeakFlavor');
+    if (!btn) return;
+    const supported = window.MonkTTS &&
+      (typeof window.MonkTTS.isSupported !== 'function' || window.MonkTTS.isSupported());
+    if (!supported) {
+      btn.disabled = true;
+      btn.title = 'Гласът не е наличен в този браузър.';
+      return;
+    }
+    btn.addEventListener('click', () => {
+      if (window.MonkTTS.isSpeaking()) { stopSpeaking(); return; }
+      const out = document.getElementById('flavorOutput');
+      const text = out ? out.value.trim() : '';
+      if (!text) return;
+      btn.textContent = SPEAK_STOP;
+      btn.classList.add('speaking');
+      window.MonkTTS.speak(text, { onend: resetSpeakBtn });
+    });
+  }
+
   async function showLine(type, btn) {
+    stopSpeaking();
     setOutput('');
     setActive(btn);
     try {
@@ -76,6 +115,7 @@
       if (!btn) return; // табът може да липсва в някои билдове
       btn.addEventListener('click', () => showLine(type, btn));
     });
+    attachSpeak();
   };
 
   window.renderFlavorUI = function () {};
