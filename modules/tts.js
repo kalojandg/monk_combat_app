@@ -104,7 +104,11 @@
       body: JSON.stringify(body),
       signal: signal
     });
-    if (!res.ok) throw new Error('TTS HTTP ' + res.status);
+    if (!res.ok) {
+      const err = new Error('TTS HTTP ' + res.status);
+      err.status = res.status;   // 403 = отказан достъп, не липса на мрежа
+      throw err;
+    }
     const data = await res.json();
     if (!data || !data.audioContent) throw new Error('TTS missing audioContent');
     const bytes = Uint8Array.from(atob(data.audioContent), function (c) { return c.charCodeAt(0); });
@@ -181,7 +185,11 @@
     } catch (e) {
       // Нарочно прекъсване — тихо, без лог, без fallback към speechSynthesis.
       if (e && e.name === 'AbortError') return;
-      fallbackSpeak(clean, function () { finish('network'); });
+      // 403 значи, че ключът работи, но текущият адрес не е в разрешените
+      // HTTP referrer-и. Различава се от истинска липса на мрежа, защото
+      // поправката е съвсем друга — виж TTS-SETUP.md.
+      const reason = (e && e.status === 403) ? 'forbidden' : 'network';
+      fallbackSpeak(clean, function () { finish(reason); });
     }
   }
 

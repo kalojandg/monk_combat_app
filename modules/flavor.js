@@ -59,6 +59,12 @@
   const SPEAK_STOP = '⏹ Спри';
   const NOTE_NO_KEY = 'Липсва API ключ — чете вграденият глас.';
   const NOTE_NETWORK = 'Няма връзка с TTS — чете вграденият глас.';
+  // 403: ключът е наред, но адресът не е в разрешените referrer-и. Показваме кой
+  // е адресът — иначе човек тръгва да търси мрежов проблем, какъвто няма.
+  function noteForbidden() {
+    const origin = (window.location && window.location.origin) || 'този адрес';
+    return 'Адресът ' + origin + ' не е разрешен за API ключа — чете вграденият глас.';
+  }
 
   function noteEl() {
     return document.getElementById('flavorTtsNote');
@@ -74,7 +80,9 @@
   function showNote(reason) {
     const n = noteEl();
     if (!n) return;
-    n.textContent = reason === 'no-key' ? NOTE_NO_KEY : NOTE_NETWORK;
+    n.textContent = reason === 'no-key' ? NOTE_NO_KEY
+      : reason === 'forbidden' ? noteForbidden()
+      : NOTE_NETWORK;
     n.classList.remove('hidden');
   }
 
@@ -89,7 +97,7 @@
   // вградения глас (no-key/network), иначе я скрива.
   function onSpeakEnd(reason) {
     resetSpeakBtn();
-    if (reason === 'no-key' || reason === 'network') showNote(reason);
+    if (reason === 'no-key' || reason === 'network' || reason === 'forbidden') showNote(reason);
     else hideNote();
   }
 
