@@ -15,8 +15,7 @@
       'bg-BG': 'bg-BG-Chirp3-HD-Sadaltager',
       'en-US': 'en-US-Chirp3-HD-Sadaltager'
     },
-    speakingRate: 0.85,
-    breakMs: 350
+    speakingRate: 0.78
   };
 
   const ENDPOINT = 'https://texttospeech.googleapis.com/v1/text:synthesize';
@@ -59,44 +58,17 @@
       .replace(/'/g, '&apos;');
   }
 
-  // Режем по силна пунктуация (.!?…) винаги; по слаба (,;:) само ако парчето е
-  // достатъчно дълго. Между парчетата и след силна пунктуация — драматична пауза.
+  // БЕЗ <break> и БЕЗ <prosody> — нарочно.
+  // Сравнителен тест с реални записи показа, че всеки таг, който вмъкваме,
+  // разваля изговора: разкъсването на репликата на парчета мести ударенията
+  // (думата в края на парче получава фразова интонация), а <prosody rate>
+  // отгоре на speakingRate забавя дотолкова, че думите излизат сгрешени.
+  // <phoneme> е още по-лошо — Chirp3 не го поддържа и ИЗХВЪРЛЯ съдържанието му,
+  // тоест думата просто изчезва от репликата.
+  // Чистият текст звучи най-правилно. Ритъмът идва от пунктуацията в самия текст
+  // и от speakingRate. Не добавяй тагове тук без запис, който доказва, че помагат.
   function buildSsml(text) {
-    const breakTag = '<break time="' + TTS_CONFIG.breakMs + 'ms"/>';
-    const raw = String(text).trim();
-    const pieces = [];
-    let buf = '';
-    for (let i = 0; i < raw.length; i++) {
-      const ch = raw[i];
-      buf += ch;
-      let strong = '.!?…'.indexOf(ch) !== -1;
-      const weak = ',;:'.indexOf(ch) !== -1;
-      if (!strong && !weak) continue;
-      // Поредица от пунктуация ("...", "?!", "!.") е ЕДИН знак за пауза, не три.
-      // Иначе всяка точка от многоточието ражда отделно парче — включително
-      // парчета, които са само точка — и репликата заеква с тройна пауза.
-      while (i + 1 < raw.length && '.!?…,;:'.indexOf(raw[i + 1]) !== -1) {
-        if ('.!?…'.indexOf(raw[i + 1]) !== -1) strong = true;
-        buf += raw[++i];
-      }
-      if (strong || buf.trim().length >= 18) {
-        pieces.push({ text: buf.trim(), pause: strong });
-        buf = '';
-      }
-    }
-    if (buf.trim()) pieces.push({ text: buf.trim(), pause: false });
-    if (!pieces.length) pieces.push({ text: raw, pause: false });
-
-    const last = pieces.length - 1;
-    let out = '';
-    pieces.forEach(function (p, i) {
-      let seg = escapeXml(p.text);
-      // Провлачен, снизходителен финал — БЕЗ pitch (гласът не го поддържа).
-      if (i === last) seg = '<prosody rate="80%">' + seg + '</prosody>';
-      out += seg;
-      if (p.pause || i < last) out += breakTag;
-    });
-    return '<speak>' + out + '</speak>';
+    return '<speak>' + escapeXml(String(text).trim()) + '</speak>';
   }
 
   async function synthesize(text, signal) {

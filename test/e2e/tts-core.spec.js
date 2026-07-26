@@ -97,10 +97,18 @@ test.describe('TTS core (MonkTTS + Google Cloud TTS contract)', () => {
     expect(call.body.voice.languageCode).toBe('en-US');
   });
 
-  test('(г) ssml започва с <speak> и съдържа поне един <break', async ({ page }) => {
-    const call = await speakAndWait(page, 'Не мърдай!');
-    expect(call.body.input.ssml.startsWith('<speak>')).toBe(true);
-    expect(call.body.input.ssml).toContain('<break');
+  test('(г) ssml е чист <speak> без тагове, които развалят изговора', async ({ page }) => {
+    const call = await speakAndWait(page, 'Не мърдай, че да те уцеля! Аз не пропускам.');
+    const ssml = call.body.input.ssml;
+    expect(ssml.startsWith('<speak>')).toBe(true);
+    expect(ssml.endsWith('</speak>')).toBe(true);
+    // Регресионна защита: тези тагове бяха премахнати, защото местеха ударенията,
+    // а <phoneme> кара Chirp3 да ИЗХВЪРЛИ думата. Не ги връщай без запис-доказателство.
+    expect(ssml).not.toContain('<break');
+    expect(ssml).not.toContain('<prosody');
+    expect(ssml).not.toContain('<phoneme');
+    // текстът минава непокътнат
+    expect(ssml).toContain('Не мърдай, че да те уцеля! Аз не пропускам.');
   });
 
   test('(д) апостроф и амперсанд са XML-escape-нати, без сурови символи', async ({ page }) => {
