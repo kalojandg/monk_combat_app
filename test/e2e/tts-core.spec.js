@@ -107,8 +107,20 @@ test.describe('TTS core (MonkTTS + Google Cloud TTS contract)', () => {
     expect(ssml).not.toContain('<break');
     expect(ssml).not.toContain('<prosody');
     expect(ssml).not.toContain('<phoneme');
-    // текстът минава непокътнат
-    expect(ssml).toContain('Не мърдай, че да те уцеля! Аз не пропускам.');
+  });
+
+  test('(г2) запетаите стават тирета — думата преди запетая губеше ударението си', async ({ page }) => {
+    const call = await speakAndWait(page, 'Ако мозъкът ти беше злато, пак щеше да дължиш.');
+    const ssml = call.body.input.ssml;
+    expect(ssml).toContain('злато – пак');
+    expect(ssml).not.toContain(',');
+  });
+
+  test('(г3) запетая между цифри се пази', async ({ page }) => {
+    const call = await speakAndWait(page, 'Спечелих 3,000 златни, ама ги изпих.');
+    const ssml = call.body.input.ssml;
+    expect(ssml).toContain('3,000');          // числото остава цяло
+    expect(ssml).toContain('златни – ама');   // само словесната запетая става тире
   });
 
   test('(д) апостроф и амперсанд са XML-escape-нати, без сурови символи', async ({ page }) => {
