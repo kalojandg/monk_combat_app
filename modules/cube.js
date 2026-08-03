@@ -22,6 +22,21 @@
     return null;
   }
 
+  // Spell charge-drain table (RAW, DMG p.159). The die is rolled physically at the
+  // table; the player types the rolled damage and Apply subtracts it from charges.
+  var DRAIN_SPELLS = [
+    { key: 'disintegrate',     name: 'Disintegrate',     dice: '1d12' },
+    { key: 'horn-of-blasting', name: 'Horn of Blasting', dice: '1d10' },
+    { key: 'passwall',         name: 'Passwall',         dice: '1d6'  },
+    { key: 'prismatic-spray',  name: 'Prismatic Spray',  dice: '1d20' },
+    { key: 'wall-of-fire',     name: 'Wall of Fire',     dice: '1d4'  }
+  ];
+
+  // Drain only makes sense while the barrier actually stops spells: face 4 or 5.
+  function canDrain(cube) {
+    return cube.activeFace === 4 || cube.activeFace === 5;
+  }
+
   // ---- state helpers ----
   function getCube() {
     var st = window.st || {};
@@ -57,6 +72,7 @@
 
   // ---- DOM ----
   var widget, dialog, chargesValEl, regainInput, minuteBtn, facesEl;
+  var ticker, drainToggle, drainPanel;
 
   function build() {
     // Peek handle (3x3 "Rubik" grid of muted accent colours)
@@ -76,6 +92,19 @@
     widget.appendChild(grid);
     document.body.appendChild(widget);
 
+    // News ticker lives statically in index.html (between .header and #tab-combat).
+    ticker = document.getElementById('cubeTicker');
+
+    // Drain-accordion rows (5 spells from the RAW drain table)
+    var drainRows = DRAIN_SPELLS.map(function (s) {
+      return '<div class="cube-drain-item" data-spell="' + s.key + '">' +
+          '<span class="cube-drain-name">' + s.name + '</span>' +
+          '<span class="cube-drain-dice">' + s.dice + '</span>' +
+          '<input class="cube-num cube-drain-input" type="number" min="1" step="1">' +
+          '<button class="cube-btn cube-drain-apply" type="button">Apply</button>' +
+        '</div>';
+    }).join('');
+
     // Dialog
     dialog = document.createElement('div');
     dialog.id = 'cubeDialog';
@@ -94,6 +123,12 @@
         '<div class="cube-row">' +
           '<button id="cubeMinuteBtn" class="cube-btn" type="button">Minute Elapsed</button>' +
         '</div>' +
+        '<div class="cube-row cube-drain-header-row">' +
+          '<button id="cubeDrainToggle" class="cube-btn cube-drain-toggle" type="button" aria-expanded="false" disabled>' +
+            '<span class="cube-drain-arrow">▶</span> Dmg from special spells' +
+          '</button>' +
+        '</div>' +
+        '<div id="cubeDrainPanel" class="cube-drain-panel hidden">' + drainRows + '</div>' +
         '<div id="cubeFaces" class="cube-faces"></div>' +
       '</div>';
     document.body.appendChild(dialog);
@@ -102,12 +137,16 @@
     regainInput = dialog.querySelector('#cubeRegainInput');
     minuteBtn = dialog.querySelector('#cubeMinuteBtn');
     facesEl = dialog.querySelector('#cubeFaces');
+    drainToggle = dialog.querySelector('#cubeDrainToggle');
+    drainPanel = dialog.querySelector('#cubeDrainPanel');
 
     // Wire dialog controls
     dialog.querySelector('#cubeClose').addEventListener('click', closeDialog);
     dialog.querySelector('#cubeRegainBtn').addEventListener('click', regain);
     minuteBtn.addEventListener('click', minuteElapsed);
     facesEl.addEventListener('click', onFacesClick);
+    drainToggle.addEventListener('click', toggleDrain);
+    drainPanel.addEventListener('click', onDrainClick);
     // Backdrop click closes (but not clicks inside the card)
     dialog.addEventListener('click', function (e) { if (e.target === dialog) closeDialog(); });
 
@@ -121,7 +160,78 @@
     var cube = getCube();
     if (chargesValEl) chargesValEl.textContent = String(cube.charges);
     if (minuteBtn) minuteBtn.disabled = (cube.activeFace === null);
+    renderTicker(cube);
+    renderDrain(cube);
     renderFaces(cube);
+  }
+
+  // News ticker — shown only while a barrier is up; restored on reload via render().
+  function renderTicker(cube) {
+    if (!ticker) return;
+    var span = ticker.querySelector('span');
+    var f = faceByNum(cube.activeFace);
+    if (!f) {
+      ticker.classList.add('hidden');
+      if (span) span.textContent = '';
+      return;
+    }
+    if (span) {
+      span.textContent = 'FACE ' + f.face + ' ACTIVE — ' + f.effect + ' · ' +
+        cube.charges + ' CHARGE' + (cube.charges === 1 ? '' : 'S');
+    }
+    ticker.classList.remove('hidden');
+  }
+
+  // Drain accordion — the toggle is enabled only on face 4/5; when the gate
+  // closes (face 1-3 or no barrier) an open panel is collapsed.
+  function renderDrain(cube) {
+    if (!drainToggle) return;
+    var allowed = canDrain(cube);
+    drainToggle.disabled = !allowed;
+    if (!allowed) collapseDrain();
+  }
+
+  function collapseDrain() {
+    if (!drainPanel) return;
+    drainPanel.classList.add('hidden');
+    if (drainToggle) {
+      drainToggle.setAttribute('aria-expanded', 'false');
+      var arrow = drainToggle.querySelector('.cube-drain-arrow');
+      if (arrow) arrow.textContent = '▶';
+    }
+  }
+
+  function toggleDrain() {
+    if (!drainToggle || drainToggle.disabled || !drainPanel) return;
+    var open = drainPanel.classList.toggle('hidden'); // true → now hidden
+    var nowOpen = !open;
+    drainToggle.setAttribute('aria-expanded', nowOpen ? 'true' : 'false');
+    var arrow = drainToggle.querySelector('.cube-drain-arrow');
+    if (arrow) arrow.textContent = nowOpen ? '▼' : '▶';
+  }
+
+  function onDrainClick(e) {
+    var btn = e.target.closest('.cube-drain-apply');
+    if (!btn) return;
+    var item = btn.closest('.cube-drain-item');
+    if (!item) return;
+    var input = item.querySelector('.cube-drain-input');
+    var v = parseInt(input ? input.value : '', 10);
+    if (!isFinite(v) || v <= 0) return;
+    applyDrain(v);
+    if (input) input.value = '';
+  }
+
+  function applyDrain(amount) {
+    var cube = getCube();
+    if (!canDrain(cube)) return;                    // gate — face 4/5 only
+    cube.charges -= amount;
+    if (cube.charges <= 0) {                         // drained to 0 → barrier drops
+      cube.charges = 0;
+      cube.activeFace = null;
+      removeTheme();
+    }
+    persist();
   }
 
   function renderFaces(cube) {
