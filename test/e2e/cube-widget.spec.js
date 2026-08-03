@@ -171,4 +171,98 @@ test.describe('Cube of Force widget', () => {
     expect(after.y).toBeGreaterThan(box.y + 60);
     await expect(page.locator('#cubeDialog')).toBeHidden();
   });
+
+  // ===== News ticker (task 540) =====
+
+  test('[m] ticker is hidden while no barrier is active', async ({ page }) => {
+    await expect(page.locator('#cubeTicker')).toBeHidden();
+  });
+
+  test('[n] activating Face 4 shows the ticker with FACE 4 ACTIVE text', async ({ page }) => {
+    await openDialog(page);
+    await page.locator('.cube-activate[data-face="4"]').click();
+    await page.locator('#cubeClose').click();
+
+    const ticker = page.locator('#cubeTicker');
+    await expect(ticker).toBeVisible();
+    await expect(ticker).toContainText('FACE 4 ACTIVE');
+  });
+
+  test('[o] ticker animation is ~32s per cycle and bold', async ({ page }) => {
+    await setCube(page, { charges: 20, activeFace: 4 });
+    await expect(page.locator('#cubeTicker')).toBeVisible();
+
+    const span = page.locator('#cubeTicker span');
+    const duration = await span.evaluate((el) => getComputedStyle(el).animationDuration);
+    expect(parseFloat(duration)).toBeCloseTo(32, 0); // slow — accessibility requirement
+
+    const weight = await span.evaluate((el) => getComputedStyle(el).fontWeight);
+    expect(parseInt(weight, 10)).toBeGreaterThanOrEqual(700); // bold
+  });
+
+  test('[p] reload with an active barrier restores the ticker', async ({ page }) => {
+    await setCube(page, { charges: 20, activeFace: 5 });
+    await expect(page.locator('#cubeTicker')).toBeVisible();
+    await expect(page.locator('#cubeTicker')).toContainText('FACE 5 ACTIVE');
+  });
+
+  // ===== Spell-drain accordion (task 540) =====
+
+  test('[q] drain accordion is disabled without a barrier and on faces 1-3, enabled on 4 and 5', async ({ page }) => {
+    await openDialog(page);
+    await expect(page.locator('#cubeDrainToggle')).toBeDisabled(); // no barrier
+
+    await page.locator('.cube-activate[data-face="3"]').click();
+    await expect(page.locator('#cubeDrainToggle')).toBeDisabled(); // face 3
+
+    await page.locator('.cube-activate[data-face="4"]').click();
+    await expect(page.locator('#cubeDrainToggle')).toBeEnabled(); // face 4 (spell shield)
+
+    await page.locator('.cube-activate[data-face="5"]').click();
+    await expect(page.locator('#cubeDrainToggle')).toBeEnabled(); // face 5 (everything)
+  });
+
+  test('[r] accordion closes when switching from a shielded face to a low face', async ({ page }) => {
+    await openDialog(page);
+    await page.locator('.cube-activate[data-face="4"]').click();
+    await page.locator('#cubeDrainToggle').click();
+    await expect(page.locator('#cubeDrainPanel')).toBeVisible();
+
+    await page.locator('.cube-activate[data-face="2"]').click();
+    await expect(page.locator('#cubeDrainPanel')).toBeHidden();
+    await expect(page.locator('#cubeDrainToggle')).toBeDisabled();
+  });
+
+  test('[s] Apply subtracts the entered number from charges (7 from 30 → 23)', async ({ page }) => {
+    await setCube(page, { charges: 30, activeFace: 4 });
+    await openDialog(page);
+    await page.locator('#cubeDrainToggle').click();
+
+    const row = page.locator('.cube-drain-item[data-spell="disintegrate"]');
+    await row.locator('.cube-drain-input').fill('7');
+    await row.locator('.cube-drain-apply').click();
+
+    await expect(page.locator('#cubeChargesVal')).toHaveText('23');
+    const cube = await page.evaluate(() => JSON.parse(localStorage.getItem('monkSheet_v3')).cube);
+    expect(cube.charges).toBe(23);
+    expect(cube.activeFace).toBe(4);
+  });
+
+  test('[t] Apply that drains to 0 drops the barrier, removes the theme and hides the ticker', async ({ page }) => {
+    await setCube(page, { charges: 5, activeFace: 5 });
+    await openDialog(page);
+    await page.locator('#cubeDrainToggle').click();
+
+    const row = page.locator('.cube-drain-item[data-spell="prismatic-spray"]');
+    await row.locator('.cube-drain-input').fill('8');
+    await row.locator('.cube-drain-apply').click();
+
+    await expect(page.locator('#cubeChargesVal')).toHaveText('0'); // floored at 0
+    await expect(page.locator('#cubeThemeLink')).toHaveCount(0);
+    await expect(page.locator('#cubeTicker')).toBeHidden();
+
+    const cube = await page.evaluate(() => JSON.parse(localStorage.getItem('monkSheet_v3')).cube);
+    expect(cube.charges).toBe(0);
+    expect(cube.activeFace).toBeNull();
+  });
 });
