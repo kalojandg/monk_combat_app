@@ -1,0 +1,80 @@
+/*
+ * Cube of Force — theme: Bastion (face 5)
+ * тъмно бордо, пълен бункер
+ * Standalone stylesheet. Applied by modules/cube.js via a dynamic
+ * <link id="cubeThemeLink"> kept last in <head> so it wins the cascade.
+ * Overrides the SAME ambient :root tokens as styles.css (task 510 set).
+ * Semantic colors (coins, success/danger, cleric purple) are NOT themed —
+ * they live as literal values in styles.css, never as :root tokens.
+ * Palette (approved, do not renegotiate): bg #160f11 / card #22171a / accent #8a5a62.
+ */
+:root {
+  /* core surfaces & accent */
+  --bg: #160f11;
+  --accent: #8a5a62;
+  --panel: #181112;
+  --panel2: #130d0e;
+  --muted: #aca0a2;
+  --text: #ece9ea;
+  --border: #3a262a;
+  --pill: #140e0f;
+  --pill2: #25191b;
+  --feat-head-bg: rgba(157, 108, 116, 0.18);
+  --feat-head-text: #ece2e4;
+  --feat-head-border: rgba(221, 204, 207, 0.25);
+  --feat-card-bg: rgba(32, 22, 23, 0.9);
+  --feat-card-border: rgba(255, 255, 255, 0.08);
+  --feat-accent: #d2bcc0;
+  --text-white: #fff;
+  --text-bright: #f6f4f5;
+  --text-soft: #efeded;
+  --text-mute-1: #d0c8ca;
+  --text-mute-2: #6d5f61;
+  --text-mute-3: #5b4f51;
+  --text-lav-1: #f3f2f2;
+  --text-lav-2: #e7e4e4;
+  --text-lav-3: #dbd5d6;
+  --text-lav-4: #e9e5e6;
+  --text-lav-5: #dbd5d6;
+  --text-slate: #ebe7e8;
+  --border-1: #3d292c;
+  --border-2: #52363b;
+  --border-slate: #52363b;
+  --border-notes: #52363b;
+  --pill-border: #2f1f22;
+  --card-border: #432c30;
+  --tab-border: #50353a;
+  --tab-border-hover: #7c535a;
+  --tab-border-active: #af868d;
+  --subtab-border: #462f33;
+  --subtab-border-active: #bf9fa4;
+  --rule-accent: rgba(172, 130, 137, 0.55);
+  --tab-bg: #2f2023;
+  --tab-bg-hover: #473135;
+  --tab-bg-active: #5a3f43;
+  --subtab-bg: #23181a;
+  --subtab-bg-active: #463034;
+  --input-bg: #261b1d;
+  --surface-pill: #201718;
+  --surface-textarea: #1e1516;
+  --btn-bg: #322225;
+  --field-bg: #2d2022;
+  --btn-alt-bg: #3d2a2d;
+  --btn-alt-bg-hover: #593e42;
+  --surface-card: #251a1c;
+  --surface-card-hover: #302224;
+  --surface-feat-body: #261a1c;
+  --surface-notes: #211719;
+  --modal-bg: #181112;
+  --modal-textarea-bg: #271b1d;
+  --modal-btn-hover: #563c40;
+  --surface-hover: #2c1e21;
+  --flavor-hover-bg: #362528;
+  --tooltip-bg: #352427;
+  --alias-th-bg: #291c1e;
+  --alias-even-bg: #23191a;
+  --alias-odd-bg: #1f1517;
+  --collapse-bg: #281c1e;
+  --feat-head-bg-hover: rgba(157, 108, 116, 0.24);
+  --feat-head-border-hover: rgba(221, 204, 207, 0.45);
+}

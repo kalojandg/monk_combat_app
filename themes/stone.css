@@ -1,0 +1,80 @@
+/*
+ * Cube of Force — theme: Stone (face 2)
+ * пясъчник/бронз, неживо
+ * Standalone stylesheet. Applied by modules/cube.js via a dynamic
+ * <link id="cubeThemeLink"> kept last in <head> so it wins the cascade.
+ * Overrides the SAME ambient :root tokens as styles.css (task 510 set).
+ * Semantic colors (coins, success/danger, cleric purple) are NOT themed —
+ * they live as literal values in styles.css, never as :root tokens.
+ * Palette (approved, do not renegotiate): bg #15110d / card #211a13 / accent #8a6f4d.
+ */
+:root {
+  /* core surfaces & accent */
+  --bg: #15110d;
+  --accent: #8a6f4d;
+  --panel: #191510;
+  --panel2: #13100d;
+  --muted: #ada79f;
+  --text: #ecebe9;
+  --border: #3b3125;
+  --pill: #14110e;
+  --pill2: #252019;
+  --feat-head-bg: rgba(159, 135, 106, 0.18);
+  --feat-head-text: #ece8e2;
+  --feat-head-border: rgba(222, 213, 203, 0.25);
+  --feat-card-bg: rgba(33, 28, 21, 0.9);
+  --feat-card-border: rgba(255, 255, 255, 0.08);
+  --feat-accent: #d3c8bb;
+  --text-white: #fff;
+  --text-bright: #f6f5f4;
+  --text-soft: #efeeed;
+  --text-mute-1: #d0ccc8;
+  --text-mute-2: #6e675e;
+  --text-mute-3: #5c564e;
+  --text-lav-1: #f3f3f2;
+  --text-lav-2: #e8e6e3;
+  --text-lav-3: #dbd8d5;
+  --text-lav-4: #e9e7e5;
+  --text-lav-5: #dbd8d5;
+  --text-slate: #ebe9e7;
+  --border-1: #3e3428;
+  --border-2: #534535;
+  --border-slate: #534535;
+  --border-notes: #534535;
+  --pill-border: #30281e;
+  --card-border: #44392b;
+  --tab-border: #514434;
+  --tab-border-hover: #7e6a51;
+  --tab-border-active: #b19d84;
+  --subtab-border: #473c2e;
+  --subtab-border-active: #c1b19d;
+  --rule-accent: rgba(174, 153, 128, 0.55);
+  --tab-bg: #2f2820;
+  --tab-bg-hover: #483d30;
+  --tab-bg-active: #5c4e3d;
+  --subtab-bg: #231e18;
+  --subtab-bg-active: #473c2f;
+  --input-bg: #27211a;
+  --surface-pill: #211c16;
+  --surface-textarea: #1f1a14;
+  --btn-bg: #322b22;
+  --field-bg: #2e271f;
+  --btn-alt-bg: #3e3529;
+  --btn-alt-bg-hover: #5a4d3c;
+  --surface-card: #262019;
+  --surface-card-hover: #312a21;
+  --surface-feat-body: #26211a;
+  --surface-notes: #221d16;
+  --modal-bg: #191510;
+  --modal-textarea-bg: #28221a;
+  --modal-btn-hover: #584a3a;
+  --surface-hover: #2c261e;
+  --flavor-hover-bg: #372e24;
+  --tooltip-bg: #352d24;
+  --alias-th-bg: #29231c;
+  --alias-even-bg: #241f18;
+  --alias-odd-bg: #1f1b15;
+  --collapse-bg: #29231b;
+  --feat-head-bg-hover: rgba(159, 135, 106, 0.24);
+  --feat-head-border-hover: rgba(222, 213, 203, 0.45);
+}
