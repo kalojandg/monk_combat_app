@@ -134,7 +134,8 @@ const defaultState = {
   baseSpeed: 30,
   tough: false,
   hpAdjust: 0,
-  kiSaveDcMagic: 0
+  kiSaveDcMagic: 0,
+  cube: { charges: 36, activeFace: null }  // Cube of Force widget state (modules/cube.js)
 };
 
 // ===== Load/save =====
