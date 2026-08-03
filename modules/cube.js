@@ -61,7 +61,9 @@
       link.rel = 'stylesheet';
       link.id = 'cubeThemeLink';
     }
-    link.setAttribute('href', 'themes/' + f.theme + '.css');
+    var href = 'themes/' + f.theme + '.css';
+    if (link.getAttribute('href') === href && link === document.head.lastElementChild) return;
+    link.setAttribute('href', href);
     document.head.appendChild(link); // keep it the LAST element in <head> → wins the cascade
   }
 
@@ -156,8 +158,10 @@
 
   // ---- rendering ----
   function render() {
-    if (!dialog) return;
     var cube = getCube();
+    // sync the theme link with state — import (applyBundle) can change activeFace under us
+    if (cube.activeFace !== null) applyTheme(cube.activeFace); else removeTheme();
+    if (!dialog) return;
     if (chargesValEl) chargesValEl.textContent = String(cube.charges);
     if (minuteBtn) minuteBtn.disabled = (cube.activeFace === null);
     renderTicker(cube);
@@ -377,6 +381,8 @@
     if (cube.activeFace) applyTheme(cube.activeFace); // restore theme on reload
     render();
   }
+
+  window.renderCube = render; // applyBundle hook — Import refreshes the widget without a reload
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);

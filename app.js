@@ -811,6 +811,8 @@ function applyBundle(data) {
   if (typeof window.renderClericPrepSpells === 'function') window.renderClericPrepSpells();
   if (typeof window.renderClericCantrips === 'function') window.renderClericCantrips();
   if (typeof window.renderChaSpells === 'function') window.renderChaSpells();
+
+  if (typeof window.renderCube === 'function') window.renderCube();
 }
 
 // Inventory functions are in modules/inventory.js

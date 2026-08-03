@@ -265,4 +265,31 @@ test.describe('Cube of Force widget', () => {
     expect(cube.charges).toBe(0);
     expect(cube.activeFace).toBeNull();
   });
+
+  test('[u] applyBundle refreshes theme, ticker and charges without a reload', async ({ page }) => {
+    // active barrier on Face 2, then import a bundle with no barrier
+    await setCube(page, { charges: 30, activeFace: 2 });
+    await expect(page.locator('#cubeThemeLink')).toHaveAttribute('href', /stone\.css/);
+
+    await page.evaluate(() => {
+      const b = window.buildBundle();
+      b.state.cube = { charges: 12, activeFace: null };
+      window.applyBundle(b);
+    });
+    await expect(page.locator('#cubeThemeLink')).toHaveCount(0);
+    await expect(page.locator('#cubeTicker')).toBeHidden();
+    await openDialog(page);
+    await expect(page.locator('#cubeChargesVal')).toHaveText('12');
+
+    // and the reverse: import a bundle WITH an active barrier
+    await page.evaluate(() => {
+      const b = window.buildBundle();
+      b.state.cube = { charges: 20, activeFace: 4 };
+      window.applyBundle(b);
+    });
+    await expect(page.locator('#cubeThemeLink')).toHaveAttribute('href', /arcane\.css/);
+    await expect(page.locator('#cubeTicker')).toBeVisible();
+    await expect(page.locator('#cubeTicker')).toContainText('FACE 4 ACTIVE');
+    await expect(page.locator('#cubeChargesVal')).toHaveText('20');
+  });
 });
