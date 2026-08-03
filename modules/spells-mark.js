@@ -250,7 +250,8 @@ function initMarkSpells() {
   _renderMarkSpells(maxSlotLevel);
 }
 
-// Called on Long Rest — reset used slots and clear cleric prepared list
+// Called on Long Rest — reset used slots; the prepared cleric list SURVIVES the rest
+// (preparation се сменя ръчно при level-up, не на почивка)
 function restoreMarkSlots() {
   const slots = window.st.markSlots;
   if (slots) {
@@ -258,7 +259,6 @@ function restoreMarkSlots() {
       slots[lvl].used = 0;
     }
   }
-  window.st.preparedClericSpells = [];
 }
 
 // ── Cleric Spell Preparation Browser ──

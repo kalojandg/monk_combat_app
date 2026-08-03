@@ -150,7 +150,11 @@
     drainToggle.addEventListener('click', toggleDrain);
     drainPanel.addEventListener('click', onDrainClick);
     // Backdrop click closes (but not clicks inside the card)
-    dialog.addEventListener('click', function (e) { if (e.target === dialog) closeDialog(); });
+    dialog.addEventListener('click', function (e) {
+      if (e.target !== dialog) return;                 // clicks inside the card don't close
+      if (Date.now() - dialogOpenedAt < 500) return;   // ghost click from the opening tap
+      closeDialog();
+    });
 
     // Widget click / drag
     widget.addEventListener('pointerdown', onPointerDown);
@@ -305,8 +309,18 @@
   function minuteElapsed() {
     var cube = getCube();
     if (cube.activeFace === null) return;          // nothing to expire
-    cube.activeFace = null;                         // duration elapsed — no charge cost
-    removeTheme();
+    var f = faceByNum(cube.activeFace);
+    if (cube.charges >= f.cost) {
+      cube.charges -= f.cost;                      // duration elapsed — re-pay to keep the barrier up
+      if (cube.charges <= 0) {                     // cube ran out of charges → barrier drops
+        cube.charges = 0;
+        cube.activeFace = null;
+        removeTheme();
+      }
+    } else {
+      cube.activeFace = null;                      // can't afford another minute — barrier drops
+      removeTheme();
+    }
     persist();
   }
 
@@ -321,8 +335,11 @@
   }
 
   // ---- widget state machine (peek → expanded → dialog) ----
+  var dialogOpenedAt = 0; // touch browsers fire a synthetic click ~300ms after the opening tap
+
   function openDialog() {
     dialog.classList.remove('hidden');
+    dialogOpenedAt = Date.now();
     render();
   }
 

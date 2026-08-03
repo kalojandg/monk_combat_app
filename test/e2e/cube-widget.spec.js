@@ -142,7 +142,7 @@ test.describe('Cube of Force widget', () => {
     await expect(page.locator('.cube-activate[data-face="1"]')).toBeEnabled(); // cost 1 is affordable
   });
 
-  test('[i] Minute Elapsed drops the barrier without charge cost', async ({ page }) => {
+  test('[i] Minute Elapsed re-pays the face cost and keeps the barrier up', async ({ page }) => {
     await openDialog(page);
     await expect(page.locator('#cubeMinuteBtn')).toBeDisabled(); // no barrier yet
 
@@ -150,12 +150,35 @@ test.describe('Cube of Force widget', () => {
     await expect(page.locator('#cubeChargesVal')).toHaveText('33');
     await expect(page.locator('#cubeMinuteBtn')).toBeEnabled();
 
+    // the minute elapses → the shield is re-charged for another minute (cost 3)
     await page.locator('#cubeMinuteBtn').click();
+    await expect(page.locator('#cubeChargesVal')).toHaveText('30');
+    await expect(page.locator('#cubeThemeLink')).toHaveAttribute('href', /moss\.css/);
+    await expect(page.locator('#cubeTicker')).toBeVisible();
+
+    const cube = await page.evaluate(() => JSON.parse(localStorage.getItem('monkSheet_v3')).cube);
+    expect(cube.charges).toBe(30);
+    expect(cube.activeFace).toBe(3);
+  });
+
+  test('[i2] Minute Elapsed drops the barrier only on insufficient charges', async ({ page }) => {
+    // cost 3, only 2 left → cannot afford another minute
+    await setCube(page, { charges: 2, activeFace: 3 });
+    await openDialog(page);
+    await page.locator('#cubeMinuteBtn').click();
+
     await expect(page.locator('#cubeThemeLink')).toHaveCount(0);
-    await expect(page.locator('#cubeChargesVal')).toHaveText('33'); // unchanged — no cost
+    await expect(page.locator('#cubeChargesVal')).toHaveText('2'); // nothing spent
 
     const cube = await page.evaluate(() => JSON.parse(localStorage.getItem('monkSheet_v3')).cube);
     expect(cube.activeFace).toBeNull();
+
+    // paying down to exactly 0 also drops the barrier (cube out of charges)
+    await setCube(page, { charges: 3, activeFace: 3 });
+    await openDialog(page);
+    await page.locator('#cubeMinuteBtn').click();
+    await expect(page.locator('#cubeChargesVal')).toHaveText('0');
+    await expect(page.locator('#cubeThemeLink')).toHaveCount(0);
   });
 
   test('[k] reload with an active barrier restores the theme link and charges', async ({ page }) => {
@@ -303,5 +326,35 @@ test.describe('Cube of Force widget', () => {
     await expect(page.locator('#cubeTicker')).toBeVisible();
     await expect(page.locator('#cubeTicker')).toContainText('FACE 4 ACTIVE');
     await expect(page.locator('#cubeChargesVal')).toHaveText('20');
+  });
+});
+
+// Phone landscape: the dialog card is centered, so the widget sits over the BACKDROP.
+// The browser's synthetic click (~300ms after a tap) used to land on the backdrop
+// and instantly close the freshly opened dialog.
+test.describe('Cube of Force widget — touch, phone landscape', () => {
+  test.use({ viewport: { width: 844, height: 390 }, hasTouch: true });
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
+    await expect(page.locator('#cubeWidget')).toBeVisible();
+  });
+
+  test('[v] two taps open the dialog and the ghost click does not close it', async ({ page }) => {
+    const w = page.locator('#cubeWidget');
+    await w.tap();
+    await w.tap();
+    await expect(page.locator('#cubeDialog')).toBeVisible();
+
+    // survives the synthetic-click window
+    await page.waitForTimeout(600);
+    await expect(page.locator('#cubeDialog')).toBeVisible();
+
+    // a deliberate backdrop tap afterwards still closes it
+    await page.locator('#cubeDialog').tap({ position: { x: 60, y: 60 } });
+    await expect(page.locator('#cubeDialog')).toBeHidden();
   });
 });

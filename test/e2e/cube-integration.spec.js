@@ -120,12 +120,20 @@ test.describe('Cube of Force — integration (dialog click themes the whole app)
     await expect(page.locator('#cubeTicker')).toBeHidden();
   });
 
-  // ===== 3. Minute Elapsed reverts to the default theme =====
-  test('Minute Elapsed returns the app to the default theme and hides the ticker', async ({ page }) => {
+  // ===== 3. Minute Elapsed re-pays and keeps the theme; drops to default only when broke =====
+  test('Minute Elapsed keeps the theme while affordable, reverts to default when charges run short', async ({ page }) => {
     await openDialog(page);
     await page.locator('.cube-activate[data-face="4"]').click();
     await expect.poll(async () => (await readSurfaces(page)).bodyBg).toBe(FACES[3].bg);
 
+    // affordable → the shield is re-charged, the theme stays
+    await page.locator('#cubeMinuteBtn').click();
+    await expect(page.locator('#cubeChargesVal')).toHaveText('28'); // 36 − 4 − 4
+    await expect.poll(async () => (await readSurfaces(page)).bodyBg).toBe(FACES[3].bg);
+
+    // broke (cost 4 > 2) → the barrier finally drops
+    await setCube(page, { charges: 2, activeFace: 4 });
+    await openDialog(page);
     await page.locator('#cubeMinuteBtn').click();
 
     await expect.poll(async () => (await readSurfaces(page)).bodyBg).toBe(DEFAULT_BG);

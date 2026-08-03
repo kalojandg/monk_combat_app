@@ -72,9 +72,32 @@ test.describe('Rest Mechanics - Long Rest Basic', () => {
     
     // Long rest
     await page.locator('#btnLongRest').click();
-    
+
     // HP restored
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8');
+  });
+
+  test('Long Rest keeps prepared cleric spells and resets used mark slots', async ({ page }) => {
+    await page.goto('/');
+    await page.evaluate(() => {
+      localStorage.clear();
+      const st = {
+        level: 7, monkLevel: 5, clericLevel: 2, xp: 23000,
+        preparedClericSpells: ['bane', 'cure-wounds', 'inflict-wounds'],
+        markSlots: { 1: { total: 3, used: 2 } }
+      };
+      localStorage.setItem('monkSheet_v3', JSON.stringify(st));
+    });
+    await page.reload();
+    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
+
+    await page.locator('#btnLongRest').click();
+
+    // used slots reset, but the prepared list survives the long rest
+    await expect.poll(async () => page.evaluate(() => {
+      const st = JSON.parse(localStorage.getItem('monkSheet_v3'));
+      return { prepared: st.preparedClericSpells, used: st.markSlots?.['1']?.used };
+    })).toEqual({ prepared: ['bane', 'cure-wounds', 'inflict-wounds'], used: 0 });
   });
 
 });
