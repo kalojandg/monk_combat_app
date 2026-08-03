@@ -23,10 +23,12 @@
 
 .cube-widget.peek {
   opacity: .68;               /* peeking / half-asleep look */
+  transform: translateX(58%); /* half the icon hides beyond the right edge */
 }
 
 .cube-widget:not(.peek) {
   opacity: 1;
+  transform: none;
 }
 
 .cube-widget:active {

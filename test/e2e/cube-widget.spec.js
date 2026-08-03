@@ -39,16 +39,28 @@ test.describe('Cube of Force widget', () => {
     await expect(page.locator('#cubeWidget')).toBeVisible();
   });
 
-  test('[a] widget starts in peek state', async ({ page }) => {
+  test('[a] widget starts in peek state, half off the right edge', async ({ page }) => {
     await expect(page.locator('#cubeWidget')).toHaveClass(/peek/);
     await expect(page.locator('#cubeDialog')).toBeHidden();
+
+    // peek must visibly stick out beyond the viewport's right edge
+    const vw = page.viewportSize().width;
+    const box = await page.locator('#cubeWidget').boundingBox();
+    expect(box.x + box.width).toBeGreaterThan(vw + 5);
   });
 
   test('[b] click 1 expands, click 2 opens dialog, ✕ returns to peek', async ({ page }) => {
     const w = page.locator('#cubeWidget');
+    const vw = page.viewportSize().width;
     await w.click();
     await expect(w).not.toHaveClass(/peek/);
     await expect(page.locator('#cubeDialog')).toBeHidden();
+
+    // expanded icon slides fully inside the viewport — visibly different from peek
+    await expect.poll(async () => {
+      const box = await w.boundingBox();
+      return box.x + box.width;
+    }).toBeLessThanOrEqual(vw);
 
     await w.click();
     await expect(page.locator('#cubeDialog')).toBeVisible();
