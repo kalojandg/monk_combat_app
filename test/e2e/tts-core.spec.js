@@ -196,6 +196,73 @@ test.describe('TTS core (MonkTTS + Google Cloud TTS contract)', () => {
     expect(result.speaking).toBe(false);
   });
 
+  test('(к) priming не пуска остатъка от предишната реплика', async ({ page }) => {
+    // Багът: елементът пази декодираното старо аудио (revoke на blob URL-а не
+    // го изхвърля) и priming play() в новия клик го рестартираше от нулата,
+    // докато тече заявката за новата реплика. Правилното: priming-ът свири
+    // тишина (data: URI), никога стар blob.
+    const res = await page.evaluate(() => new Promise((resolve) => {
+      window.__plays = [];
+      window.__el = null;
+      window.HTMLMediaElement.prototype.play = function () {
+        window.__plays.push(this.src || '');
+        window.__el = this;
+        return Promise.resolve();
+      };
+
+      window.MonkTTS.speak('Първата реплика.');
+      const waitBlob = setInterval(function () {
+        if (window.__el && window.__el.src.indexOf('blob:') === 0) {
+          clearInterval(waitBlob);
+          const before = window.__plays.length;
+          window.MonkTTS.speak('Втората реплика.'); // priming-ът е синхронен
+          resolve({ primingSrc: window.__plays[before] || '(няма play)' });
+        }
+      }, 20);
+      setTimeout(function () { clearInterval(waitBlob); resolve({ primingSrc: 'timeout: първата реплика не стигна до blob' }); }, 3000);
+    }));
+    expect(res.primingSrc.indexOf('blob:')).not.toBe(0);
+  });
+
+  test('(л) прекъсната реплика не получава onend от края на следващата', async ({ page }) => {
+    // Багът: ended/error listener-ите се трупаха върху преизползвания елемент
+    // при всяка реплика. Прекъсната по средата реплика оставяше жив closure,
+    // който стреляше при края на СЛЕДВАЩАТА и викаше чуждия onend.
+    const res = await page.evaluate(() => new Promise((resolve) => {
+      window.__el = null;
+      // Валиден (безмълвен) WAV — 16-те нулеви байта на базовия мок не са валиден
+      // MP3 и 'error' събитието завършва А легитимно преди да я прекъснем.
+      window.__ttsMock.audioContent = 'UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+      // play не пуска реално възпроизвеждане: краят се контролира с dispatchEvent
+      window.HTMLMediaElement.prototype.play = function () {
+        window.__el = this;
+        return Promise.resolve();
+      };
+      let aEnd = 0, bEnd = 0;
+
+      window.MonkTTS.speak('Първата реплика.', { onend: function () { aEnd++; } });
+      const waitA = setInterval(function () {
+        if (window.__el && window.__el.src.indexOf('blob:') === 0) {
+          clearInterval(waitA);
+          const srcA = window.__el.src;
+          // Прекъсваме А по средата на "възпроизвеждането"
+          window.MonkTTS.speak('Втората реплика.', { onend: function () { bEnd++; } });
+          const waitB = setInterval(function () {
+            if (window.__el.src.indexOf('blob:') === 0 && window.__el.src !== srcA) {
+              clearInterval(waitB);
+              window.__el.dispatchEvent(new Event('ended')); // Б свършва
+              setTimeout(function () { resolve({ aEnd: aEnd, bEnd: bEnd }); }, 50);
+            }
+          }, 20);
+          setTimeout(function () { clearInterval(waitB); resolve({ aEnd: aEnd, bEnd: -1 }); }, 3000);
+        }
+      }, 20);
+      setTimeout(function () { clearInterval(waitA); resolve({ aEnd: -1, bEnd: -1 }); }, 3000);
+    }));
+    expect(res.bEnd).toBe(1);  // onend на Б си работи
+    expect(res.aEnd).toBe(0);  // прекъснатата А не получава късен onend
+  });
+
   test('(й) втори speak abort-ва заявката на първия в полет', async ({ page }) => {
     const res = await page.evaluate(() => new Promise((resolve) => {
       // Забавен fetch, който УВАЖАВА signal-а (базовият стъб го игнорира).

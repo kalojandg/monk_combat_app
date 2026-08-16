@@ -21,6 +21,13 @@
   const ENDPOINT = 'https://texttospeech.googleapis.com/v1/text:synthesize';
   const PLACEHOLDER_KEYS = ['', 'YOUR_API_KEY', 'API_KEY'];
 
+  // Тишина като data: URI за priming-а. Елементът пази декодираното старо аудио
+  // дори след revoke на blob URL-а, и play() в новия user-gesture го пускаше
+  // отначало, докато тече заявката за новата реплика. Празен src не върши работа —
+  // play() върху празен елемент реджектва и някои мобилни браузъри не броят
+  // отключването. Затова priming-ът винаги свири това едносемплово WAV.
+  const SILENCE = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+
   let primeEl = null;       // ЕДИН преизползван <audio> — priming за autoplay policy
   let currentUrl = null;
   let speaking = false;
@@ -151,6 +158,7 @@
     // PRIMING: синхронно, още в user-gesture-а, „отключваме" преизползвания елемент,
     // за да не отхвърли play() с NotAllowedError, когато асинхронният отговор дойде.
     const audio = getAudioEl();
+    audio.src = SILENCE;
     try {
       const pp = audio.play();
       if (pp && typeof pp.catch === 'function') pp.catch(function () { /* noop */ });
@@ -171,8 +179,11 @@
       if (controller === ctrl) controller = null;
       const url = URL.createObjectURL(blob);
       currentUrl = url;
-      audio.addEventListener('ended', function () { finish(null); });
-      audio.addEventListener('error', function () { finish(null); });
+      // Присвояване, НЕ addEventListener — listener-ите се трупаха върху
+      // преизползвания елемент и прекъсната реплика получаваше onend от края
+      // на следващата. Присвояването презаписва стария handler.
+      audio.onended = function () { finish(null); };
+      audio.onerror = function () { finish(null); };
       audio.src = url;
       const p = audio.play();
       if (p && typeof p.catch === 'function') p.catch(function () { finish(null); });
@@ -193,6 +204,10 @@
       controller = null;
     }
     if (primeEl) {
+      // Чистим и хендлърите — прекъснатата реплика не бива да получава onend
+      // от края на priming тишината или на следващата реплика.
+      primeEl.onended = null;
+      primeEl.onerror = null;
       try { primeEl.pause(); } catch (e) { /* noop */ }
     }
     if (window.speechSynthesis) {
