@@ -366,21 +366,7 @@ document.addEventListener('click', () => {
 });
 
 // ===== Tabs =====
-document.addEventListener("click", (e) => {
-  const tabBtn = e.target.closest("[data-tab]");
-  if (!tabBtn) return;
-  const tab = tabBtn.getAttribute("data-tab");
-
-  // toggle active
-  document.querySelectorAll("[data-tab]").forEach(b =>
-    b.classList.toggle("active", b === tabBtn)
-  );
-
-  // hide/show tabs
-  document.querySelectorAll(".tab").forEach(p => p.classList.add("hidden"));
-  const pane = document.querySelector(`#tab-${tab}`) || document.querySelector(`#${tab}`);
-  if (pane) pane.classList.remove("hidden");
-});
+// Single source of truth: showTab() in tabsInit (bottom of file).
 
 // ===== Rendering =====
 function renderAll() {
@@ -1395,36 +1381,6 @@ function attachCollapseBtn() {
   });
 }
 
-document.addEventListener("click", (e) => {
-  const tabBtn = e.target.closest("[data-tab]");
-  if (!tabBtn) return;
-  const tab = tabBtn.getAttribute("data-tab");
-
-  // ... твоя код за превключване ...
-
-  if (tab === 'skills' || tab === 'features') {
-    const d = derived();
-    if (!_featuresRendered || _featuresDirty) {
-      renderFeaturesAccordion(st.monkLevel || 1, st.clericLevel || 0);
-      _featuresRendered = true;
-      _featuresDirty = false;
-    }
-  }
-});
-
-// след глобалния таб-контрол
-document.addEventListener('click', (e) => {
-  const tabBtn = e.target.closest("[data-tab]");
-  if (!tabBtn) return;
-  const tab = tabBtn.getAttribute("data-tab");
-
-  // ... твоята логика за активиране/скриване ...
-
-  if (tab === 'skills' || tab === 'features') {
-    renderFeaturesAccordion(st.monkLevel || 1, st.clericLevel || 0);
-  }
-});
-
 
 // ===== Session Notes — FOLDER MODE =====
 const NOTES_DIR_KEY = "notesDirHandle_v2"; // ключ в IndexedDB
@@ -1658,10 +1614,16 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
     const tabEl = document.getElementById(`tab-${tabKey}`);
     if (tabEl) tabEl.classList.remove('hidden');
 
+    // помни последния таб (само се четеше, никога не се пишеше)
+    try { localStorage.setItem('activeTab', tabKey); } catch { }
+
     // 3) лениво рендериране само когато е нужно
-    if (tabKey === 'featuresSection') {
-      const d = derived();
+    if (tabKey === 'skills' || tabKey === 'featuresSection') {
       renderFeaturesAccordion(st.monkLevel || 1, st.clericLevel || 0);
+    }
+
+    if (tabKey === 'sessionNotes') {
+      onNotesTabShown();
     }
 
     if (tabKey === 'resurrection') {
@@ -1925,10 +1887,12 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
 
   // wire (skip 'combat' - it's not a tab)
   btns.forEach(b => {
+    b.setAttribute('type', 'button');
     if (b.dataset.tab !== 'combat') {
       b.addEventListener('click', () => showTab(b.dataset.tab));
     }
   });
+  window.showTab = showTab;
 
   // Първоначален таб (помни последния; fallback към първия бутон)
   // Combat не е таб - е винаги видим отгоре, не го включваме в таб логиката
@@ -1943,75 +1907,16 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
   }
 })();
 
-(function tabsInitToggleable() {
-  const btns = Array.from(document.querySelectorAll('.tab-nav [data-tab]'));
-  // Only select actual tabs, not combat section
-  const panels = Array.from(document.querySelectorAll('.tab')).filter(p => p.id !== 'tab-combat');
-  let activeName = null;
-
-  function setActive(name) {
-    // Skip 'combat' - it's not a tab, it's always visible above tabs
-    if (name === 'combat') {
-      activeName = null;
-      return;
-    }
-    
-    activeName = name;
-
-    // 1) скрий всички табове (Combat не е таб, не го докосваме)
-    panels.forEach(p => p.classList.add('hidden'));
-
-    // 2) покажи избрания (ако има такъв)
-    if (name) {
-      const panel = document.getElementById(`tab-${name}`);
-      if (panel) panel.classList.remove('hidden');
-    }
-
-    // 3) активна визия за бутоните
-    btns.forEach(b => b.classList.toggle('active', !!name && b.dataset.tab === name));
-
-    // 4) лениво зареждане на съдържание
-    if (name === 'stats') {            // второ ниво навигация под Stats
-      // Show first sub-tab by default if none is active
-      const activeSubTab = document.querySelector('.sub-tab-btn.active');
-      if (!activeSubTab && typeof window.showSubTab === 'function') {
-        window.showSubTab('basicinfo');
-      }
-      // при Stats не чертаем акордеона
-    } else {
-      // Hide all sub-tabs when switching away from Stats tab
-      if (typeof window.hideAllSubTabs === 'function') {
-        window.hideAllSubTabs();
-      }
-    }
-    // Skills табът все още чертае features акордеона
-    if (name === 'skills') {
-      const d = derived();
-      renderFeaturesAccordion(st.monkLevel || 1, st.clericLevel || 0); // чертай акордеона тук
-    }
-    if (name === 'sessionNotes') {
-      onNotesTabShown();                // както вече имаш
-    }
-  }
-
-  btns.forEach(b => {
-    b.setAttribute('type', 'button');
-    // Skip 'combat' button - it's not a tab
-    if (b.dataset.tab === 'combat') return;
-    // поддържаме "collapse all" при повторно кликване
-    b.addEventListener('click', () => setActive(activeName === b.dataset.tab ? null : b.dataset.tab));
-  });
-
-  // Combat табът е винаги видим, не го скриваме
-  // setActive(null); // старт без отворен таб (ако искаш определен — подай името му)
-})();
+// NOTE: премахнат е вторият таб-контролер (tabsInitToggleable) — той
+// "toggle-ваше" активния таб при повторен клик (setActive(null) + hideAllSubTabs),
+// което оставяше Stats без активен sub-tab и празен, докато не се смени табът.
+// showTab() по-горе е единственият контролер.
 
 window.addEventListener('beforeunload', (e) => {
   // покажи подсказка ако има непратени промени
   e.preventDefault();
   e.returnValue = ''; // стандартен трик за prompt
 });
-+
 
   // ==== Boot ====
   (async () => {
@@ -2028,6 +1933,13 @@ window.addEventListener('beforeunload', (e) => {
     await notesEnsureNewFile();            // ако има папка → създай *нов* днешен файл
 
     renderAll();
+
+    // Re-show the restored tab now that its HTML fragment exists
+    // (the parse-time showTab ran against empty panels).
+    {
+      const activeBtn = document.querySelector('.tab-nav .tab-btn.active');
+      if (activeBtn && typeof window.showTab === 'function') window.showTab(activeBtn.dataset.tab);
+    }
     // Module functions are now loaded from separate files (modules/*.js)
     if (typeof window.attachFlavor === 'function') attachFlavor();
     if (typeof window.attachNamegen === 'function') attachNamegen();

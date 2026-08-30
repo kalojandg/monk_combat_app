@@ -187,12 +187,19 @@ function _renderMarkSpells(maxSlotLevel) {
     }).join('')
   ).join('');
 
+  // Root element persists across re-renders (only innerHTML changes) — wire the
+  // click handler ONCE. A `{ once: true }` listener per render used to pile up:
+  // N renders → N toggles per click → accordion "dead" on every even visit.
+  root.__markMaxSlotLevel = maxSlotLevel;
+  if (root.__spellClicksWired) return;
+  root.__spellClicksWired = true;
+
   root.addEventListener('click', async e => {
     const item = e.target.closest('.mark-spell-item');
     if (!item) return;
     const index = item.dataset.index;
     _expandedSpell = _expandedSpell === index ? null : index;
-    _renderMarkSpells(maxSlotLevel);
+    _renderMarkSpells(root.__markMaxSlotLevel);
 
     if (_expandedSpell === index) {
       try {
@@ -204,7 +211,7 @@ function _renderMarkSpells(maxSlotLevel) {
         if (detailEl) detailEl.innerHTML = '<div class="small muted">Failed to load spell details.</div>';
       }
     }
-  }, { once: true });
+  });
 }
 
 function _renderSpellDetail(d) {
@@ -450,14 +457,23 @@ function _spellItemHTML(sp, expandedIndex, dataAttr = 'data-spell="1"') {
 }
 
 function _attachSpellClicks(root, getExpanded, setExpanded, rerender) {
+  // Root persists across re-renders — keep the LATEST callbacks on the element
+  // (rerender may capture a changing clericLevel) but wire the listener only once.
+  // The old `{ once: true }`-per-render pattern accumulated N listeners after N
+  // renders; each click then toggled N times → no-op on every even tab visit.
+  root.__spellHandlers = { getExpanded, setExpanded, rerender };
+  if (root.__spellClicksWired) return;
+  root.__spellClicksWired = true;
+
   root.addEventListener('click', async e => {
     const item = e.target.closest('.mark-spell-item');
     if (!item) return;
+    const h = root.__spellHandlers;
     const index = item.dataset.index;
-    setExpanded(getExpanded() === index ? null : index);
-    rerender();
+    h.setExpanded(h.getExpanded() === index ? null : index);
+    h.rerender();
 
-    if (getExpanded() === index) {
+    if (h.getExpanded() === index) {
       try {
         const d = await _fetchSpellDetails(index);
         const detailEl = root.querySelector(`.mark-spell-item[data-index="${index}"] .mark-spell-details`);
@@ -467,7 +483,7 @@ function _attachSpellClicks(root, getExpanded, setExpanded, rerender) {
         if (detailEl) detailEl.innerHTML = '<div class="small muted">Failed to load spell details.</div>';
       }
     }
-  }, { once: true });
+  });
 }
 
 let _expandedWisCantrip = null;
