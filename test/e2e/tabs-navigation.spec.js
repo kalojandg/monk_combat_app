@@ -81,7 +81,7 @@ test.describe('Tabs - Basic Navigation', () => {
 
   test('All tabs are clickable', async ({ page }) => {
     // 1:1 with the real tab-nav in index.html (Quests is commented out).
-    // Final order after the Name Gen consolidation: Names is the last tab.
+    // Final order after the Name Gen consolidation: Names, then Campaign NPCs last.
     const tabs = [
       'stats',
       'pcchar',
@@ -90,7 +90,8 @@ test.describe('Tabs - Basic Navigation', () => {
       'flavor',
       'skills',
       'sessionNotes',
-      'namegen'
+      'namegen',
+      'campaignNpc'
     ];
 
     for (const tabName of tabs) {

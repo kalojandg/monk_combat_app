@@ -10,6 +10,7 @@ async function loadTabs() {
     'namegen': 'tabs/namegen.html',
     'skills': 'tabs/skills.html',
     'sessionNotes': 'tabs/sessionNotes.html',
+    'campaignNpc': 'tabs/campaignNpc.html',
     // 'quests': 'tabs/quests.html', // moved to shared-inventory app
   };
 
@@ -129,6 +130,7 @@ const defaultState = {
   familiars: [],
   quests: [],
   npcNames: [],
+  campaignNpcs: [],   // Campaign NPCs таб: { name, faction, description, location }
 
   acMagic: 0,
   baseSpeed: 30,
@@ -482,6 +484,7 @@ function renderAll() {
   renderDeathSaves();
   window.renderInventoryTable?.();
   window.renderGold?.();
+  if (typeof window.renderNpcTable === 'function') window.renderNpcTable();
   // renderFeaturesAccordion(d.level);
 }
 
@@ -1648,6 +1651,14 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
         if (typeof window.renderGold === 'function') {
           window.renderGold();
         }
+      }, 100);
+    }
+
+    // Re-attach Campaign NPCs event listeners when the tab is shown
+    if (tabKey === 'campaignNpc') {
+      setTimeout(() => {
+        window.attachCampaignNpcs?.();
+        window.renderNpcTable?.();
       }, 100);
     }
 
