@@ -199,3 +199,225 @@ test.describe('Campaign NPCs - Persistence', () => {
   });
 
 });
+
+/* =========================================================================
+ * Таск 820 — търсене (slash-aware) + детайлен ред
+ * ========================================================================= */
+
+// Реални примери от кампанията: и името, и фракцията могат да носят няколко
+// стойности, разделени с / или \.
+const NPC_SEED = [
+  { name: 'Гримгор', faction: 'орките', description: '', location: '' },
+  {
+    name: 'Катарин',
+    faction: 'кралицата на Кислев/руснаците',
+    description: 'Ледената кралица.',
+    location: 'Ледения дворец'
+  },
+  {
+    name: 'Кулсталтин/Распутин',
+    faction: 'окултен лидер',
+    description: 'Кръстен от партито.',
+    location: ''
+  }
+];
+
+async function seedNpcs(page, list = NPC_SEED) {
+  await page.evaluate(l => {
+    window.st.campaignNpcs = JSON.parse(JSON.stringify(l));
+    window.save();
+  }, list);
+  await page.waitForTimeout(200);
+}
+
+test.describe('Campaign NPCs - npcMatches (чиста функция)', () => {
+
+  test.beforeEach(async ({ page }) => {
+    await bootClean(page);
+    await openCampaignNpcTab(page);
+  });
+
+  test('npcMatches is exposed on window', async ({ page }) => {
+    const type = await page.evaluate(() => typeof window.npcMatches);
+    expect(type).toBe('function');
+  });
+
+  test('Slash in the faction matches the trailing part', async ({ page }) => {
+    const katarin = NPC_SEED[1];
+    const hit = await page.evaluate(n => window.npcMatches(n, 'руснаци'), katarin);
+    expect(hit).toBe(true);
+  });
+
+  test('Matching is case-insensitive', async ({ page }) => {
+    const katarin = NPC_SEED[1];
+    const hit = await page.evaluate(n => window.npcMatches(n, 'РУСНАЦИ'), katarin);
+    expect(hit).toBe(true);
+  });
+
+  test('Slash in the NAME matches the trailing part', async ({ page }) => {
+    const kulstaltin = NPC_SEED[2];
+    const hit = await page.evaluate(n => window.npcMatches(n, 'распутин'), kulstaltin);
+    expect(hit).toBe(true);
+  });
+
+  test('The query is trimmed before matching', async ({ page }) => {
+    const katarin = NPC_SEED[1];
+    const hit = await page.evaluate(n => window.npcMatches(n, ' кислев '), katarin);
+    expect(hit).toBe(true);
+  });
+
+  test('A substring inside a part matches', async ({ page }) => {
+    const katarin = NPC_SEED[1];
+    const hit = await page.evaluate(n => window.npcMatches(n, 'наци'), katarin);
+    expect(hit).toBe(true);
+  });
+
+  test('A query that is nowhere does not match', async ({ page }) => {
+    const katarin = NPC_SEED[1];
+    const hit = await page.evaluate(n => window.npcMatches(n, 'елф'), katarin);
+    expect(hit).toBe(false);
+  });
+
+  test('An empty query matches everything', async ({ page }) => {
+    const results = await page.evaluate(seed => seed.map(n => window.npcMatches(n, '')), NPC_SEED);
+    expect(results).toEqual([true, true, true]);
+  });
+
+});
+
+test.describe('Campaign NPCs - Live search', () => {
+
+  test.beforeEach(async ({ page }) => {
+    await bootClean(page);
+    await openCampaignNpcTab(page);
+    await seedNpcs(page);
+  });
+
+  test('Typing filters the table down to the matching rows', async ({ page }) => {
+    await page.locator('#npcSearch').fill('руснаци');
+    await page.waitForTimeout(200);
+
+    const rows = page.locator('#npcTableRoot tr[data-npc-idx]');
+    await expect(rows).toHaveCount(1);
+    await expect(rows.first()).toContainText('Катарин');
+
+    const root = page.locator('#npcTableRoot');
+    await expect(root).not.toContainText('Гримгор');
+    await expect(root).not.toContainText('Кулсталтин');
+  });
+
+  test('Clearing the search brings every row back', async ({ page }) => {
+    await page.locator('#npcSearch').fill('руснаци');
+    await page.waitForTimeout(200);
+    await page.locator('#npcSearch').fill('');
+    await page.waitForTimeout(200);
+
+    await expect(page.locator('#npcTableRoot tr[data-npc-idx]')).toHaveCount(3);
+  });
+
+  test('A query with no hits shows the no-matches message', async ({ page }) => {
+    await page.locator('#npcSearch').fill('елфи');
+    await page.waitForTimeout(200);
+
+    await expect(page.locator('#npcTableRoot')).toContainText('Няма съвпадения.');
+    await expect(page.locator('#npcTableRoot tr[data-npc-idx]')).toHaveCount(0);
+  });
+
+  test('Editing a visible row while filtering hits the right record', async ({ page }) => {
+    await page.locator('#npcSearch').fill('руснаци');
+    await page.waitForTimeout(200);
+
+    const row = page.locator('#npcTableRoot tr[data-npc-idx]').first();
+    await row.locator('button[title="Edit"]').click();
+    await page.waitForTimeout(150);
+
+    await expect(page.locator('#npcName')).toHaveValue('Катарин');
+    await page.locator('#npcFaction').fill('болшевиките');
+    await page.locator('#npcSave').click();
+    await page.waitForTimeout(250);
+
+    const stored = await page.evaluate(() => window.st.campaignNpcs);
+    expect(stored).toHaveLength(3);
+    expect(stored[0].name).toBe('Гримгор');
+    expect(stored[1].name).toBe('Катарин');
+    expect(stored[1].faction).toBe('болшевиките');
+    expect(stored[2].name).toBe('Кулсталтин/Распутин');
+  });
+
+});
+
+test.describe('Campaign NPCs - Details row', () => {
+
+  test.beforeEach(async ({ page }) => {
+    await bootClean(page);
+    await openCampaignNpcTab(page);
+    await seedNpcs(page);
+  });
+
+  test('The details button shows description and where-to-find', async ({ page }) => {
+    await page.locator('button[data-npc-details="1"]').click();
+    await page.waitForTimeout(200);
+
+    const details = page.locator('#npcTableRoot tr.npc-details-row');
+    await expect(details).toHaveCount(1);
+    await expect(details).toContainText('Description');
+    await expect(details).toContainText('Ледената кралица.');
+    await expect(details).toContainText('Where to find');
+    await expect(details).toContainText('Ледения дворец');
+  });
+
+  test('Only one row is expanded at a time', async ({ page }) => {
+    await page.locator('button[data-npc-details="1"]').click();
+    await page.waitForTimeout(200);
+    await page.locator('button[data-npc-details="2"]').click();
+    await page.waitForTimeout(200);
+
+    const details = page.locator('#npcTableRoot tr.npc-details-row');
+    await expect(details).toHaveCount(1);
+    await expect(details).toContainText('Кръстен от партито.');
+    await expect(details).not.toContainText('Ледената кралица.');
+  });
+
+  test('Clicking the same details button again collapses the row', async ({ page }) => {
+    await page.locator('button[data-npc-details="1"]').click();
+    await page.waitForTimeout(200);
+    await expect(page.locator('#npcTableRoot tr.npc-details-row')).toHaveCount(1);
+
+    await page.locator('button[data-npc-details="1"]').click();
+    await page.waitForTimeout(200);
+    await expect(page.locator('#npcTableRoot tr.npc-details-row')).toHaveCount(0);
+  });
+
+  test('An NPC without details says so', async ({ page }) => {
+    await page.locator('button[data-npc-details="0"]').click();
+    await page.waitForTimeout(200);
+
+    const details = page.locator('#npcTableRoot tr.npc-details-row');
+    await expect(details).toHaveCount(1);
+    await expect(details).toContainText('Няма детайли.');
+    await expect(details).not.toContainText('Description');
+  });
+
+  test('An empty field block is skipped', async ({ page }) => {
+    // Кулсталтин има описание, но няма „Where to find".
+    await page.locator('button[data-npc-details="2"]').click();
+    await page.waitForTimeout(200);
+
+    const details = page.locator('#npcTableRoot tr.npc-details-row');
+    await expect(details).toContainText('Description');
+    await expect(details).not.toContainText('Where to find');
+  });
+
+  test('The expanded row survives a re-render while it stays visible', async ({ page }) => {
+    await page.locator('button[data-npc-details="1"]').click();
+    await page.waitForTimeout(200);
+
+    await page.locator('#npcSearch').fill('кислев');
+    await page.waitForTimeout(200);
+
+    const details = page.locator('#npcTableRoot tr.npc-details-row');
+    await expect(details).toHaveCount(1);
+    await expect(details).toContainText('Ледената кралица.');
+  });
+
+});

@@ -7,8 +7,39 @@
   let __npcEditIndex = null; // null => Add, число => Edit
   let __npcAttached = false;
   let __npcSortableInstance = null;
+  let __npcExpandedIdx = null; // реалният индекс на разгънатия детайлен ред (точно един)
 
   const safe = s => String(s || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+
+  // Чиста функция (по прецедента на spendGold — спековете я викат директно).
+  // И името, и фракцията могат да носят няколко стойности, разделени с / или \
+  // („кралицата на Кислев/руснаците", „Кулсталтин/Распутин").
+  function npcMatches(npc, query) {
+    const q = String(query || '').trim().toLowerCase();
+    if (!q) return true;
+    const parts = [npc && npc.name, npc && npc.faction]
+      .flatMap(v => String(v || '').split(/[\/\\]/))
+      .map(s => s.trim().toLowerCase())
+      .filter(Boolean);
+    return parts.some(p => p.includes(q));
+  }
+
+  function npcQuery() {
+    const el = document.getElementById('npcSearch');
+    return el ? el.value : '';
+  }
+
+  // Свободен текст, не таблица (изискване): два блока, празният се пропуска.
+  function npcDetailsHtml(npc) {
+    const desc = String((npc && npc.description) || '').trim();
+    const loc = String((npc && npc.location) || '').trim();
+    if (!desc && !loc) return '<small class="npc-details-empty">Няма детайли.</small>';
+
+    let html = '';
+    if (desc) html += `<div class="npc-details-block"><strong>Description</strong><div class="npc-details-text">${safe(desc)}</div></div>`;
+    if (loc) html += `<div class="npc-details-block"><strong>Where to find</strong><div class="npc-details-text">${safe(loc)}</div></div>`;
+    return html;
+  }
 
   function npcList() {
     if (typeof window.st === 'undefined') return null;
@@ -57,15 +88,32 @@
       return;
     }
 
-    const rows = list.map((npc, i) => `<tr data-npc-idx="${i}">
+    const q = npcQuery();
+    const filtering = String(q || '').trim() !== '';
+    // Пази РЕАЛНИЯ индекс — edit/delete/детайли работят върху НЕфилтрирания масив.
+    const visible = list.map((npc, i) => ({ npc, i })).filter(e => npcMatches(e.npc, q));
+
+    if (!visible.length) {
+      root.innerHTML = '<small>Няма съвпадения.</small>';
+      return;
+    }
+
+    const rows = visible.map(({ npc, i }) => {
+      const row = `<tr data-npc-idx="${i}">
         <td class="npc-drag-handle" title="Drag to reorder">☰</td>
         <td>${safe(npc.name)}</td>
         <td>${safe(npc.faction)}</td>
         <td style="white-space:nowrap;text-align:center">
+          <button class="icon-btn" data-npc-details="${i}" title="Details">📖</button>
           <button class="icon-btn" data-npc-edit="${i}" title="Edit">✏️</button>
           <button class="icon-btn" data-npc-del="${i}" title="Delete">🗑️</button>
         </td>
-      </tr>`).join('');
+      </tr>`;
+      if (__npcExpandedIdx !== i) return row;
+      return row + `<tr class="npc-details-row" data-npc-details-idx="${i}">
+        <td colspan="4">${npcDetailsHtml(npc)}</td>
+      </tr>`;
+    }).join('');
 
     root.innerHTML = `
     <table class="alias-table npc-table">
@@ -75,7 +123,14 @@
       <tbody id="npcTableBody">${rows}</tbody>
     </table>`;
 
-    // wire edit/delete
+    // wire details / edit / delete
+    root.querySelectorAll('[data-npc-details]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const idx = parseInt(e.currentTarget.getAttribute('data-npc-details'), 10);
+        __npcExpandedIdx = (__npcExpandedIdx === idx) ? null : idx;
+        renderNpcTable();
+      });
+    });
     root.querySelectorAll('[data-npc-edit]').forEach(btn => {
       btn.addEventListener('click', e => {
         const idx = parseInt(e.currentTarget.getAttribute('data-npc-edit'), 10);
@@ -87,31 +142,45 @@
         const idx = parseInt(e.currentTarget.getAttribute('data-npc-del'), 10);
         const sure = confirm('Изтриване на този NPC?');
         if (!sure) return;
+        // Индексите се местят — дръж разгънатия ред честен.
+        if (__npcExpandedIdx === idx) __npcExpandedIdx = null;
+        else if (__npcExpandedIdx !== null && __npcExpandedIdx > idx) __npcExpandedIdx--;
         window.st.campaignNpcs.splice(idx, 1);
         window.save(); // render + cloud
       });
     });
 
-    initNpcDragAndDrop();
+    initNpcDragAndDrop(filtering);
   }
 
-  function initNpcDragAndDrop() {
-    const tbody = document.getElementById('npcTableBody');
-    if (!tbody || typeof Sortable === 'undefined') return;
-
+  function initNpcDragAndDrop(filtering) {
     if (__npcSortableInstance) {
       __npcSortableInstance.destroy();
+      __npcSortableInstance = null;
     }
+
+    // Преподреждане на филтриран изглед би разбъркало скритите редове.
+    if (filtering) return;
+
+    const tbody = document.getElementById('npcTableBody');
+    if (!tbody || typeof Sortable === 'undefined') return;
 
     __npcSortableInstance = Sortable.create(tbody, {
       animation: 150,
       handle: '.npc-drag-handle',
       ghostClass: 'npc-dragging',
+      draggable: 'tr[data-npc-idx]',
       filter: 'button, .icon-btn',
-      onEnd: function (evt) {
-        if (evt.oldIndex === evt.newIndex) return;
-        const moved = window.st.campaignNpcs.splice(evt.oldIndex, 1)[0];
-        window.st.campaignNpcs.splice(evt.newIndex, 0, moved);
+      onEnd: function () {
+        // Чети новия ред от DOM-а по РЕАЛНИТЕ индекси — детайлният ред не се брои.
+        const order = Array.from(tbody.querySelectorAll('tr[data-npc-idx]'))
+          .map(tr => parseInt(tr.getAttribute('data-npc-idx'), 10));
+        const list = window.st.campaignNpcs;
+        if (order.length !== list.length || order.some(i => !list[i])) return;
+        const same = order.every((idx, pos) => idx === pos);
+        if (same) return;
+        window.st.campaignNpcs = order.map(i => list[i]);
+        __npcExpandedIdx = null;
         window.save();
       }
     });
@@ -124,8 +193,10 @@
     const addBtn = document.getElementById('btnNpcAdd');
     const saveBtn = document.getElementById('npcSave');
     const cancelBtn = document.getElementById('npcCancel');
+    const search = document.getElementById('npcSearch');
 
     addBtn && addBtn.addEventListener('click', () => npcOpenModal());
+    search && search.addEventListener('input', () => renderNpcTable()); // живо филтриране
     cancelBtn && cancelBtn.addEventListener('click', npcCloseModal);
 
     saveBtn && saveBtn.addEventListener('click', () => {
@@ -162,4 +233,5 @@
   // Export functions to global scope
   window.attachCampaignNpcs = attachCampaignNpcs;
   window.renderNpcTable = renderNpcTable;
+  window.npcMatches = npcMatches;
 })();
