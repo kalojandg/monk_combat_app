@@ -421,3 +421,92 @@ test.describe('Campaign NPCs - Details row', () => {
   });
 
 });
+
+/* =========================================================================
+ * Drag reorder — state-level покритие. Реален mouse drag е flaky
+ * (Playwright + SortableJS timing, урокът от quest drag теста), затова
+ * симулираме каквото Sortable прави: местим <tr> в DOM-а и викаме onEnd
+ * през инстанцията (Sortable.get, наличен от SortableJS 1.11+).
+ * ========================================================================= */
+
+// Мести първия видим ред в края на tbody и пуска onEnd — както след реален drag.
+async function simulateDragFirstRowToEnd(page) {
+  await page.evaluate(() => {
+    const tbody = document.getElementById('npcTableBody');
+    const inst = Sortable.get(tbody);
+    const rows = tbody.querySelectorAll('tr[data-npc-idx]');
+    tbody.appendChild(rows[0]);
+    inst.options.onEnd();
+  });
+  await page.waitForTimeout(200);
+}
+
+test.describe('Campaign NPCs - Drag reorder (state-level)', () => {
+
+  test.beforeEach(async ({ page }) => {
+    await bootClean(page);
+    await openCampaignNpcTab(page);
+    await seedNpcs(page);
+  });
+
+  test('Sortable instance is attached to the unfiltered table', async ({ page }) => {
+    const attached = await page.evaluate(() => {
+      const tbody = document.getElementById('npcTableBody');
+      return !!(tbody && Sortable.get(tbody));
+    });
+    expect(attached).toBe(true);
+  });
+
+  test('Simulated drag reorders st.campaignNpcs and persists', async ({ page }) => {
+    await simulateDragFirstRowToEnd(page);
+
+    const stored = await page.evaluate(() => window.st.campaignNpcs.map(n => n.name));
+    expect(stored).toEqual(['Катарин', 'Кулсталтин/Распутин', 'Гримгор']);
+
+    const persisted = await page.evaluate(() =>
+      JSON.parse(localStorage.getItem('monkSheet_v3')).campaignNpcs.map(n => n.name));
+    expect(persisted).toEqual(['Катарин', 'Кулсталтин/Распутин', 'Гримгор']);
+
+    // Re-render-ът показва новия ред.
+    const rows = page.locator('#npcTableRoot tr[data-npc-idx]');
+    await expect(rows).toHaveCount(3);
+    await expect(rows.nth(0)).toContainText('Катарин');
+    await expect(rows.nth(2)).toContainText('Гримгор');
+  });
+
+  test('Reorder with an expanded details row keeps the order honest and collapses it', async ({ page }) => {
+    await page.locator('button[data-npc-details="1"]').click();
+    await page.waitForTimeout(200);
+    await expect(page.locator('#npcTableRoot tr.npc-details-row')).toHaveCount(1);
+
+    await simulateDragFirstRowToEnd(page);
+
+    // Детайлният ред (без data-npc-idx) не се брои при четенето на новия ред.
+    const stored = await page.evaluate(() => window.st.campaignNpcs.map(n => n.name));
+    expect(stored).toEqual(['Катарин', 'Кулсталтин/Распутин', 'Гримгор']);
+    await expect(page.locator('#npcTableRoot tr.npc-details-row')).toHaveCount(0);
+  });
+
+  test('Sortable is NOT created while a filter is active', async ({ page }) => {
+    await page.locator('#npcSearch').fill('руснаци');
+    await page.waitForTimeout(200);
+
+    const filtered = await page.evaluate(() => {
+      const tbody = document.getElementById('npcTableBody');
+      return {
+        rows: tbody ? tbody.querySelectorAll('tr[data-npc-idx]').length : 0,
+        sortable: !!(tbody && Sortable.get(tbody))
+      };
+    });
+    expect(filtered.rows).toBe(1);
+    expect(filtered.sortable).toBe(false);
+
+    // Изчистването на филтъра връща drag-а.
+    await page.locator('#npcSearch').fill('');
+    await page.waitForTimeout(200);
+    const unfiltered = await page.evaluate(() =>
+      !!Sortable.get(document.getElementById('npcTableBody')));
+    expect(unfiltered).toBe(true);
+  });
+
+});
