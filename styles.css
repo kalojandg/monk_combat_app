@@ -1370,6 +1370,34 @@ details.feat[open]>summary::before {
   min-width: 220px;
 }
 
+/* Campaign NPCs details row (📖) — свободен текст, не таблица */
+.npc-details-row td {
+  white-space: pre-wrap;
+  padding: 10px 12px;
+  border-top: none;
+}
+
+.npc-details-block + .npc-details-block {
+  margin-top: 10px;
+}
+
+.npc-details-block strong {
+  display: block;
+  color: var(--muted);
+  font-size: 0.8em;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.npc-details-text {
+  white-space: pre-wrap;
+}
+
+.npc-details-empty {
+  color: var(--muted);
+}
+
 /* Quest Edit Button */
 .quest-edit-btn {
   background: var(--panel);
