@@ -1344,6 +1344,32 @@ details.feat[open]>summary::before {
   background: var(--accent) !important;
 }
 
+/* Campaign NPCs Drag and Drop (същият патърн като inventory) */
+.npc-drag-handle {
+  cursor: grab;
+  text-align: center;
+  color: var(--muted);
+  user-select: none;
+  width: 28px;
+  font-size: 1.1em;
+}
+
+.npc-drag-handle:active {
+  cursor: grabbing;
+}
+
+.npc-dragging {
+  opacity: 0.4;
+  background: var(--accent) !important;
+}
+
+/* Campaign NPCs search box */
+#npcSearch {
+  height: 40px;
+  padding: 0 10px;
+  min-width: 220px;
+}
+
 /* Quest Edit Button */
 .quest-edit-btn {
   background: var(--panel);

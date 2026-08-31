@@ -1,0 +1,41 @@
+<div class="section-title">Campaign NPCs</div>
+
+<div class="controls flex-center mb-10">
+  <input id="npcSearch" type="search" placeholder="Търси по име или фракция…" />
+  <button id="btnNpcAdd" class="primary">+ Add NPC</button>
+</div>
+
+<div id="npcTableRoot"></div>
+
+<!-- Modal за Add/Edit (ползваме стила на modal) -->
+<div id="npcModal" class="modal hidden">
+  <div class="modal__card">
+    <div class="modal__title" id="npcModalTitle">Add NPC</div>
+
+    <div class="row-grid mt-8">
+      <div class="field">
+        <label>Име*</label>
+        <input id="npcName" type="text" placeholder="Кулсталтин/Распутин" />
+      </div>
+      <div class="field">
+        <label>Фракция</label>
+        <input id="npcFaction" type="text" placeholder="кралицата на Кислев/руснаците" />
+      </div>
+    </div>
+
+    <div class="field mt-8">
+      <label>Description</label>
+      <textarea id="npcDescription" rows="4" class="dark-textarea"></textarea>
+    </div>
+
+    <div class="field mt-8">
+      <label>Where to find</label>
+      <textarea id="npcLocation" rows="3" class="dark-textarea"></textarea>
+    </div>
+
+    <div class="modal__actions">
+      <button id="npcCancel">Отказ</button>
+      <button id="npcSave" class="primary">Запази</button>
+    </div>
+  </div>
+</div>
