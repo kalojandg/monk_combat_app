@@ -347,7 +347,8 @@ a {
 
 /* inputs vs spans */
 input[type=number],
-input[type=text] {
+input[type=text],
+input[type=search] {
   background: var(--input-bg);
   /* малко по-плътно от span */
   border: 1px solid var(--border);
