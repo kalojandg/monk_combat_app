@@ -70,6 +70,34 @@ test.describe('Regression: Resurrection spell accordion + active-tab re-tap', ()
     expect(open).toBe(true);
   });
 
+  test('NPC search filters live when app boots directly on the NPC tab (slow tab HTML)', async ({ page }) => {
+    await boot(page);
+    // seed NPCs + make campaignNpc the restored tab
+    await page.evaluate(() => {
+      window.st.campaignNpcs = [
+        { name: 'Влад фон Карщайн', faction: 'вампири', description: '', location: '' },
+        { name: 'Юри Барков', faction: 'Кислев', description: '', location: '' }
+      ];
+      window.save();
+      localStorage.setItem('activeTab', 'campaignNpc');
+    });
+    // simulate cold GitHub Pages: tab fragments arrive AFTER the 100ms attach timeout
+    await page.route('**/tabs/*.html', async route => {
+      await new Promise(r => setTimeout(r, 400));
+      await route.continue();
+    });
+    await page.reload();
+    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
+    await page.waitForSelector('#npcSearch', { timeout: 5000 });
+    await page.waitForTimeout(300); // let the post-boot re-show attach pass run
+
+    await page.locator('#npcSearch').fill('юри');
+    await page.waitForTimeout(200);
+    const names = await page.locator('#npcTableRoot tbody tr[data-npc-idx] td:nth-child(2)').allTextContents();
+    console.log('NPC rows after typing "юри":', JSON.stringify(names));
+    expect(names).toEqual(['Юри Барков']);
+  });
+
   test('Stats tapped while already active keeps its sub-tabs', async ({ page }) => {
     await boot(page);
     await page.locator('button[data-tab="stats"]').click();

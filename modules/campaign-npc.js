@@ -188,12 +188,16 @@
 
   function attachCampaignNpcs() {
     if (__npcAttached) return;
-    __npcAttached = true;
 
     const addBtn = document.getElementById('btnNpcAdd');
     const saveBtn = document.getElementById('npcSave');
     const cancelBtn = document.getElementById('npcCancel');
     const search = document.getElementById('npcSearch');
+
+    // Табът се зарежда async (loadTabs) — ако HTML-ът още го няма, НЕ заключвай,
+    // иначе следващото (успешно) извикване удря латча и search-ът остава глух.
+    if (!search && !addBtn) return;
+    __npcAttached = true;
 
     addBtn && addBtn.addEventListener('click', () => npcOpenModal());
     search && search.addEventListener('input', () => renderNpcTable()); // живо филтриране

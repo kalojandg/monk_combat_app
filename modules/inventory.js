@@ -243,6 +243,9 @@
 
   function attachInventory() {
     if (__invAttached) return;
+    // Табът се зарежда async (loadTabs) — не заключвай преди HTML-ът да е тук
+    // (същият рейс като при Campaign NPCs search).
+    if (!document.getElementById('btnInvAdd')) return;
     __invAttached = true;
     const addBtn = document.getElementById('btnInvAdd');
     const saveBtn = document.getElementById('invSave');
