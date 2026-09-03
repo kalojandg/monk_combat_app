@@ -437,6 +437,14 @@ function renderAll() {
   el("passInsSpan") && (el("passInsSpan").textContent = 10 + skillBonusTotal("Insight", d.mods, d.prof));
   el("notes") && (el("notes").value = st.notes || "");
 
+  // Session Notes: дръж textarea-та в синхрон със state-а (import/cloud pull).
+  // При нормално писане input-хендлърът пръв изравнява st.sessionNotes с полето,
+  // затова тук стойностите съвпадат и не пишем → курсорът не мърда.
+  const notesTa = el("notesInput");
+  if (notesTa && notesTa.value !== (st.sessionNotes || "")) {
+    notesTa.value = st.sessionNotes || "";
+  }
+
   // Mods
   const mods = d.mods;
   el("strModSpan") && (el("strModSpan").textContent = mods.str >= 0 ? `+${mods.str}` : `${mods.str}`);

@@ -98,6 +98,24 @@ test.describe('Regression: Resurrection spell accordion + active-tab re-tap', ()
     expect(names).toEqual(['Юри Барков']);
   });
 
+  test('Import while ON the Session Notes tab refreshes the textarea', async ({ page }) => {
+    await boot(page);
+    await page.locator('button[data-tab="sessionNotes"]').click();
+    await expect(page.locator('#notesInput')).toBeVisible();
+
+    // има стари записки на екрана
+    await page.locator('#notesInput').fill('стари записки');
+    await page.waitForTimeout(100);
+
+    // импорт, докато сме на таба (legacy raw-state bundle е валиден вход)
+    await page.evaluate(() => {
+      window.applyBundle({ ...window.st, sessionNotes: 'НОВИ ЗАПИСКИ ОТ ИМПОРТ' });
+    });
+    await page.waitForTimeout(100);
+
+    await expect(page.locator('#notesInput')).toHaveValue('НОВИ ЗАПИСКИ ОТ ИМПОРТ');
+  });
+
   test('Stats tapped while already active keeps its sub-tabs', async ({ page }) => {
     await boot(page);
     await page.locator('button[data-tab="stats"]').click();
