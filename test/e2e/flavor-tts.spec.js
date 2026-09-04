@@ -74,8 +74,8 @@ test.describe('Flavor - Speak button (MonkTTS)', () => {
     await expect(speakBtn(page)).not.toHaveClass(/\bflavor-btn\b/);
   });
 
-  test('(б) все още точно 17 .flavor-btn', async ({ page }) => {
-    await expect(page.locator('#tab-flavor .flavor-btn')).toHaveCount(17);
+  test('(б) все още точно 19 .flavor-btn', async ({ page }) => {
+    await expect(page.locator('#tab-flavor .flavor-btn')).toHaveCount(19);
   });
 
   test('(в) празен output -> клик не прави TTS заявка', async ({ page }) => {

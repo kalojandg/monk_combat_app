@@ -25,7 +25,10 @@
     // --- Insults & Jokes (плоски масиви) ---
     { id: 'insult',          label: 'Insult',           group: 'Insults & Jokes', url: 'insults.json',     key: null },
     { id: 'dark-joke',       label: 'Dark Joke',        group: 'Insults & Jokes', url: 'dark-jokes.json',  key: null },
-    { id: 'tasha',           label: "Tasha's Joke",     group: 'Insults & Jokes', url: 'tasha-jokes.json', key: null }
+    { id: 'tasha',           label: "Tasha's Joke",     group: 'Insults & Jokes', url: 'tasha-jokes.json', key: null },
+    // --- Портиерът на смъртта (doorman.json) — Death Cleric на вратата ---
+    { id: 'spare-dying',     label: 'Spare the Dying',  group: 'Портиерът на смъртта', url: 'doorman.json', key: 'spare_the_dying' },
+    { id: 'heal-zero',       label: 'Heal from 0',      group: 'Портиерът на смъртта', url: 'doorman.json', key: 'heal_from_zero' }
   ];
 
   // Lazy cache per URL — трите one-liner/excuses типа си делят по един fetch.

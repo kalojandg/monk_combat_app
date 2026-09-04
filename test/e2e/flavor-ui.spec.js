@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-// Всичките 17 типа, както са в registry-то на modules/flavor.js.
+// Всичките типове, както са в registry-то на modules/flavor.js.
 const TYPES = [
   { id: 'crit-miss',       label: 'Critical Miss' },
   { id: 'miss-attack',     label: 'Miss Attack' },
@@ -19,6 +19,8 @@ const TYPES = [
   { id: 'insult',          label: 'Insult' },
   { id: 'dark-joke',       label: 'Dark Joke' },
   { id: 'tasha',           label: "Tasha's Joke" },
+  { id: 'spare-dying',     label: 'Spare the Dying' },
+  { id: 'heal-zero',       label: 'Heal from 0' },
 ];
 
 const btn = (page, id) => page.locator(`#tab-flavor [data-flavor="${id}"]`);
@@ -41,7 +43,7 @@ test.describe('Flavor - UI Interaction', () => {
     expect(await output(page).getAttribute('readonly')).not.toBeNull();
   });
 
-  test('All 17 flavor buttons are visible', async ({ page }) => {
+  test('All flavor buttons are visible', async ({ page }) => {
     for (const t of TYPES) {
       await expect(btn(page, t.id), `${t.label} button`).toBeVisible();
     }
