@@ -61,6 +61,8 @@ async function openDialog(page) {
   }
   await w.click();
   await expect(page.locator('#cubeDialog')).toBeVisible();
+  // Activate is ignored for 500ms after opening (ghost-click guard) — wait it out.
+  await page.waitForTimeout(550);
 }
 
 test.describe('Cube of Force — integration (dialog click themes the whole app)', () => {

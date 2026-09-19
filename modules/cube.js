@@ -275,6 +275,8 @@
   function onFacesClick(e) {
     var btn = e.target.closest('.cube-activate');
     if (!btn || btn.disabled) return;
+    if (Date.now() - dialogOpenedAt < 500) return;   // ghost click from the opening tap
+
     var n = parseInt(btn.getAttribute('data-face'), 10);
     if (n === 6) deactivate();
     else activate(n);

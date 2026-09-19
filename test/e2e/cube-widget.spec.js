@@ -28,6 +28,8 @@ async function openDialog(page) {
   }
   await w.click();
   await expect(page.locator('#cubeDialog')).toBeVisible();
+  // Activate is ignored for 500ms after opening (ghost-click guard) — wait it out.
+  await page.waitForTimeout(550);
 }
 
 test.describe('Cube of Force widget', () => {
@@ -356,5 +358,38 @@ test.describe('Cube of Force widget — touch, phone landscape', () => {
     // a deliberate backdrop tap afterwards still closes it
     await page.locator('#cubeDialog').tap({ position: { x: 60, y: 60 } });
     await expect(page.locator('#cubeDialog')).toBeHidden();
+  });
+});
+
+// Phone portrait (Android): the card is 92vw, so the widget on the right wall sits
+// over the CARD — level with a face's Activate button. The browser's synthetic
+// click (~300ms after the opening tap) used to land on that button and activate
+// the face for free the moment the dialog opened.
+test.describe('Cube of Force widget — touch, phone portrait', () => {
+  test.use({ viewport: { width: 412, height: 915 }, hasTouch: true, isMobile: true });
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
+    await expect(page.locator('#cubeWidget')).toBeVisible();
+  });
+
+  test('[w] Activate clicked inside the opening ghost window is ignored', async ({ page }) => {
+    const w = page.locator('#cubeWidget');
+    await w.tap();
+    await w.tap();
+    await expect(page.locator('#cubeDialog')).toBeVisible();
+
+    // the synthetic click lands on Face 1's Activate right after the dialog opens
+    await page.locator('.cube-activate[data-face="1"]').click();
+    await expect(page.locator('.cube-face.active')).toHaveCount(0);
+    await expect(page.locator('#cubeDialog')).toBeVisible();
+
+    // a deliberate tap after the window still activates
+    await page.waitForTimeout(500);
+    await page.locator('.cube-activate[data-face="1"]').tap();
+    await expect(page.locator('.cube-face[data-face="1"]')).toHaveClass(/active/);
   });
 });
