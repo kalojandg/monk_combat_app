@@ -299,16 +299,91 @@ test.describe('Stats Tab - Second Level Navigation', () => {
     // Open Stats tab and a sub-tab
     await page.locator('button[data-subtab="stats"]').click();
     await expect(page.locator('#subtab-stats #strInput')).toBeVisible();
-    
+
     // Click another first-level tab
     await page.locator('button[data-tab="inventory"]').click();
-    
+
     // Stats tab and sub-tabs should be hidden
     await expect(page.locator('#tab-stats')).not.toBeVisible();
     await expect(page.locator('button[data-subtab="stats"]')).not.toBeVisible();
-    
+
     // Inventory should be visible
     await expect(page.locator('#tab-inventory')).toBeVisible();
+  });
+
+});
+
+test.describe('Skills Tab - Second Level Navigation', () => {
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
+    await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
+    // Open Skills tab
+    await page.locator('button[data-tab="skills"]').click();
+    await page.waitForTimeout(500);
+  });
+
+  test('Skills tab shows two sub-tabs: Personal and Quick Reference', async ({ page }) => {
+    await expect(page.locator('#tab-skills button[data-subtab="personal"]')).toBeVisible();
+    await expect(page.locator('#tab-skills button[data-subtab="quickref"]')).toBeVisible();
+  });
+
+  test('Personal is the default sub-tab and shows the class features accordion', async ({ page }) => {
+    await expect(page.locator('#tab-skills button[data-subtab="personal"]')).toHaveClass(/active/);
+    await expect(page.locator('#subtab-personal')).toBeVisible();
+    await expect(page.locator('#featuresAccordion')).toBeVisible();
+    await expect(page.locator('#collapseAllBtn')).toBeVisible();
+  });
+
+  test('Can click Quick Reference sub-tab and see its root', async ({ page }) => {
+    await page.locator('#tab-skills button[data-subtab="quickref"]').click();
+    await page.waitForTimeout(300);
+    await expect(page.locator('#subtab-quickref')).toBeVisible();
+    // The root is an empty container until the renderer fills it (separate task),
+    // so assert it is attached rather than painted.
+    await expect(page.locator('#quickRefRoot')).toBeAttached();
+    await expect(page.locator('#tab-skills button[data-subtab="quickref"]')).toHaveClass(/active/);
+    await expect(page.locator('#subtab-personal')).not.toBeVisible();
+  });
+
+  test('Switching back to Personal re-renders a non-empty features accordion', async ({ page }) => {
+    await page.waitForSelector('#featuresAccordion details.feat', { timeout: 5000 });
+
+    await page.locator('#tab-skills button[data-subtab="quickref"]').click();
+    await page.waitForTimeout(300);
+    await expect(page.locator('#subtab-quickref')).toBeVisible();
+
+    await page.locator('#tab-skills button[data-subtab="personal"]').click();
+    await page.waitForTimeout(300);
+    await expect(page.locator('#featuresAccordion')).toBeVisible();
+    await page.waitForSelector('#featuresAccordion details.feat', { timeout: 5000 });
+    const count = await page.locator('#featuresAccordion details.feat').count();
+    expect(count).toBeGreaterThan(0);
+  });
+
+  test('Skills sub-tabs do not break the Stats sub-tabs', async ({ page }) => {
+    // Stats → 'stats' sub-tab
+    await page.locator('button[data-tab="stats"]').click();
+    await page.waitForTimeout(300);
+    await page.locator('#tab-stats button[data-subtab="stats"]').click();
+    await expect(page.locator('#subtab-stats #strInput')).toBeVisible();
+
+    // Away to Skills (its own sub-tabs must show up)
+    await page.locator('button[data-tab="skills"]').click();
+    await page.waitForTimeout(300);
+    await expect(page.locator('#subtab-personal')).toBeVisible();
+
+    // Back to Stats — exactly one sub-tab is active with visible content.
+    // (Re-entering a tab resets it to its default sub-tab — long-standing behavior:
+    // showTab clears `active` from every `.tab-nav .tab-btn`, sub-tab pills included.)
+    await page.locator('button[data-tab="stats"]').click();
+    await page.waitForTimeout(300);
+    await expect(page.locator('#tab-stats .sub-tab-btn.active')).toHaveCount(1);
+    await expect(page.locator('#tab-stats > .sub-tab-content:not(.hidden)')).toHaveCount(1);
+    await expect(page.locator('#subtab-basicinfo #xpDisplay')).toBeVisible();
   });
 
 });
