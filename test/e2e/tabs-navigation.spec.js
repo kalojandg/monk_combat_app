@@ -241,7 +241,10 @@ test.describe('Stats Tab - Second Level Navigation', () => {
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
     // Open Stats tab
     await page.locator('button[data-tab="stats"]').click();
-    await page.waitForTimeout(300);
+    // showTab() вика showSubTab() БЕЗ await, а партиалът се дърпа с fetch —
+    // затова чакаме реалното съдържание, а не фиксирани 300ms (под натоварена
+    // машина fetch-ът излизаше извън default-ния 5s бюджет на assert-ите долу).
+    await page.waitForSelector('#subtab-basicinfo #xpDisplay', { state: 'attached', timeout: 15000 });
   });
 
   test('Stats tab shows three sub-tabs: basic info, stats, passive skills', async ({ page }) => {
