@@ -1629,9 +1629,7 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
     try { localStorage.setItem('activeTab', tabKey); } catch { }
 
     // 3) лениво рендериране само когато е нужно
-    if (tabKey === 'skills' || tabKey === 'featuresSection') {
-      renderFeaturesAccordion(st.monkLevel || 1, st.clericLevel || 0);
-    }
+    // (Skills features accordion вече се рендерира от sub-таба 'personal' — виж showSubTab)
 
     if (tabKey === 'sessionNotes') {
       onNotesTabShown();
@@ -1679,78 +1677,88 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
     //   }, 100);
     // }
 
-    if (tabKey === 'stats') {
-      // Show first sub-tab by default if none is active
-      const activeSubTab = document.querySelector('.sub-tab-btn.active');
-      if (!activeSubTab) {
-        showSubTab('basicinfo');
-      }
-      
-      // Lazy render features accordion
-      const d = derived();
-      if (!_featuresRendered || _featuresDirty) {
-        renderFeaturesAccordion(st.monkLevel || 1, st.clericLevel || 0);
-        _featuresRendered = true;
-        _featuresDirty = false;
-      }
-      // Attach collapse button after accordion is rendered
-      setTimeout(() => attachCollapseBtn(), 100);
-    } else {
-      // Hide all sub-tabs when switching away from Stats tab
-      hideAllSubTabs();
+    // Tabs with second-level navigation: re-show the active sub-tab (or the default
+    // one on first visit). Няма else-клон с hideAllSubTabs() — скриването на самия
+    // .tab панел по-горе е достатъчно и не гаси sub-табовете на ДРУГИТЕ табове.
+    const subCfg = SUB_TABS[tabKey];
+    if (subCfg) {
+      const panel = document.getElementById(`tab-${tabKey}`);
+      const activeSubBtn = panel && panel.querySelector('.sub-tab-btn.active');
+      showSubTab(activeSubBtn ? activeSubBtn.dataset.subtab : subCfg.default);
     }
   }
-  
+
+  // Tabs that host second-level navigation + техният default sub-таб
+  const SUB_TABS = {
+    'stats': { default: 'basicinfo' },
+    'skills': { default: 'personal' }
+  };
+
   // Track which sub-tabs have been loaded
   const __subTabsLoaded = {};
-  
-  // Sub-tab HTML mapping
+
+  // Sub-tab HTML mapping (ключовете са ГЛОБАЛНО уникални — id-тата са `subtab-<key>`)
   const subTabHtmlMap = {
     'basicinfo': 'tabs/stats-basicinfo.html',
     'stats': 'tabs/stats-stats.html',
-    'passiveskills': 'tabs/stats-passiveskills.html'
+    'passiveskills': 'tabs/stats-passiveskills.html',
+    'personal': 'tabs/skills-personal.html',
+    'quickref': 'tabs/skills-quickref.html'
   };
-  
-  // Helper function to show a sub-tab (loads HTML dynamically on first click)
+
+  // Helper function to show a sub-tab (loads HTML dynamically on first click).
+  // СКОУПНАТА е за своя таб: пипа само .sub-tab-content / .sub-tab-btn вътре в
+  // родителския .tab панел, за да не гаси sub-табовете на другите табове.
   async function showSubTab(subTabKey) {
-    // Hide all sub-tab contents
-    document.querySelectorAll('.sub-tab-content').forEach(el => {
+    const subTabEl = document.getElementById(`subtab-${subTabKey}`);
+    if (!subTabEl) return;
+    const panel = subTabEl.closest('.tab') || document;
+
+    // Hide the sub-tab contents of THIS panel only
+    panel.querySelectorAll('.sub-tab-content').forEach(el => {
       el.classList.add('hidden');
     });
-    
-    // Show selected sub-tab content
-    const subTabEl = document.getElementById(`subtab-${subTabKey}`);
-    if (subTabEl) {
-      // Load HTML if not already loaded
-      if (!__subTabsLoaded[subTabKey] && subTabHtmlMap[subTabKey]) {
-        try {
-          const response = await fetch(subTabHtmlMap[subTabKey]);
-          if (response.ok) {
-            subTabEl.innerHTML = await response.text();
-            __subTabsLoaded[subTabKey] = true;
-            
-            // Re-attach event listeners after loading HTML
-            attachSubTabEventListeners(subTabKey);
-            
-            // Render current values
-            renderAll();
-          }
-        } catch (e) {
-          console.error(`Error loading sub-tab ${subTabKey}:`, e);
+
+    // Load HTML if not already loaded
+    if (!__subTabsLoaded[subTabKey] && subTabHtmlMap[subTabKey]) {
+      try {
+        const response = await fetch(subTabHtmlMap[subTabKey]);
+        if (response.ok) {
+          subTabEl.innerHTML = await response.text();
+          __subTabsLoaded[subTabKey] = true;
+
+          // Re-attach event listeners after loading HTML
+          attachSubTabEventListeners(subTabKey);
+
+          // Render current values
+          renderAll();
         }
-      }
-      
-      subTabEl.classList.remove('hidden');
-      
-      // Render skills table if passive skills sub-tab is shown
-      if (subTabKey === 'passiveskills') {
-        const d = derived();
-        renderSkillsInSubtab(d.mods, d.prof);
+      } catch (e) {
+        console.error(`Error loading sub-tab ${subTabKey}:`, e);
       }
     }
-    
-    // Update sub-tab buttons
-    document.querySelectorAll('.sub-tab-btn').forEach(btn => {
+
+    subTabEl.classList.remove('hidden');
+
+    // Per-show рендери (при ВСЯКО показване, не само при първото зареждане)
+    if (subTabKey === 'passiveskills') {
+      const d = derived();
+      renderSkillsInSubtab(d.mods, d.prof);
+    }
+
+    if (subTabKey === 'personal') {
+      renderFeaturesAccordion(st.monkLevel || 1, st.clericLevel || 0);
+      _featuresRendered = true;
+      _featuresDirty = false;
+      setTimeout(() => attachCollapseBtn(), 100);
+    }
+
+    if (subTabKey === 'quickref') {
+      if (typeof window.renderQuickReference === 'function') window.renderQuickReference();
+    }
+
+    // Update the sub-tab buttons of THIS panel only
+    panel.querySelectorAll('.sub-tab-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.subtab === subTabKey);
     });
   }
@@ -1870,20 +1878,23 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
     }
   }
   
-  // Helper function to hide all sub-tabs
-  function hideAllSubTabs() {
-    document.querySelectorAll('.sub-tab-content').forEach(el => {
+  // Helper function to hide all sub-tabs of a panel (или на цялата страница, ако
+  // няма подаден панел). НЕ се вика при смяна на таб — скриването на .tab панела
+  // е достатъчно; иначе Skills sub-табовете изчезваха при отваряне на Skills.
+  function hideAllSubTabs(scope) {
+    const root = scope || document;
+    root.querySelectorAll('.sub-tab-content').forEach(el => {
       el.classList.add('hidden');
     });
-    document.querySelectorAll('.sub-tab-btn').forEach(btn => {
+    root.querySelectorAll('.sub-tab-btn').forEach(btn => {
       btn.classList.remove('active');
     });
   }
-  
-  // Initialize Stats sub-tabs navigation
-  function initStatsSubTabs() {
-    const subTabBtns = document.querySelectorAll('.sub-tab-btn');
-    subTabBtns.forEach(btn => {
+
+  // Initialize second-level navigation (Stats + Skills). САМО закача listener-ите;
+  // default sub-табът се избира от showTab чрез SUB_TABS.
+  function initSubTabs() {
+    document.querySelectorAll('.sub-tab-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         const subTabKey = btn.dataset.subtab;
         if (subTabKey) {
@@ -1891,17 +1902,13 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
         }
       });
     });
-    
-    // Show first sub-tab by default
-    if (subTabBtns.length > 0) {
-      showSubTab('basicinfo');
-    }
   }
-  
+
   // Make functions available globally for initialization
   window.showSubTab = showSubTab;
   window.hideAllSubTabs = hideAllSubTabs;
-  window.initStatsSubTabs = initStatsSubTabs;
+  window.initSubTabs = initSubTabs;
+  window.initStatsSubTabs = initSubTabs;   // legacy alias
 
 
   // wire (skip 'combat' - it's not a tab)
@@ -1942,8 +1949,8 @@ window.addEventListener('beforeunload', (e) => {
     // Load tab HTML fragments first (before attaching event listeners)
     await loadTabs();
     
-    // Initialize Stats sub-tabs navigation after tabs are loaded
-    if (typeof window.initStatsSubTabs === 'function') window.initStatsSubTabs();
+    // Initialize second-level navigation (Stats + Skills) after tabs are loaded
+    if (typeof window.initSubTabs === 'function') window.initSubTabs();
 
     await cloudRestore();
 
