@@ -51,8 +51,11 @@ async function ensureDirRW(dirHandle) {
   return r === 'granted';
 }
 
-let _featuresRendered = false;
-let _featuresDirty = false;  // ще го ползваме при смяна на ниво
+// (Тук стояха _featuresRendered / _featuresDirty — dirty-tracking гейт пред
+//  renderFeaturesAccordion. Гейтът отпадна: акордеонът вече се рендира при ВСЯКО
+//  показване на Skills → Personal (виж showSubTab), което е и по-коректно при
+//  level-up. Двата fetch-а са зад __feat_cache / __cleric_feat_cache, тоест
+//  повторният рендер не удря мрежата.)
 
 // XP thresholds 1..20 (RAW без 0-праг)
 const XP_THRESH = [300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000, 85000, 100000, 120000, 140000, 165000, 195000, 225000, 265000, 305000, 355000];
@@ -192,7 +195,6 @@ function save() {
   if (window.st) {
     st = window.st;
   }
-  _featuresDirty = true;  // ensure accordion re-renders on next tab visit
   localStorage.setItem("monkSheet_v3", JSON.stringify(st));
   renderAll();
 
@@ -508,7 +510,6 @@ el("btnAddXp") && el("btnAddXp").addEventListener("click", () => {
     const d = derived();
     st.hdAvail = clamp(st.hdAvail, 0, d.hdMax);
     st.kiCurrent = clamp(st.kiCurrent, 0, d.kiMax);
-    _featuresDirty = true;
     save();
   }
   if (addEl) addEl.value = '';
@@ -1677,15 +1678,17 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
     //   }, 100);
     // }
 
-    // Tabs with second-level navigation: re-show the active sub-tab (or the default
-    // one on first visit). Няма else-клон с hideAllSubTabs() — скриването на самия
-    // .tab панел по-горе е достатъчно и не гаси sub-табовете на ДРУГИТЕ табове.
+    // Tabs with second-level navigation: влизането в таб го РЕСЕТВА към неговия
+    // default sub-таб. Не помним последния — стъпка 1 по-горе гаси `active` от
+    // ВСЕКИ `.tab-nav .tab-btn`, а sub-tab pill-овете са точно такива (седят в
+    // `<div class="sub-tab-nav tab-nav">` и нямат `data-tab`), тоест до тук вече
+    // няма активен pill, който да прочетем. Това е дългогодишното поведение и е
+    // закотвено в tabs-navigation.spec.js („Skills sub-tabs do not break the
+    // Stats sub-tabs" очаква ресет към basicinfo).
+    // Няма else-клон с hideAllSubTabs() — скриването на самия .tab панел по-горе
+    // е достатъчно и не гаси sub-табовете на ДРУГИТЕ табове.
     const subCfg = SUB_TABS[tabKey];
-    if (subCfg) {
-      const panel = document.getElementById(`tab-${tabKey}`);
-      const activeSubBtn = panel && panel.querySelector('.sub-tab-btn.active');
-      showSubTab(activeSubBtn ? activeSubBtn.dataset.subtab : subCfg.default);
-    }
+    if (subCfg) showSubTab(subCfg.default);
   }
 
   // Tabs that host second-level navigation + техният default sub-таб
@@ -1748,8 +1751,6 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
 
     if (subTabKey === 'personal') {
       renderFeaturesAccordion(st.monkLevel || 1, st.clericLevel || 0);
-      _featuresRendered = true;
-      _featuresDirty = false;
       setTimeout(() => attachCollapseBtn(), 100);
     }
 
@@ -1785,7 +1786,6 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
             const d = derived();
             st.hdAvail = clamp(st.hdAvail, 0, d.hdMax);
             st.kiCurrent = clamp(st.kiCurrent, 0, d.kiMax);
-            _featuresDirty = true;
             save();
           }
           if (addEl) addEl.value = '';

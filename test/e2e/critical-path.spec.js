@@ -68,21 +68,19 @@ test.describe('Critical Path - Combat System', () => {
     // Action: Take 50 damage (повече от Max HP)
     await page.locator('#hpDelta').fill('50');
     await page.locator('#btnDamage').click();
-
+    
     // Assert: HP = 0, не отрицателно
-    // (изричен бюджет като в beforeEach — под натоварена машина default-ните 5s
-    //  на пълния гейт не стигаха, докато тестът минава самостоятелно)
-    await expect(page.locator('#hpCurrentSpan')).toHaveText('0', { timeout: 10000 });
-
+    await expect(page.locator('#hpCurrentSpan')).toHaveText('0');
+    
     // Assert: Status = unconscious
     const status = await page.evaluate(() => {
       const st = JSON.parse(localStorage.getItem('monkSheet_v3'));
       return st.status;
     });
     expect(status).toBe('unconscious');
-
+    
     // Assert: Emoji = 😵
-    await expect(page.locator('#lifeStatus')).toHaveText('😵', { timeout: 10000 });
+    await expect(page.locator('#lifeStatus')).toHaveText('😵');
   });
 
   test('[POSITIVE] Heal clamped at Max HP', async ({ page }) => {
