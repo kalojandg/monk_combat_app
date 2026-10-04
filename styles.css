@@ -1814,9 +1814,26 @@ details[open] .prep-level-summary::before { content: '▼ '; }
 }
 
 /* ===== Flavor tab ===== */
+
+/*
+ * Докът държи изтеглената реплика на екрана, докато се скролват бутоните — иначе
+ * всяко теглене е поглед нагоре и връщане надолу (виж бележката в tabs/flavor.html).
+ * Фонът е ЗАДЪЛЖИТЕЛЕН: без него бутоните прозират под залепеното поле.
+ */
+.flavor-output-dock {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--bg);
+  padding-bottom: 10px;
+}
+
 #flavorOutput {
   width: 100%;
   min-height: 200px;
+  /* Таванът е в ЕДИНИЦИ НА ЕКРАНА, не в пиксели: залепено поле с фиксирана височина
+     изяжда телефона в портрет и бутоните остават под сгъвката. */
+  max-height: 34vh;
   font-size: 1.25rem;
   line-height: 1.5;
   padding: 14px;
@@ -1827,6 +1844,23 @@ details[open] .prep-level-summary::before { content: '▼ '; }
   color: var(--text-bright);
   border: 1px solid var(--border-1);
   border-radius: 6px;
+}
+
+/*
+ * Телефон в портрет: 200px залепено поле + бутонът за TTS изяждат половината екран.
+ * Полето се свива до четими три реда; `resize: vertical` остава, тоест при нужда се
+ * разтяга с пръст. Прагът е по ВИСОЧИНА, не по ширина — проблемът е вертикален.
+ */
+@media (max-height: 720px) {
+  #flavorOutput {
+    min-height: 92px;
+    max-height: 30vh;
+    font-size: 1.1rem;
+  }
+
+  .flavor-output-dock {
+    padding-bottom: 6px;
+  }
 }
 
 .flavor-section-title {

@@ -1,10 +1,44 @@
 <div class="section-title">Flavor</div>
 
-<textarea id="flavorOutput" readonly></textarea>
+<!--
+  ЗАЛЕПЕН ДОК (04.10.2026): текстът и бутонът „Произнеси" остават на екрана, докато
+  скролваш бутоните. Преди това изтеглената реплика беше най-горе, а бутоните под нея —
+  значи всяко теглене струваше поглед нагоре и връщане надолу, а в битката редът идва.
+  Сега натискаш и четеш на едно място.
+  ⚠ Текстът И бутонът са в ЕДИН док нарочно: ако залепне само полето, „Произнеси"
+  отплува и TTS-ът става недостижим точно когато репликата е готова.
+-->
+<div class="flavor-output-dock">
+  <textarea id="flavorOutput" readonly></textarea>
 
-<div class="flavor-actions">
-  <button type="button" id="btnSpeakFlavor" class="flavor-speak">🔊 Произнеси</button>
-  <span id="flavorTtsNote" class="flavor-tts-note hidden"></span>
+  <div class="flavor-actions">
+    <button type="button" id="btnSpeakFlavor" class="flavor-speak">🔊 Произнеси</button>
+    <span id="flavorTtsNote" class="flavor-tts-note hidden"></span>
+  </div>
+</div>
+
+<!--
+  РЕДЪТ НА СЕКЦИИТЕ Е ПО ЧЕСТОТА НА УПОТРЕБА В БИТКА, не по азбучен ред или по
+  големина (04.10.2026, от жива употреба). Причината: изтегленият текст се появява
+  в #flavorOutput най-ГОРЕ, значи всяка секция по-надолу плаща скрол в двете посоки —
+  надолу за бутона, нагоре да прочетеш, пак надолу ако репликата не става. При бой с
+  вампир редът дойде, преди да е намерена свестна реплика.
+
+  Затова най-ползваните секции стоят най-близо до изхода. Нов раздел се слага по
+  същото правило — колко често се натиска В БИТКА, не колко бутона има.
+-->
+
+<div class="section-title flavor-section-title">Insults &amp; Jokes</div>
+<div class="flavor-grid">
+  <button class="flavor-btn" data-flavor="insult">Insult</button>
+  <button class="flavor-btn" data-flavor="dark-joke">Dark Joke</button>
+  <button class="flavor-btn" data-flavor="tasha">Tasha's Joke</button>
+</div>
+
+<div class="section-title flavor-section-title">Портиерът на смъртта</div>
+<div class="flavor-grid">
+  <button class="flavor-btn" data-flavor="spare-dying">Spare the Dying</button>
+  <button class="flavor-btn" data-flavor="heal-zero">Heal from 0</button>
 </div>
 
 <div class="section-title flavor-section-title">One-Liners</div>
@@ -27,17 +61,4 @@
   <button class="flavor-btn" data-flavor="excuses">Excuses</button>
   <button class="flavor-btn" data-flavor="storytime">Storytime</button>
   <button class="flavor-btn" data-flavor="slipaway">Slip Away</button>
-</div>
-
-<div class="section-title flavor-section-title">Insults &amp; Jokes</div>
-<div class="flavor-grid">
-  <button class="flavor-btn" data-flavor="insult">Insult</button>
-  <button class="flavor-btn" data-flavor="dark-joke">Dark Joke</button>
-  <button class="flavor-btn" data-flavor="tasha">Tasha's Joke</button>
-</div>
-
-<div class="section-title flavor-section-title">Портиерът на смъртта</div>
-<div class="flavor-grid">
-  <button class="flavor-btn" data-flavor="spare-dying">Spare the Dying</button>
-  <button class="flavor-btn" data-flavor="heal-zero">Heal from 0</button>
 </div>
