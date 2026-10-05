@@ -74,10 +74,10 @@ test.describe('Regression: Resurrection spell accordion + active-tab re-tap', ()
     await boot(page);
     // seed NPCs + make campaignNpc the restored tab
     await page.evaluate(() => {
-      window.st.campaignNpcs = [
+      window.Campaign.setNpcs([
         { name: 'Влад фон Карщайн', faction: 'вампири', description: '', location: '' },
         { name: 'Юри Барков', faction: 'Кислев', description: '', location: '' }
-      ];
+      ]);
       window.save();
       localStorage.setItem('activeTab', 'campaignNpc');
     });
@@ -107,9 +107,21 @@ test.describe('Regression: Resurrection spell accordion + active-tab re-tap', ()
     await page.locator('#notesInput').fill('стари записки');
     await page.waitForTimeout(100);
 
-    // импорт, докато сме на таба (legacy raw-state bundle е валиден вход)
+    // Импорт, докато сме на таба. Записките вече са КАМПАНИЙНИ и важи правилото
+    // „само напред", затова файлът носи ПО-НОВА кампанийна дата — иначе няма право да
+    // замени това, което е на екрана. Проверяваната тук регресия е, че textarea-та се
+    // опреснява при импорт, а не кой файл печели.
     await page.evaluate(() => {
-      window.applyBundle({ ...window.st, sessionNotes: 'НОВИ ЗАПИСКИ ОТ ИМПОРТ' });
+      window.applyBundle({
+        version: 3,
+        character: 'monk',
+        state: { ...window.st },
+        campaign: {
+          npcs: window.Campaign.getNpcs(),
+          sessionNotes: 'НОВИ ЗАПИСКИ ОТ ИМПОРТ',
+          savedAt: new Date(Date.now() + 60000).toISOString()
+        }
+      });
     });
     await page.waitForTimeout(100);
 

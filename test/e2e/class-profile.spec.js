@@ -115,19 +115,24 @@ test.describe('Class profiles', () => {
     await expect(row).toBeVisible();
   });
 
-  test('(e) Campaign facade reads/writes st.campaignNpcs and st.sessionNotes', async ({ page }) => {
+  // Таск 1310: фасадата вече пише в кампанийния контейнер campaign_v1, не в st.
+  test('(e) Campaign facade reads/writes the campaign container, not st', async ({ page }) => {
     const r = await page.evaluate(() => {
-      window.st.campaignNpcs = [{ name: 'Rasputin', faction: 'Kislev', description: '', location: '' }];
-      const same = window.Campaign.getNpcs() === window.st.campaignNpcs;
       window.Campaign.setNpcs([{ name: 'X', faction: '', description: '', location: '' }]);
       window.Campaign.setNotes('hello');
+      const stored = JSON.parse(localStorage.getItem('campaign_v1'));
       return {
-        same,
-        npcs: window.st.campaignNpcs.map(n => n.name),
-        notes: window.st.sessionNotes,
-        getNotes: window.Campaign.getNotes()
+        npcs: window.Campaign.getNpcs().map(n => n.name),
+        getNotes: window.Campaign.getNotes(),
+        storedNpcs: stored.npcs.map(n => n.name),
+        storedNotes: stored.sessionNotes,
+        stNpcs: window.st.campaignNpcs,
+        stNotes: window.st.sessionNotes
       };
     });
-    expect(r).toEqual({ same: true, npcs: ['X'], notes: 'hello', getNotes: 'hello' });
+    expect(r).toEqual({
+      npcs: ['X'], getNotes: 'hello', storedNpcs: ['X'], storedNotes: 'hello',
+      stNpcs: [], stNotes: ''
+    });
   });
 });
