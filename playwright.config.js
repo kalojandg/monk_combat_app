@@ -10,8 +10,10 @@ export default defineConfig({
   // Fail при първия error (за да видиш веднага какво не работи)
   fullyParallel: false,
   
-  // Retry при fail (0 = no retry, за да видиш истинския fail веднага)
-  retries: 0,
+  // Retry при fail: 1 опит — Chromium прекъсва page.goto/fetch с net::ERR_NETWORK_CHANGED при
+  // смяна на мрежата по време на дългия run (случайни тестове, без връзка с кода).
+  // Истински бъг fail-ва и двата опита; flaky тестовете се виждат отделно в отчета.
+  retries: 1,
   
   // Само 1 worker (sequential execution за ясност)
   workers: 1,
