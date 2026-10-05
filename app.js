@@ -193,6 +193,7 @@ function save() {
     st = window.st;
   }
   localStorage.setItem(activeStorageKey(), JSON.stringify(st));
+  window.Campaign.persist?.(); // кампанийният контейнер (modules/campaign.js) — само при промяна
   renderAll();
 
   cloudSchedule();           // ← остава си
@@ -201,10 +202,10 @@ function save() {
 window.save = save;
 
 // ===== Campaign accessors =====
-// Фасада за кампанийните данни (Campaign NPCs, Session Notes). Засега чете/пише право
-// в st; модулите и notes кодът минават САМО през нея, за да може реализацията отдолу
-// да се смени, без да се пипат консуматорите.
-window.Campaign = {
+// Фасада за кампанийните данни (Campaign NPCs, Session Notes); модулите и notes кодът
+// минават САМО през нея. Реализацията е modules/campaign.js (ключ campaign_v1, общ за
+// героите); долното е само резервен вариант право в st, ако модулът липсва.
+window.Campaign = window.Campaign || {
   getNpcs() {
     if (!Array.isArray(window.st.campaignNpcs)) window.st.campaignNpcs = [];
     return window.st.campaignNpcs;
@@ -775,6 +776,9 @@ function applyBundle(data) {
   }
 
   st = { ...defaultState, ...incoming };
+
+  // Импортираните записки отиват в кампанийния контейнер
+  if (typeof incoming.sessionNotes === 'string') Campaign.setNotes(incoming.sessionNotes);
   
   // Ensure arrays exist
   if (!Array.isArray(st.aliases)) st.aliases = [];
@@ -1131,7 +1135,7 @@ function buildBundle() {
   return {
     version: 2,
     state: stateCopy,   // всичко вътре, включително aliases, familiars, languages, tools, inventory, gold
-    sessionNotes: st.sessionNotes || ""  // sessionNotes се пази отделно
+    sessionNotes: Campaign.getNotes() || ""  // sessionNotes се пази отделно (кампанийни)
   };
 }
 

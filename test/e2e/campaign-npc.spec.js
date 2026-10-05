@@ -67,7 +67,7 @@ test.describe('Campaign NPCs - Add', () => {
     await expect(root).toContainText('Кулсталтин');
     await expect(root).toContainText('кралицата на Кислев');
 
-    const stored = await page.evaluate(() => window.st.campaignNpcs);
+    const stored = await page.evaluate(() => window.Campaign.getNpcs());
     expect(stored).toHaveLength(1);
     expect(stored[0]).toEqual({
       name: 'Кулсталтин',
@@ -91,7 +91,7 @@ test.describe('Campaign NPCs - Add', () => {
     await page.waitForTimeout(200);
 
     expect(messages.join(' ')).toContain('Името е задължително.');
-    const stored = await page.evaluate(() => window.st.campaignNpcs);
+    const stored = await page.evaluate(() => window.Campaign.getNpcs());
     expect(stored).toHaveLength(0);
   });
 
@@ -132,7 +132,7 @@ test.describe('Campaign NPCs - Edit', () => {
     await expect(root).toContainText('болшевиките');
     await expect(root).not.toContainText('руснаците');
 
-    const stored = await page.evaluate(() => window.st.campaignNpcs);
+    const stored = await page.evaluate(() => window.Campaign.getNpcs());
     expect(stored).toHaveLength(1);
     expect(stored[0].name).toBe('Распутин');
     expect(stored[0].faction).toBe('болшевиките');
@@ -162,7 +162,7 @@ test.describe('Campaign NPCs - Delete', () => {
     await expect(root).not.toContainText('NPC A');
     await expect(root).toContainText('NPC B');
 
-    const stored = await page.evaluate(() => window.st.campaignNpcs);
+    const stored = await page.evaluate(() => window.Campaign.getNpcs());
     expect(stored).toHaveLength(1);
     expect(stored[0].name).toBe('NPC B');
   });
@@ -193,7 +193,7 @@ test.describe('Campaign NPCs - Persistence', () => {
     await expect(root).toContainText('Баба Яга');
     await expect(root).toContainText('горските духове');
 
-    const stored = await page.evaluate(() => window.st.campaignNpcs);
+    const stored = await page.evaluate(() => window.Campaign.getNpcs());
     expect(stored).toHaveLength(1);
     expect(stored[0].location).toBe('Дълбоката гора');
   });
@@ -224,7 +224,7 @@ const NPC_SEED = [
 
 async function seedNpcs(page, list = NPC_SEED) {
   await page.evaluate(l => {
-    window.st.campaignNpcs = JSON.parse(JSON.stringify(l));
+    window.Campaign.setNpcs(JSON.parse(JSON.stringify(l)));
     window.save();
   }, list);
   await page.waitForTimeout(200);
@@ -336,7 +336,7 @@ test.describe('Campaign NPCs - Live search', () => {
     await page.locator('#npcSave').click();
     await page.waitForTimeout(250);
 
-    const stored = await page.evaluate(() => window.st.campaignNpcs);
+    const stored = await page.evaluate(() => window.Campaign.getNpcs());
     expect(stored).toHaveLength(3);
     expect(stored[0].name).toBe('Гримгор');
     expect(stored[1].name).toBe('Катарин');
@@ -457,14 +457,14 @@ test.describe('Campaign NPCs - Drag reorder (state-level)', () => {
     expect(attached).toBe(true);
   });
 
-  test('Simulated drag reorders st.campaignNpcs and persists', async ({ page }) => {
+  test('Simulated drag reorders the campaign NPCs and persists', async ({ page }) => {
     await simulateDragFirstRowToEnd(page);
 
-    const stored = await page.evaluate(() => window.st.campaignNpcs.map(n => n.name));
+    const stored = await page.evaluate(() => window.Campaign.getNpcs().map(n => n.name));
     expect(stored).toEqual(['Катарин', 'Кулсталтин/Распутин', 'Гримгор']);
 
     const persisted = await page.evaluate(() =>
-      JSON.parse(localStorage.getItem('monkSheet_v3')).campaignNpcs.map(n => n.name));
+      JSON.parse(localStorage.getItem('campaign_v1')).npcs.map(n => n.name));
     expect(persisted).toEqual(['Катарин', 'Кулсталтин/Распутин', 'Гримгор']);
 
     // Re-render-ът показва новия ред.
@@ -482,7 +482,7 @@ test.describe('Campaign NPCs - Drag reorder (state-level)', () => {
     await simulateDragFirstRowToEnd(page);
 
     // Детайлният ред (без data-npc-idx) не се брои при четенето на новия ред.
-    const stored = await page.evaluate(() => window.st.campaignNpcs.map(n => n.name));
+    const stored = await page.evaluate(() => window.Campaign.getNpcs().map(n => n.name));
     expect(stored).toEqual(['Катарин', 'Кулсталтин/Распутин', 'Гримгор']);
     await expect(page.locator('#npcTableRoot tr.npc-details-row')).toHaveCount(0);
   });

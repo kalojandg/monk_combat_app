@@ -74,10 +74,10 @@ test.describe('Regression: Resurrection spell accordion + active-tab re-tap', ()
     await boot(page);
     // seed NPCs + make campaignNpc the restored tab
     await page.evaluate(() => {
-      window.st.campaignNpcs = [
+      window.Campaign.setNpcs([
         { name: 'Влад фон Карщайн', faction: 'вампири', description: '', location: '' },
         { name: 'Юри Барков', faction: 'Кислев', description: '', location: '' }
-      ];
+      ]);
       window.save();
       localStorage.setItem('activeTab', 'campaignNpc');
     });
