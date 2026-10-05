@@ -34,6 +34,54 @@
     return { ac, totalSpeed, meleeAtk, meleeWeaponAtk, spellSaveDC_WIS, spellAtk_WIS };
   }
 
+  // ===== Armor AC / Max DEX входове (tabs/stats-basicinfo.html) =====
+  // app.js не знае за тях: слушателите са делегирани на document (партиалът се зарежда
+  // лениво), а видимостта е ОБРАТНАТА на hiddenFieldIds — редът #armorRow е display:none
+  // в HTML-а и се показва само при активен клерик. Синхронизира се при всяка промяна на
+  // DOM-а (зареждане на партиала) и след всеки renderAll() (смяна на профил/import).
+  function isCleric() {
+    return typeof window.activeProfile === 'function' && window.activeProfile().id === 'cleric';
+  }
+
+  function syncArmorFields() {
+    const row = document.getElementById('armorRow');
+    if (!row) return;
+    const show = isCleric();
+    row.style.display = show ? '' : 'none';
+    if (!show || !window.st) return;
+    const ac = document.getElementById('armorAcInput');
+    const dex = document.getElementById('armorMaxDexInput');
+    // Не презаписвай полето, което се пише в момента
+    if (ac && ac !== document.activeElement) ac.value = Number(window.st.armorAc || 0) || '';
+    if (dex && dex !== document.activeElement) dex.value = num(window.st.armorMaxDex) === null ? '' : window.st.armorMaxDex;
+  }
+
+  document.addEventListener('input', e => {
+    const id = e.target && e.target.id;
+    if (id !== 'armorAcInput' && id !== 'armorMaxDexInput') return;
+    if (!isCleric()) return;
+    const raw = e.target.value;
+    if (id === 'armorAcInput') {
+      window.st.armorAc = raw === '' ? 0 : Math.floor(Number(raw));
+    } else {
+      window.st.armorMaxDex = raw === '' ? null : Math.floor(Number(raw));  // празно = без таван
+    }
+    window.save();
+  });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    new MutationObserver(syncArmorFields).observe(document.body, { childList: true, subtree: true });
+    if (typeof window.renderAll === 'function') {
+      const origRenderAll = window.renderAll;
+      window.renderAll = function () {
+        const r = origRenderAll.apply(this, arguments);
+        syncArmorFields();
+        return r;
+      };
+    }
+    syncArmorFields();
+  });
+
   window.CLASS_PROFILES = window.CLASS_PROFILES || {};
   window.CLASS_PROFILES.cleric = {
     id: 'cleric',
