@@ -50,29 +50,29 @@ const API_BASE = 'https://www.dnd5eapi.co';
 // Spell details cache
 const _spellCache = {};
 
-const _LOCAL_SPELLS = {
-  'sacred-flame': {
-    name: 'Holy Word', level: 0,
-    casting_time: '1 action', range: '60 feet', duration: 'Instantaneous',
-    components: ['V', 'S'],
-    desc: ['You mutter a word of the divine under your breath, being careful not to speak it any louder, for such celestial power is not for the tainted and unworthy. Make a ranged spell attack against the target. On a hit, the target takes 1d8 radiant damage. If you hit an undead, fiend, or fey, then its speed is reduced by 10 feet and it cannot take reactions until the end of its next turn.'],
-    higher_level: ['This spell\'s damage increases by 1d8 when you reach 5th level (2d8), 11th level (3d8), and 17th level (4d8).'],
-  },
-  'ray-of-sickness': {
-    name: 'Ray of Sickness', level: 1,
-    casting_time: '1 action', range: '60 feet', duration: 'Instantaneous',
-    components: ['V', 'S'],
-    desc: ['A ray of sickening greenish energy lashes out toward a creature within range. Make a ranged spell attack against the target. On a hit, the target takes 2d8 poison damage and must make a Constitution saving throw. On a failed save, it is also poisoned until the end of your next turn.'],
-    higher_level: ['When you cast this spell using a spell slot of 2nd level or higher, the damage increases by 1d8 for each slot level above 1st.'],
-  },
-};
+// Заклинания, които ги НЯМА в dnd5eapi (кампанийни + публикувани извън SRD).
+// Данните живеят в local-spells.json, не тук: списъкът расте и съдържание се
+// добавя във ФАЙЛА, без да се пипа код. Локалното има приоритет пред API-то.
+let _localSpells = null;
+let _localSpellsPromise = null;
+async function _loadLocalSpells() {
+  if (_localSpells) return _localSpells;
+  if (!_localSpellsPromise) {
+    _localSpellsPromise = fetch('local-spells.json', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : {}))
+      .catch(() => ({}));   // липсващ файл не бива да събаря заклинанията от API-то
+  }
+  _localSpells = await _localSpellsPromise;
+  return _localSpells;
+}
 
 // Spells cast via Innate Spellcasting require no material components
 const _NO_MATERIAL_SPELLS = new Set(['animal-friendship', 'suggestion']);
 
 async function _fetchSpellDetails(index) {
   if (_spellCache[index]) return _spellCache[index];
-  if (_LOCAL_SPELLS[index]) { _spellCache[index] = _LOCAL_SPELLS[index]; return _LOCAL_SPELLS[index]; }
+  const local = await _loadLocalSpells();
+  if (local[index]) { _spellCache[index] = local[index]; return local[index]; }
   const res = await fetch(`${API_BASE}/api/spells/${index}`);
   if (!res.ok) throw new Error(`API ${res.status}`);
   const data = await res.json();
@@ -98,7 +98,7 @@ const CLERIC_SPELL_SLOTS = {
 };
 
 const WIS_CANTRIPS = [
-  { index: 'sacred-flame',     name: 'Holy Word',        source: 'Cleric',              ability: 'WIS' },
+  { index: 'holy-word',        name: 'Holy Word',        source: 'Cleric',              ability: 'WIS' },
   { index: 'thaumaturgy',      name: 'Thaumaturgy',      source: 'Cleric',              ability: 'WIS' },
   { index: 'spare-the-dying',  name: 'Spare the Dying',  source: 'Cleric',              ability: 'WIS' },
   { index: 'chill-touch',      name: 'Chill Touch',      source: 'Death Domain (Reaper)', ability: 'WIS' },
