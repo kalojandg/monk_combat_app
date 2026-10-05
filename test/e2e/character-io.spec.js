@@ -155,7 +155,7 @@ test.describe('Character-aware export / import (bundle v3)', () => {
     await importFile(page, v3File({ character: 'cleric', savedAt: NEW }));
 
     await expect.poll(() => message).not.toBeNull();
-    expect(message).toContain('cleric');
+    expect(message).toMatch(/cleric/i);  // label на профила (Cleric) или id, ако профилът липсва
     expect(message).toContain('Monk');
     expect(await page.evaluate(() => window.st.name)).toBe('Активен Монах');
     expect(await campaignNow(page)).toEqual({ npcs: ['Текущ NPC'], notes: CUR_NOTES, savedAt: OLD });
