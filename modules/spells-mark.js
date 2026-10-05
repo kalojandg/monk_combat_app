@@ -230,20 +230,27 @@ function _renderMarkSpells(maxSlotLevel) {
   });
 }
 
+// Детайлите идват от външното API / local-spells.json и се кешират в localStorage —
+// всеки низ минава през ескейп преди innerHTML (code-rules §4).
+function _escSpellHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
 function _renderSpellDetail(d) {
+  const e = _escSpellHtml;
   const lines = [];
-  if (d.casting_time) lines.push(`<div><strong>Casting Time:</strong> ${d.casting_time}</div>`);
-  if (d.range)        lines.push(`<div><strong>Range:</strong> ${d.range}</div>`);
-  if (d.duration)     lines.push(`<div><strong>Duration:</strong> ${d.duration}</div>`);
+  if (d.casting_time) lines.push(`<div><strong>Casting Time:</strong> ${e(d.casting_time)}</div>`);
+  if (d.range)        lines.push(`<div><strong>Range:</strong> ${e(d.range)}</div>`);
+  if (d.duration)     lines.push(`<div><strong>Duration:</strong> ${e(d.duration)}</div>`);
   if (Array.isArray(d.components)) {
-    const comps = d.components.map(c => (c === 'M' && d.material) ? `M (${d.material})` : c);
+    const comps = d.components.map(c => (c === 'M' && d.material) ? `M (${e(d.material)})` : e(c));
     lines.push(`<div><strong>Components:</strong> ${comps.join(', ')}</div>`);
   }
   if (d.concentration) lines.push(`<div><strong>Concentration:</strong> Yes</div>`);
   if (d.ritual)        lines.push(`<div><strong>Ritual:</strong> Yes</div>`);
-  if (Array.isArray(d.desc)) lines.push(`<div class="spell-desc">${d.desc.join('<br><br>')}</div>`);
+  if (Array.isArray(d.desc)) lines.push(`<div class="spell-desc">${d.desc.map(e).join('<br><br>')}</div>`);
   if (Array.isArray(d.higher_level) && d.higher_level.length)
-    lines.push(`<div><strong>At Higher Levels:</strong> ${d.higher_level.join(' ')}</div>`);
+    lines.push(`<div><strong>At Higher Levels:</strong> ${d.higher_level.map(e).join(' ')}</div>`);
   return lines.join('');
 }
 

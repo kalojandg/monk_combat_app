@@ -186,6 +186,31 @@ test.describe('Spell library', () => {
     await expect(page.locator('#spellSlotsRoot .slot-row[data-level="1"] .slot-remaining')).toHaveText('3');
   });
 
+  test('spending a slot in #spellSlotsRoot updates the counter and st.markSlots', async ({ page }) => {
+    await mockApi(page);
+    await seedCleric(page, { level: 3, wis: 16 });
+    await openSpellcasting(page);
+    const l2 = page.locator('#spellSlotsRoot .slot-row[data-level="2"]');
+    await l2.locator('.btn-slot-use').click();
+    await expect(l2.locator('.slot-remaining')).toHaveText('1');
+    await page.locator('#spellSlotsRoot .slot-row[data-level="2"] .btn-slot-use').click();
+    await expect(page.locator('#spellSlotsRoot .slot-row[data-level="2"] .slot-remaining')).toHaveText('0');
+    await expect(page.locator('#spellSlotsRoot .slot-row[data-level="2"] .btn-slot-use')).toBeDisabled();
+    expect(await page.evaluate(() => window.st.markSlots[2])).toEqual({ max: 2, used: 2 });
+  });
+
+  test('Long Rest restores spent slots in #spellSlotsRoot', async ({ page }) => {
+    await mockApi(page);
+    await seedCleric(page, { level: 3, wis: 16 });
+    await openSpellcasting(page);
+    await page.locator('#spellSlotsRoot .slot-row[data-level="1"] .btn-slot-use').click();
+    await expect(page.locator('#spellSlotsRoot .slot-row[data-level="1"] .slot-remaining')).toHaveText('3');
+
+    await page.locator('#btnLongRest').click();
+    await expect(page.locator('#spellSlotsRoot .slot-row[data-level="1"] .slot-remaining')).toHaveText('4');
+    expect(await page.evaluate(() => window.st.markSlots[1].used)).toBe(0);
+  });
+
   test('(g) offline: prepared spells show cached details, library shows a message', async ({ page }) => {
     await mockApi(page);
     await seedCleric(page, { level: 3, wis: 16 });
