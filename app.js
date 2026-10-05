@@ -63,13 +63,6 @@ const NOTES_DB_NAME = "monkNotesDB";
 const NOTES_STORE = "handles";
 const NOTES_KEY = "notesFileHandle";
 
-// Martial Arts die по ниво
-function maDie(level) {
-  if (level >= 17) return "d10";
-  if (level >= 11) return "d8";
-  if (level >= 5) return "d6";
-  return "d4";
-}
 // Proficiency по ниво
 function profBonus(level) {
   if (level >= 17) return 6;
@@ -77,15 +70,6 @@ function profBonus(level) {
   if (level >= 9) return 4;
   if (level >= 5) return 3;
   return 2;
-}
-// Unarmored Movement бонус
-function umBonus(level) {
-  if (level >= 18) return 30;
-  if (level >= 14) return 25;
-  if (level >= 10) return 20;
-  if (level >= 6) return 15;
-  if (level >= 2) return 10;
-  return 0;
 }
 // Monk HP (fixed average RAW) + retroactive CON
 function baseHP(level, conMod) {
@@ -143,6 +127,19 @@ const defaultState = {
   cube: { charges: 36, activeFace: null }  // Cube of Force widget state (modules/cube.js)
 };
 
+// ===== Class profile / storage =====
+// Класовата математика живее в modules/classes/*.js (window.CLASS_PROFILES).
+// Указателят localStorage['activeCharacter'] избира профила; липсва → монк → monkSheet_v3.
+function activeProfile() {
+  return window.CLASS_PROFILES[st.class || 'monk'] || window.CLASS_PROFILES.monk;
+}
+function activeStorageKey() {
+  const id = localStorage.getItem('activeCharacter') || 'monk';
+  return (window.CLASS_PROFILES[id] || window.CLASS_PROFILES.monk).storageKey;
+}
+window.activeProfile = activeProfile;
+window.activeStorageKey = activeStorageKey;
+
 // ===== Load/save =====
 let st = load();
 // Export st to global scope for modules
@@ -150,7 +147,7 @@ window.st = st;
 window.defaultState = defaultState;
 function load() {
   try {
-    const raw = localStorage.getItem("monkSheet_v3");
+    const raw = localStorage.getItem(activeStorageKey());
     let obj = raw ? { ...defaultState, ...JSON.parse(raw) } : { ...defaultState };
 
     // --- миграция на стари алиаси от 'aliases_v1' → st.aliases
@@ -195,13 +192,27 @@ function save() {
   if (window.st) {
     st = window.st;
   }
-  localStorage.setItem("monkSheet_v3", JSON.stringify(st));
+  localStorage.setItem(activeStorageKey(), JSON.stringify(st));
   renderAll();
 
   cloudSchedule();           // ← остава си
 }
 // Export save to global scope for modules
 window.save = save;
+
+// ===== Campaign accessors =====
+// Фасада за кампанийните данни (Campaign NPCs, Session Notes). Засега чете/пише право
+// в st; модулите и notes кодът минават САМО през нея, за да може реализацията отдолу
+// да се смени, без да се пипат консуматорите.
+window.Campaign = {
+  getNpcs() {
+    if (!Array.isArray(window.st.campaignNpcs)) window.st.campaignNpcs = [];
+    return window.st.campaignNpcs;
+  },
+  setNpcs(arr) { window.st.campaignNpcs = arr; },
+  getNotes() { return window.st.sessionNotes; },
+  setNotes(str) { window.st.sessionNotes = str; }
+};
 
 
 // ===== Derived =====
@@ -212,26 +223,19 @@ function levelFromXP(xp) {
   }
   return lvl;
 }
+// Диспечер: неутралната част се смята тук, класовата идва от activeProfile().derive().
 function derived() {
   // Character level drives: prof bonus, HP, HD
   const level = st.level || 1;
-  // Monk level drives: Ki, Martial Arts die, Unarmored Movement
-  const monkLevel = st.monkLevel || 1;
   const mods = {
     str: modFrom(st.str), dex: modFrom(st.dex), con: modFrom(st.con), int_: modFrom(st.int_), wis: modFrom(st.wis), cha: modFrom(st.cha)
   };
   const prof = profBonus(level);
-  const ma = maDie(monkLevel);
-  const kiMax = monkLevel;
   const hdMax = level;
 
   const formulaMaxHP = baseHP(level, mods.con) + (st.tough ? 2 * level : 0) + Number(st.hpAdjust || 0);
   const hbAdj = Number(st.hpHomebrew || 0);
   const maxHP = Math.max(1, Math.floor(formulaMaxHP + hbAdj));
-
-  const ac = 10 + mods.dex + mods.wis + Number(st.acMagic || 0);
-  const um = umBonus(monkLevel);
-  const totalSpeed = Number(st.baseSpeed || 0) + um;
 
   const savesBase = {
     str: mods.str + (st.saveStrProf ? prof : 0),
@@ -251,20 +255,10 @@ function derived() {
     cha: savesBase.cha + allBonus,
   };
 
-  const meleeAtk = mods.dex + prof + Number(st.unarmedMagic || 0);  // Unarmed attack uses unarmedMagic
-  const meleeWeaponAtk = mods.dex + prof + Number(st.meleeWeaponMagic || 0);  // Melee weapon attack
   const rangedAtk = mods.dex + prof + Number(st.rangedMagic || 0);
 
-  // Ki Save DC = 8 + WIS mod + Prof + Magic bonus
-  const kiSaveDC = 8 + mods.wis + prof + Number(st.kiSaveDcMagic || 0);
-
-  // Spell Save DC / Spell Attack — WIS (Cleric) and CHA (Mark of Shadow)
-  const spellSaveDC_WIS = 8 + prof + mods.wis;
-  const spellAtk_WIS    = prof + mods.wis;
-  const spellSaveDC_CHA = 8 + prof + mods.cha;
-  const spellAtk_CHA    = prof + mods.cha;
-
-  return { level, mods, prof, ma, kiMax, hdMax, maxHP, ac, um, totalSpeed, savesBase, savesTotal, meleeAtk, meleeWeaponAtk, rangedAtk, kiSaveDC, spellSaveDC_WIS, spellAtk_WIS, spellSaveDC_CHA, spellAtk_CHA };
+  const base = { level, mods, prof, hdMax, maxHP, savesBase, savesTotal, rangedAtk };
+  return { ...base, ...activeProfile().derive(st, base) };
 }
 window.derived = derived;
 
@@ -440,11 +434,11 @@ function renderAll() {
   el("notes") && (el("notes").value = st.notes || "");
 
   // Session Notes: дръж textarea-та в синхрон със state-а (import/cloud pull).
-  // При нормално писане input-хендлърът пръв изравнява st.sessionNotes с полето,
+  // При нормално писане input-хендлърът пръв изравнява Campaign notes с полето,
   // затова тук стойностите съвпадат и не пишем → курсорът не мърда.
   const notesTa = el("notesInput");
-  if (notesTa && notesTa.value !== (st.sessionNotes || "")) {
-    notesTa.value = st.sessionNotes || "";
+  if (notesTa && notesTa.value !== (Campaign.getNotes() || "")) {
+    notesTa.value = Campaign.getNotes() || "";
   }
 
   // Mods
@@ -495,7 +489,25 @@ function renderAll() {
   window.renderInventoryTable?.();
   window.renderGold?.();
   if (typeof window.renderNpcTable === 'function') window.renderNpcTable();
+  applyHiddenFields();
   // renderFeaturesAccordion(d.level);
+}
+
+// Видимост по профил: скрий най-близкия .field на всяко id от hiddenFieldIds;
+// ред (.row-grid), в който не е останало видимо поле, се скрива също.
+function applyHiddenFields() {
+  document.querySelectorAll('[data-profile-hidden]').forEach(n => {
+    n.style.display = '';
+    n.removeAttribute('data-profile-hidden');
+  });
+  const hide = n => { n.style.display = 'none'; n.setAttribute('data-profile-hidden', ''); };
+  (activeProfile().hiddenFieldIds || []).forEach(id => {
+    const field = el(id)?.closest('.field');
+    if (!field) return;
+    hide(field);
+    const row = field.closest('.row-grid');
+    if (row && Array.from(row.querySelectorAll('.field')).every(f => f.hasAttribute('data-profile-hidden'))) hide(row);
+  });
 }
 
 // ===== Events: inputs =====
@@ -962,7 +974,7 @@ async function notesWriteNow() {
       if (req !== "granted") return;
     }
     const writable = await notesHandle.createWritable();
-    const obj = { schema: "sessionNotes/v1", created: new Date().toISOString(), title: "Session Notes", content: st.sessionNotes };
+    const obj = { schema: "sessionNotes/v1", created: new Date().toISOString(), title: "Session Notes", content: Campaign.getNotes() };
     await writable.write(new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" }));
     await writable.close();
   } catch (e) { console.error("notesWriteNow", e); }
@@ -999,12 +1011,12 @@ async function onNotesTabShown() {
     try { await notesPickDir(); } catch (_) { }
   }
 
-  // зареди runtime стойност (ако пазиш в st.sessionNotes)
-  ta.value = st.sessionNotes || '';
+  // зареди runtime стойност (Campaign notes)
+  ta.value = Campaign.getNotes() || '';
 
   // авто-сейв с debounce към JSON файла
   const debSave = debounce(async () => {
-    st.sessionNotes = ta.value;
+    Campaign.setNotes(ta.value);
     await notesWriteNow();
   }, 1200);
 
@@ -1454,7 +1466,7 @@ async function notesWriteNow() {
       if (req !== "granted") return;
     }
     const w = await notesFileHandle.createWritable();
-    const obj = { schema: "sessionNotes/v1", updated: new Date().toISOString(), content: st.sessionNotes || "" };
+    const obj = { schema: "sessionNotes/v1", updated: new Date().toISOString(), content: Campaign.getNotes() || "" };
     await w.write(new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" }));
     await w.close();
   } catch (e) { console.error("notesWriteNow", e); }
@@ -1492,7 +1504,7 @@ async function notesRestoreDir() {
       return;
     }
     if (!notesFileHandle) {
-      st.sessionNotes = "";
+      Campaign.setNotes("");
       const ta = document.getElementById('notesInput');
       if (ta) ta.value = "";
     }
@@ -1516,7 +1528,7 @@ function wireNotesUI() {
 
   if (ta && !ta.__wired) {
     ta.__wired = true;
-    ta.value = st.sessionNotes || "";
+    ta.value = Campaign.getNotes() || "";
 
     let firstInputHandled = false;
 
@@ -1535,7 +1547,7 @@ function wireNotesUI() {
 
     // 2) след това — нормален дебаунс за записите
     ta.addEventListener('input', () => {
-      st.sessionNotes = ta.value;
+      Campaign.setNotes(ta.value);
       save();                    // локален бекъп
       notesDebouncedSave();      // ще пише, ако вече има file handle
     });

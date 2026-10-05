@@ -41,10 +41,10 @@
     return html;
   }
 
+  // Данните минават през window.Campaign фасадата (app.js), не право през st.
   function npcList() {
     if (typeof window.st === 'undefined') return null;
-    if (!Array.isArray(window.st.campaignNpcs)) window.st.campaignNpcs = [];
-    return window.st.campaignNpcs;
+    return window.Campaign.getNpcs();
   }
 
   function npcOpenModal(editIndex = null, npc = null) {
@@ -134,7 +134,7 @@
     root.querySelectorAll('[data-npc-edit]').forEach(btn => {
       btn.addEventListener('click', e => {
         const idx = parseInt(e.currentTarget.getAttribute('data-npc-edit'), 10);
-        npcOpenModal(idx, window.st.campaignNpcs[idx]);
+        npcOpenModal(idx, npcList()[idx]);
       });
     });
     root.querySelectorAll('[data-npc-del]').forEach(btn => {
@@ -145,7 +145,7 @@
         // Индексите се местят — дръж разгънатия ред честен.
         if (__npcExpandedIdx === idx) __npcExpandedIdx = null;
         else if (__npcExpandedIdx !== null && __npcExpandedIdx > idx) __npcExpandedIdx--;
-        window.st.campaignNpcs.splice(idx, 1);
+        npcList().splice(idx, 1);
         window.save(); // render + cloud
       });
     });
@@ -175,11 +175,11 @@
         // Чети новия ред от DOM-а по РЕАЛНИТЕ индекси — детайлният ред не се брои.
         const order = Array.from(tbody.querySelectorAll('tr[data-npc-idx]'))
           .map(tr => parseInt(tr.getAttribute('data-npc-idx'), 10));
-        const list = window.st.campaignNpcs;
+        const list = npcList();
         if (order.length !== list.length || order.some(i => !list[i])) return;
         const same = order.every((idx, pos) => idx === pos);
         if (same) return;
-        window.st.campaignNpcs = order.map(i => list[i]);
+        window.Campaign.setNpcs(order.map(i => list[i]));
         __npcExpandedIdx = null;
         window.save();
       }
@@ -225,9 +225,9 @@
       }
 
       if (__npcEditIndex === null) {
-        window.st.campaignNpcs.push(rec);
+        npcList().push(rec);
       } else {
-        window.st.campaignNpcs[__npcEditIndex] = rec;
+        npcList()[__npcEditIndex] = rec;
       }
       npcCloseModal();
       window.save(); // trigger render + cloud write
