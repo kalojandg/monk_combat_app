@@ -90,7 +90,7 @@ test.describe('Profile surface: tabs and feature files', () => {
 
     await page.locator('.tab-btn[data-tab="spellcasting"]').click();
     await expect(page.locator('#tab-spellcasting')).toBeVisible();
-    await expect(page.locator('#tab-spellcasting .section-title')).toHaveText('Spellcasting');
+    await expect(page.locator('#tab-spellcasting > .section-title')).toHaveText('Spellcasting');
     await expect(page.locator('#tab-spellcasting #spellSlotsRoot')).toHaveCount(1);
     await expect(page.locator('#tab-spellcasting #spellPreparedRoot')).toHaveCount(1);
     await expect(page.locator('#tab-spellcasting #spellLibraryRoot')).toHaveCount(1);
