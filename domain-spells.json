@@ -1,0 +1,46 @@
+{
+  "death": [
+    { "minLevel": 1, "spells": [
+      { "index": "false-life", "name": "False Life" },
+      { "index": "ray-of-sickness", "name": "Ray of Sickness" }
+    ]},
+    { "minLevel": 3, "spells": [
+      { "index": "blindness-deafness", "name": "Blindness/Deafness" },
+      { "index": "ray-of-enfeeblement", "name": "Ray of Enfeeblement" }
+    ]},
+    { "minLevel": 5, "spells": [
+      { "index": "animate-dead", "name": "Animate Dead" },
+      { "index": "vampiric-touch", "name": "Vampiric Touch" }
+    ]},
+    { "minLevel": 7, "spells": [
+      { "index": "blight", "name": "Blight" },
+      { "index": "death-ward", "name": "Death Ward" }
+    ]},
+    { "minLevel": 9, "spells": [
+      { "index": "antilife-shell", "name": "Antilife Shell" },
+      { "index": "cloudkill", "name": "Cloudkill" }
+    ]}
+  ],
+  "grave": [
+    { "minLevel": 1, "spells": [
+      { "index": "bane", "name": "Bane" },
+      { "index": "false-life", "name": "False Life" }
+    ]},
+    { "minLevel": 3, "spells": [
+      { "index": "gentle-repose", "name": "Gentle Repose" },
+      { "index": "ray-of-enfeeblement", "name": "Ray of Enfeeblement" }
+    ]},
+    { "minLevel": 5, "spells": [
+      { "index": "revivify", "name": "Revivify" },
+      { "index": "vampiric-touch", "name": "Vampiric Touch" }
+    ]},
+    { "minLevel": 7, "spells": [
+      { "index": "blight", "name": "Blight" },
+      { "index": "death-ward", "name": "Death Ward" }
+    ]},
+    { "minLevel": 9, "spells": [
+      { "index": "antilife-shell", "name": "Antilife Shell" },
+      { "index": "raise-dead", "name": "Raise Dead" }
+    ]}
+  ]
+}

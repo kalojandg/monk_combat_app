@@ -1,27 +1,33 @@
 // Mark of Shadow — fixed spell list, Cleric spell slots from D&D 5e API
 
-const DOMAIN_SPELL_ROWS = [
-  { minLevel: 1, spells: [
-    { index: 'false-life',          name: 'False Life' },
-    { index: 'ray-of-sickness',     name: 'Ray of Sickness' },
-  ]},
-  { minLevel: 3, spells: [
-    { index: 'blindness-deafness',  name: 'Blindness/Deafness' },
-    { index: 'ray-of-enfeeblement', name: 'Ray of Enfeeblement' },
-  ]},
-  { minLevel: 5, spells: [
-    { index: 'animate-dead',        name: 'Animate Dead' },
-    { index: 'vampiric-touch',      name: 'Vampiric Touch' },
-  ]},
-  { minLevel: 7, spells: [
-    { index: 'blight',              name: 'Blight' },
-    { index: 'death-ward',          name: 'Death Ward' },
-  ]},
-  { minLevel: 9, spells: [
-    { index: 'antilife-shell',      name: 'Antilife Shell' },
-    { index: 'cloudkill',           name: 'Cloudkill' },
-  ]},
-];
+// Domain заклинанията живеят в domain-spells.json, по домейн ({ death: [...], grave: [...] }).
+// Профилите (modules/classes/*.js) нямат поле `domain`, затова домейнът се извежда от
+// activeProfile().id: монкът е multiclass Death Domain, клерикът е Grave Domain.
+// Непознат профил → death (поведението на монка отпреди изнасянето в JSON).
+const _DOMAIN_BY_PROFILE = { monk: 'death', cleric: 'grave' };
+let _domainSpells = null;
+let _domainSpellsPromise = null;
+
+function activeDomain() {
+  const id = typeof window.activeProfile === 'function' ? window.activeProfile().id : 'monk';
+  return _DOMAIN_BY_PROFILE[id] || 'death';
+}
+
+function loadDomainSpells() {
+  if (!_domainSpellsPromise) {
+    _domainSpellsPromise = fetch('domain-spells.json', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : {}))
+      .catch(() => ({}))
+      .then(data => { _domainSpells = data; return data; });
+  }
+  return _domainSpellsPromise;
+}
+loadDomainSpells();   // зарежда се веднага: level-up модалът чете редовете синхронно
+
+// Редовете на активния домейн; [] докато domain-spells.json не е зареден
+function getDomainSpellRows() {
+  return (_domainSpells && _domainSpells[activeDomain()]) || [];
+}
 
 const MARK_SPELLS = {
   1: [
@@ -83,7 +89,7 @@ async function _fetchSpellDetails(index) {
   return data;
 }
 
-// Standard D&D 5e Cleric spell slot progression (no API needed)
+// Standard D&D 5e Cleric spell slot progression, levels 1-20 (no API needed)
 const CLERIC_SPELL_SLOTS = {
   1:  { 1: 2 },
   2:  { 1: 3 },
@@ -95,6 +101,16 @@ const CLERIC_SPELL_SLOTS = {
   8:  { 1: 4, 2: 3, 3: 3, 4: 2 },
   9:  { 1: 4, 2: 3, 3: 3, 4: 3, 5: 1 },
   10: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2 },
+  11: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1 },
+  12: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1 },
+  13: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1 },
+  14: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1 },
+  15: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1 },
+  16: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1 },
+  17: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1, 9: 1 },
+  18: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 1, 7: 1, 8: 1, 9: 1 },
+  19: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 2, 7: 1, 8: 1, 9: 1 },
+  20: { 1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 2, 7: 2, 8: 1, 9: 1 },
 };
 
 const WIS_CANTRIPS = [
@@ -242,7 +258,7 @@ function initMarkSpells() {
     return;
   }
 
-  const slotTable = CLERIC_SPELL_SLOTS[Math.min(clericLevel, 10)] || {};
+  const slotTable = CLERIC_SPELL_SLOTS[clericLevel] || {};
   const existing = window.st.markSlots || {};
   const merged = {};
   for (const [lvl, max] of Object.entries(slotTable)) {
@@ -270,13 +286,13 @@ function restoreMarkSlots() {
 
 // ── Cleric Spell Preparation Browser ──
 
-// Domain + Mark spells are always prepared — filter from regular prep browser
-const _ALWAYS_PREPARED = new Set([
-  'false-life', 'ray-of-sickness', 'blindness-deafness', 'ray-of-enfeeblement',
-  'animate-dead', 'vampiric-touch', 'blight', 'death-ward', 'antilife-shell', 'cloudkill',
-  'disguise-self', 'silent-image', 'darkness', 'pass-without-trace',
-  'clairvoyance', 'major-image', 'greater-invisibility', 'hallucinatory-terrain', 'mislead',
-]);
+// Domain + Mark spells are always prepared (and don't count against the limit) —
+// filter them from the regular prep browser. The domain part follows the active profile.
+function _alwaysPrepared() {
+  const domain = getDomainSpellRows().flatMap(r => r.spells.map(sp => sp.index));
+  const mark = Object.values(MARK_SPELLS).flat().map(sp => sp.index);
+  return new Set([...domain, ...mark]);
+}
 
 const _clericSpellsByLevel = {};
 let _clericSpellSet = null;
@@ -293,18 +309,22 @@ async function _fetchClericSpellSet() {
 }
 
 async function _fetchClericSpellsForLevel(slotLevel) {
-  if (_clericSpellsByLevel[slotLevel]) return _clericSpellsByLevel[slotLevel];
-  const [classSet, levelRes] = await Promise.all([
-    _fetchClericSpellSet(),
-    fetch(`${API_BASE}/api/spells?level=${slotLevel}`),
-  ]);
-  if (!levelRes.ok) throw new Error(`API ${levelRes.status}`);
-  const levelData = await levelRes.json();
-  const filtered = (levelData.results || [])
-    .filter(s => classSet.has(s.index) && !_ALWAYS_PREPARED.has(s.index))
-    .sort((a, b) => a.name.localeCompare(b.name));
-  _clericSpellsByLevel[slotLevel] = filtered;
-  return filtered;
+  // Кешът държи ВСИЧКИ cleric заклинания за нивото; always-prepared се филтрират при
+  // всяко четене, защото домейнът се сменя заедно с активния герой.
+  if (!_clericSpellsByLevel[slotLevel]) {
+    const [classSet, levelRes] = await Promise.all([
+      _fetchClericSpellSet(),
+      fetch(`${API_BASE}/api/spells?level=${slotLevel}`),
+      loadDomainSpells(),
+    ]);
+    if (!levelRes.ok) throw new Error(`API ${levelRes.status}`);
+    const levelData = await levelRes.json();
+    _clericSpellsByLevel[slotLevel] = (levelData.results || [])
+      .filter(s => classSet.has(s.index))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
+  const alwaysPrepared = _alwaysPrepared();
+  return _clericSpellsByLevel[slotLevel].filter(s => !alwaysPrepared.has(s.index));
 }
 
 function renderClericPrepSpells() {
@@ -534,7 +554,12 @@ function renderDomainSpells(clericLevel) {
   const root = document.getElementById('domain-spells-root');
   if (!root) return;
 
-  const available = DOMAIN_SPELL_ROWS.filter(r => r.minLevel <= clericLevel);
+  if (!_domainSpells) {
+    loadDomainSpells().then(() => renderDomainSpells(clericLevel));
+    return;
+  }
+
+  const available = getDomainSpellRows().filter(r => r.minLevel <= clericLevel);
 
   if (available.length === 0) {
     root.innerHTML = '<div class="small muted">No domain spells at your current Cleric level.</div>';
@@ -563,7 +588,7 @@ function renderDomainSpells(clericLevel) {
 }
 
 function getClericSpellsGained(nextClericLevel) {
-  const domainRow = DOMAIN_SPELL_ROWS.find(r => r.minLevel === nextClericLevel);
+  const domainRow = getDomainSpellRows().find(r => r.minLevel === nextClericLevel);
   const domainNames = domainRow ? domainRow.spells.map(s => s.name) : [];
   const markLevelMap = { 1: 1, 3: 2, 5: 3, 7: 4, 9: 5 };
   const markSlotLevel = markLevelMap[nextClericLevel];
@@ -579,3 +604,6 @@ window.renderChaCantrips = renderChaCantrips;
 window.renderChaSpells = renderChaSpells;
 window.renderDomainSpells = renderDomainSpells;
 window.getClericSpellsGained = getClericSpellsGained;
+window.loadDomainSpells = loadDomainSpells;
+window.getDomainSpellRows = getDomainSpellRows;
+window.activeDomain = activeDomain;
