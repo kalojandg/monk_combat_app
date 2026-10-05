@@ -92,6 +92,11 @@
     hiddenFieldIds: ['monkLevelSpan', 'maDieSpan', 'kiMaxSpan', 'kiSaveDcSpan2', 'kiSaveDcMagicInput', 'umBonusSpan'],
     hasClassBadges: false,         // линейна прогресия
     hasLevelUpModal: false,        // без избор на клас при level-up
-    restoresKi: false              // няма ки
+    restoresKi: false,             // няма ки
+    // Като монка, но Spellcasting стои на мястото на Resurrection
+    tabs: ['stats', 'pcchar', 'spellcasting', 'inventory', 'flavor', 'skills', 'sessionNotes', 'namegen', 'campaignNpc'],
+    featureFiles: ['grave-features.json'],
+    flavorTypes: ['insult', 'spare-dying', 'heal-zero'],
+    ttsVoice: null                 // засега гласът по подразбиране
   };
 })();
