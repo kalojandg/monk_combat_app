@@ -12,7 +12,8 @@ export default defineConfig({
   
   // Retry при fail: 1 опит — Chromium прекъсва page.goto/fetch с net::ERR_NETWORK_CHANGED при
   // смяна на мрежата по време на дългия run (случайни тестове, без връзка с кода).
-  // Истински бъг fail-ва и двата опита; flaky тестовете се виждат отделно в отчета.
+  // Истински бъг fail-ва и двата опита. Flaky тест, паднал по НЕ-мрежова причина (race/timing),
+  // НЕ минава зелено: test/network-flake-reporter.js връща exit code 1 за него.
   retries: 1,
   
   // Само 1 worker (sequential execution за ясност)
@@ -22,7 +23,8 @@ export default defineConfig({
   reporter: [
     ['line'], // По-компактен: само една линия per test
     ['html', { open: 'never' }], // HTML report (виж с: npm run test:report)
-    ['json', { outputFile: 'test-results/results.json' }] // JSON за автоматично четене
+    ['json', { outputFile: 'test-results/results.json' }], // JSON за автоматично четене
+    ['./test/network-flake-reporter.js'] // retry прощава само мрежови прекъсвания (виж retries)
   ],
   
   use: {
