@@ -56,6 +56,20 @@
     return /[Ѐ-ӿ]/.test(text) ? 'bg-BG' : 'en-US';
   }
 
+  // Профилът на активния герой може да задава собствен глас (activeProfile().ttsVoice);
+  // null/липсва → гласът по подразбиране от TTS_CONFIG.voices. Името на Google гласа
+  // започва с езиковия код ("en-US-Chirp3-HD-…"), който заявката изисква да съвпада.
+  function pickVoice(lang) {
+    const p = (typeof window !== 'undefined' && typeof window.activeProfile === 'function')
+      ? window.activeProfile() : null;
+    const override = p && p.ttsVoice;
+    if (override) {
+      const m = /^([a-z]{2,3}-[A-Za-z0-9]+)-/.exec(override);
+      return { languageCode: m ? m[1] : lang, name: override, ssmlGender: 'MALE' };
+    }
+    return { languageCode: lang, name: TTS_CONFIG.voices[lang], ssmlGender: 'MALE' };
+  }
+
   function escapeXml(s) {
     return String(s)
       .replace(/&/g, '&amp;')
@@ -96,7 +110,7 @@
     const lang = detectLang(text);
     const body = {
       input: { ssml: buildSsml(text) },
-      voice: { languageCode: lang, name: TTS_CONFIG.voices[lang], ssmlGender: 'MALE' },
+      voice: pickVoice(lang),
       audioConfig: { audioEncoding: 'MP3', speakingRate: TTS_CONFIG.speakingRate }
     };
     const res = await fetch(ENDPOINT + '?key=' + encodeURIComponent(activeKey()), {
