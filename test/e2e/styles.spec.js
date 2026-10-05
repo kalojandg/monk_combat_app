@@ -134,6 +134,8 @@ test.describe('Styles - Stats sub-tabs (second level)', () => {
 test.describe('Styles - Buttons', () => {
   test('Primary buttons have consistent background, color and radius', async ({ page }) => {
     await page.goto('/');
+    // Модалните бутони (#pcModalSave, #invSave) идват от lazy табовете — изчакай ги
+    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
     await expect(page.locator('#hpCurrentSpan')).toHaveText('8', { timeout: 10000 });
 
     // Важно: тук гледаме САМО <button class="primary"> (глобалните primary бутони),
