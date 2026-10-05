@@ -193,6 +193,7 @@ function save() {
   if (window.st) {
     st = window.st;
   }
+  syncLinearLevels();
   localStorage.setItem(activeStorageKey(), JSON.stringify(st));
   window.Campaign.persist?.(); // кампанийният контейнер (modules/campaign.js) — само при промяна
   renderAll();
@@ -201,6 +202,17 @@ function save() {
 }
 // Export save to global scope for modules
 window.save = save;
+
+// Линейна прогресия (профил без level-up модал, напр. клерик): нивото на класа = нивото
+// на героя — слотовете/домейн магиите четат clericLevel, а multiclass миграцията в
+// load() вижда валидна сума и не превръща героя в монк. Монкът не се пипа.
+function syncLinearLevels() {
+  const p = activeProfile();
+  if (p.hasLevelUpModal !== false) return;
+  st.monkLevel = 0;
+  st.clericLevel = 0;
+  st[`${p.id}Level`] = st.level || 1;
+}
 
 // ===== Campaign accessors =====
 // Фасада за кампанийните данни (Campaign NPCs, Session Notes); модулите и notes кодът
@@ -419,6 +431,7 @@ function renderAll() {
   el("clericLevelSpan") && (el("clericLevelSpan").textContent = st.clericLevel || 0);
 
   _initClassBadges();
+  el("class-badges") && (el("class-badges").style.display = activeProfile().hasClassBadges ? "" : "none");
   el("monkBadgeLv") && (el("monkBadgeLv").textContent = st.monkLevel || 0);
   el("clericBadgeLv") && (el("clericBadgeLv").textContent = st.clericLevel || 0);
   el("profSpan2") && (el("profSpan2").textContent = `+${d.prof}`);
@@ -493,13 +506,20 @@ function renderAll() {
   window.renderInventoryTable?.();
   window.renderGold?.();
   if (typeof window.renderNpcTable === 'function') window.renderNpcTable();
-  applyHiddenFields();
+  applyHiddenFields(d);
   // renderFeaturesAccordion(d.level);
 }
 
+// Combat лентата (index.html) няма .field: pill/контролите там се скриват, когато
+// профилът не връща съответната стойност (клерикът няма ki, Ki Save DC, CHA магия).
+const COMBAT_VALUE_IDS = {
+  kiCurrentSpan: 'kiMax', kiDelta: 'kiMax', kiSaveDcSpan: 'kiSaveDC',
+  spellDcChaSpan: 'spellSaveDC_CHA', spellAtkChaSpan: 'spellAtk_CHA'
+};
+
 // Видимост по профил: скрий най-близкия .field на всяко id от hiddenFieldIds;
 // ред (.row-grid), в който не е останало видимо поле, се скрива също.
-function applyHiddenFields() {
+function applyHiddenFields(d = derived()) {
   document.querySelectorAll('[data-profile-hidden]').forEach(n => {
     n.style.display = '';
     n.removeAttribute('data-profile-hidden');
@@ -511,6 +531,10 @@ function applyHiddenFields() {
     hide(field);
     const row = field.closest('.row-grid');
     if (row && Array.from(row.querySelectorAll('.field')).every(f => f.hasAttribute('data-profile-hidden'))) hide(row);
+  });
+  Object.entries(COMBAT_VALUE_IDS).forEach(([id, key]) => {
+    const box = d[key] === undefined && el(id)?.closest('.pill, .controls');
+    if (box) hide(box);
   });
 }
 
@@ -525,7 +549,7 @@ el("btnAddXp") && el("btnAddXp").addEventListener("click", () => {
     st.xp = (st.xp || 0) + amount;
     const d = derived();
     st.hdAvail = clamp(st.hdAvail, 0, d.hdMax);
-    st.kiCurrent = clamp(st.kiCurrent, 0, d.kiMax);
+    if (activeProfile().restoresKi) st.kiCurrent = clamp(st.kiCurrent, 0, d.kiMax);
     save();
   }
   if (addEl) addEl.value = '';
@@ -668,7 +692,7 @@ el("btnHealFromZero") && el("btnHealFromZero").addEventListener("click", () => {
 // Short Rest
 el("btnShortRest") && el("btnShortRest").addEventListener("click", () => {
   const d = derived();
-  st.kiCurrent = d.kiMax;
+  if (activeProfile().restoresKi) st.kiCurrent = d.kiMax;
   if (st.hdAvail > 0) {
     const maxDice = st.hdAvail;
     const ans = prompt(`Колко Hit Dice ще използваш? (0..${maxDice})`, `0`);
@@ -693,11 +717,14 @@ el("btnLongRest") && el("btnLongRest").addEventListener("click", async () => {
   if (newLevel > st.level) {
     const levelsGained = newLevel - st.level;
     for (let i = 0; i < levelsGained; i++) {
-      const choice = await chooseLevelUpClass(st.level, st.monkLevel || 0, st.clericLevel || 0);
-      if (choice === 'monk') {
-        st.monkLevel = (st.monkLevel || 0) + 1;
-      } else {
-        st.clericLevel = (st.clericLevel || 0) + 1;
+      // Без level-up модал (клерик) прогресията е линейна — класовото ниво следва st.level в save()
+      if (activeProfile().hasLevelUpModal) {
+        const choice = await chooseLevelUpClass(st.level, st.monkLevel || 0, st.clericLevel || 0);
+        if (choice === 'monk') {
+          st.monkLevel = (st.monkLevel || 0) + 1;
+        } else {
+          st.clericLevel = (st.clericLevel || 0) + 1;
+        }
       }
       st.level++;
       st.hdAvail = Math.min(st.level, (st.hdAvail || 0) + 1);
@@ -707,7 +734,7 @@ el("btnLongRest") && el("btnLongRest").addEventListener("click", async () => {
   const d = derived();
   const recover = Math.ceil(d.hdMax / 2);
   st.hdAvail = Math.min(d.hdMax, st.hdAvail + recover);
-  st.kiCurrent = d.kiMax;
+  if (activeProfile().restoresKi) st.kiCurrent = d.kiMax;
   st.hpCurrent = d.maxHP;
   st.dsSuccess = 0; st.dsFail = 0; st.status = "alive";
   if (typeof window.restoreMarkSlots === 'function') window.restoreMarkSlots();
@@ -1854,7 +1881,7 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
             st.xp = (st.xp || 0) + amount;
             const d = derived();
             st.hdAvail = clamp(st.hdAvail, 0, d.hdMax);
-            st.kiCurrent = clamp(st.kiCurrent, 0, d.kiMax);
+            if (activeProfile().restoresKi) st.kiCurrent = clamp(st.kiCurrent, 0, d.kiMax);
             save();
           }
           if (addEl) addEl.value = '';
