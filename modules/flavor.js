@@ -150,6 +150,42 @@
     }
   }
 
+  // style.display, не [hidden]: .flavor-grid/.flavor-btn имат собствен display, който бие UA правилото.
+  function setShown(el, shown) {
+    el.style.display = shown ? '' : 'none';
+  }
+
+  // Показва само бутоните, които активният профил декларира (flavorTypes; null = всички).
+  // Секция, чиито бутони са всички скрити, се скрива заедно със заглавието си.
+  function applyProfileFilter() {
+    const tab = document.getElementById('tab-flavor');
+    if (!tab) return;
+    const p = typeof window.activeProfile === 'function' ? window.activeProfile() : null;
+    const allowed = p && Array.isArray(p.flavorTypes) ? p.flavorTypes : null;
+    tab.querySelectorAll('[data-flavor]').forEach(btn => {
+      setShown(btn, !allowed || allowed.includes(btn.dataset.flavor));
+    });
+    tab.querySelectorAll('.flavor-section-title').forEach(title => {
+      const grid = title.nextElementSibling;
+      const any = !!grid && Array.from(grid.querySelectorAll('[data-flavor]')).some(b => b.style.display !== 'none');
+      setShown(title, any);
+      if (grid) setShown(grid, any);
+    });
+  }
+
+  // Смяната на герой минава през window.save() → презасичаме филтъра след него.
+  let __saveWrapped = false;
+  function hookSave() {
+    if (__saveWrapped || typeof window.save !== 'function') return;
+    __saveWrapped = true;
+    const orig = window.save;
+    window.save = function () {
+      const r = orig.apply(this, arguments);
+      applyProfileFilter();
+      return r;
+    };
+  }
+
   window.attachFlavor = function () {
     FLAVOR_TYPES.forEach(type => {
       const btn = document.querySelector('#tab-flavor [data-flavor="' + type.id + '"]');
@@ -157,9 +193,11 @@
       btn.addEventListener('click', () => showLine(type, btn));
     });
     attachSpeak();
+    hookSave();
+    applyProfileFilter();
   };
 
-  window.renderFlavorUI = function () {};
+  window.renderFlavorUI = applyProfileFilter;
 
   // за тестове / бъдещи табове
   window.__FLAVOR_TYPES = FLAVOR_TYPES;
