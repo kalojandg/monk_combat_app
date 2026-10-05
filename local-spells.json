@@ -134,7 +134,7 @@
     "school": {
       "name": "Divination"
     },
-    "casting_time": "",
+    "casting_time": "1 action",
     "range": "Self",
     "components": [
       "V",
