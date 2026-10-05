@@ -235,4 +235,28 @@ test.describe('Spell library', () => {
     await expect(page.locator('#spellLibraryRoot .spell-lib-error')).toBeVisible();
     await expect(page.locator('#spellLibraryRoot .spell-lib-error')).toContainText(/offline|connection/i);
   });
+
+  test('cached spell details with HTML in desc/level render as text, not markup', async ({ page }) => {
+    await seedCleric(page, { level: 3, wis: 16, prepared: ['bless'] });
+    await page.evaluate(() => {
+      localStorage.setItem('spellDetailsCache_v1', JSON.stringify({
+        bless: {
+          index: 'bless', name: 'Bless', level: '1"><img src=x onerror="window.__xss=1">',
+          casting_time: '1 action', range: '30 feet', duration: '1 minute', components: ['V'],
+          desc: ['<img src=x onerror="window.__xss=1">literal'],
+        },
+      }));
+    });
+    await cutApi(page);
+    await page.reload();
+    await page.waitForFunction(() => window.__tabsLoaded === true, { timeout: 10000 });
+    await openSpellcasting(page);
+
+    const item = page.locator('#spellPreparedRoot [data-prepared="bless"]');
+    await expect(item).toBeVisible();
+    await item.locator('.spell-prep-name').click();
+    await expect(item).toContainText('<img src=x onerror="window.__xss=1">literal');
+    await expect(page.locator('#spellPreparedRoot img')).toHaveCount(0);
+    expect(await page.evaluate(() => window.__xss)).toBeUndefined();
+  });
 });

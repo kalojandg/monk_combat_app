@@ -34,6 +34,12 @@
     return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 
+  // Нивото идва от API/кеша (външни данни) → само цяло число, иначе null (code-rules §4)
+  function spellLevel(x) {
+    const lv = typeof x === 'number' || (typeof x === 'string' && x.trim() !== '') ? Number(x) : NaN;
+    return Number.isInteger(lv) ? lv : null;
+  }
+
   // По име, без диакритика, case-insensitive
   function normalize(s) {
     return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
@@ -128,11 +134,11 @@
       .then(([api, local]) => {
         const byIndex = new Map();
         (api.results || []).forEach(s => {
-          if (!EXCLUDED.has(s.index)) byIndex.set(s.index, { index: s.index, name: s.name, level: s.level });
+          if (!EXCLUDED.has(s.index)) byIndex.set(s.index, { index: s.index, name: s.name, level: spellLevel(s.level) });
         });
         // Локалното има приоритет пред API-то (както в _fetchSpellDetails)
         Object.entries(local || {}).forEach(([index, d]) => {
-          byIndex.set(index, { index, name: d.name, level: d.level });
+          byIndex.set(index, { index, name: d.name, level: spellLevel(d.level) });
         });
         _library = Array.from(byIndex.values())
           .sort((a, b) => (a.level - b.level) || a.name.localeCompare(b.name));
@@ -233,10 +239,10 @@
     const domain = domainSpells();
     const domainSet = new Set(domain.map(d => d.index));
     const entries = [
-      ...domain.map(d => ({ ...d, level: cache[d.index]?.level ?? d.level, domain: true })),
+      ...domain.map(d => ({ ...d, level: spellLevel(cache[d.index]?.level ?? d.level), domain: true })),
       ...preparedList().filter(i => !domainSet.has(i)).map(index => {
         const known = cache[index] || librarySpell(index) || {};
-        return { index, name: known.name || index, level: known.level ?? null, domain: false };
+        return { index, name: known.name || index, level: spellLevel(known.level), domain: false };
       }),
     ];
 
@@ -327,7 +333,7 @@
         <div class="mark-spell-item spell-lib-item${isPrepared ? ' mark-prepared' : ''}" data-index="${esc(sp.index)}">
           <div class="mark-spell-header">
             <span class="mark-spell-name">${esc(sp.name)}</span>
-            <span class="mark-spell-level-badge">${sp.level === 0 ? 'C' : `L${sp.level}`}</span>
+            <span class="mark-spell-level-badge">${sp.level === 0 ? 'C' : sp.level === null ? '?' : `L${sp.level}`}</span>
             ${action}
           </div>
         </div>`;
