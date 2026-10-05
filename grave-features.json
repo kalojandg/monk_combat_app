@@ -1,0 +1,220 @@
+[
+  {
+    "id": "cleric_spellcasting",
+    "name": "Spellcasting",
+    "level": 1,
+    "short": "WIS-based divine spellcasting; prepare WIS mod + cleric level spells, re-prepared on a long rest.",
+    "desc": [
+      "As a conduit for divine power, you can cast cleric spells.",
+      "Cantrips. At 1st level, you know three cantrips of your choice from the cleric spell list. You learn additional cleric cantrips of your choice at higher levels, as shown in the Cantrips Known column of the Cleric table.",
+      "Preparing and Casting Spells. The Cleric table shows how many spell slots you have to cast your cleric spells of 1st level and higher. To cast one of these spells, you must expend a slot of the spell's level or higher. You regain all expended spell slots when you finish a long rest.",
+      "You prepare the list of cleric spells that are available for you to cast, choosing from the cleric spell list. When you do so, choose a number of cleric spells equal to your Wisdom modifier + your cleric level (minimum of one spell). The spells must be of a level for which you have spell slots.",
+      "You can change your list of prepared spells when you finish a long rest. Preparing a new list of cleric spells requires time spent in prayer and meditation: at least 1 minute per spell level for each spell on your list.",
+      "Spellcasting Ability. Wisdom is your spellcasting ability for your cleric spells. You use your Wisdom modifier when setting the saving throw DC for a cleric spell you cast and when making an attack roll with one.",
+      "Ritual Casting. You can cast a cleric spell as a ritual if that spell has the ritual tag and you have the spell prepared.",
+      "Spellcasting Focus. You can use a holy symbol as a spellcasting focus for your cleric spells."
+    ],
+    "bullets": [
+      "Spell save DC = 8 + Wisdom modifier + proficiency bonus",
+      "Spell attack modifier = Wisdom modifier + proficiency bonus",
+      "Casting a prepared spell does not remove it from your prepared list"
+    ]
+  },
+  {
+    "id": "grave_domain_spells",
+    "name": "Grave Domain: Domain Spells",
+    "level": 1,
+    "short": "Always prepared, and they do not count against the number of spells you can prepare each day.",
+    "desc": [
+      "Each domain has a list of spells — its domain spells — that you gain at the cleric levels noted in the domain description. Once you gain a domain spell, you always have it prepared, and it doesn't count against the number of spells you can prepare each day.",
+      "If you have a domain spell that doesn't appear on the cleric spell list, the spell is nonetheless a cleric spell for you."
+    ],
+    "bullets": [
+      "1st level — bane, false life",
+      "3rd level — gentle repose, ray of enfeeblement",
+      "5th level — revivify, vampiric touch",
+      "7th level — blight, death ward",
+      "9th level — antilife shell, raise dead"
+    ]
+  },
+  {
+    "id": "grave_circle_of_mortality",
+    "name": "Circle of Mortality",
+    "level": 1,
+    "short": "Healing a creature at 0 HP always rolls maximum; spare the dying is free, 30 ft and a bonus action.",
+    "desc": [
+      "At 1st level, you gain the ability to manipulate the line between life and death. When you would normally roll one or more dice to restore hit points with a spell to a creature at 0 hit points, you instead use the highest number possible for each die.",
+      "In addition, you learn the spare the dying cantrip, which doesn't count against the number of cleric cantrips you know. For you, it has a range of 30 feet, and you can cast it as a bonus action."
+    ],
+    "bullets": []
+  },
+  {
+    "id": "grave_eyes_of_the_grave",
+    "name": "Eyes of the Grave",
+    "level": 1,
+    "short": "Action: detect undead within 60 ft until the end of your next turn. WIS mod uses per long rest.",
+    "desc": [
+      "At 1st level, you gain the ability to occasionally sense the presence of the undead, whose existence is an insult to the natural cycle of life. As an action, you can open your awareness to magically detect undead. Until the end of your next turn, you know the location of any undead within 60 feet of you that isn't behind total cover and that isn't protected from divination magic. This sense doesn't tell you anything about a creature's capabilities or identity.",
+      "You can use this feature a number of times equal to your Wisdom modifier (minimum of once). You regain all expended uses when you finish a long rest."
+    ],
+    "bullets": []
+  },
+  {
+    "id": "cleric_channel_divinity",
+    "name": "Channel Divinity",
+    "level": 2,
+    "short": "One use between rests; recharges on a short or long rest. DC equals your cleric spell save DC.",
+    "desc": [
+      "At 2nd level, you gain the ability to channel divine energy directly from your deity, using that energy to fuel magical effects. You start with two such effects: Turn Undead and an effect determined by your domain.",
+      "When you use your Channel Divinity, you choose which effect to create. You must then finish a short or long rest to use your Channel Divinity again.",
+      "Some Channel Divinity effects require saving throws. When you use such an effect from this class, the DC equals your cleric spell save DC."
+    ],
+    "bullets": []
+  },
+  {
+    "id": "cleric_turn_undead",
+    "name": "Channel Divinity: Turn Undead",
+    "level": 2,
+    "short": "Action: each undead within 30 ft that can see or hear you makes a WIS save or is turned for 1 minute.",
+    "desc": [
+      "As an action, you present your holy symbol and speak a prayer censuring the undead. Each undead that can see or hear you within 30 feet of you must make a Wisdom saving throw. If the creature fails its saving throw, it is turned for 1 minute or until it takes any damage.",
+      "A turned creature must spend its turns trying to move as far away from you as it can, and it can't willingly move to a space within 30 feet of you. It also can't take reactions. For its action, it can use only the Dash action or try to escape from an effect that prevents it from moving. If there's nowhere to move, the creature can use the Dodge action."
+    ],
+    "bullets": []
+  },
+  {
+    "id": "grave_path_to_the_grave",
+    "name": "Channel Divinity: Path to the Grave",
+    "level": 2,
+    "short": "Action: curse a creature within 30 ft; the next hit on it has vulnerability to all that attack's damage.",
+    "desc": [
+      "Starting at 2nd level, you can use your Channel Divinity to mark another creature's life force for termination.",
+      "As an action, you choose one creature you can see within 30 feet of you, cursing it until the end of your next turn. The next time you or an ally of yours hits the cursed creature with an attack, the creature has vulnerability to all of that attack's damage, and then the curse ends."
+    ],
+    "bullets": []
+  },
+  {
+    "id": "cleric_destroy_undead_half",
+    "name": "Destroy Undead (CR 1/2)",
+    "level": 5,
+    "short": "Undead of CR 1/2 or lower that fail your Turn Undead save are destroyed instantly.",
+    "desc": [
+      "Starting at 5th level, when an undead of CR 1/2 or lower fails its saving throw against your Turn Undead feature, the creature is instantly destroyed."
+    ],
+    "bullets": []
+  },
+  {
+    "id": "cleric_channel_divinity_2",
+    "name": "Channel Divinity (2 uses)",
+    "level": 6,
+    "short": "You can use Channel Divinity twice between rests.",
+    "desc": [
+      "Beginning at 6th level, you can use your Channel Divinity twice between rests. When you finish a short or long rest, you regain your expended uses."
+    ],
+    "bullets": []
+  },
+  {
+    "id": "grave_sentinel_at_deaths_door",
+    "name": "Sentinel at Death's Door",
+    "level": 6,
+    "short": "Reaction: turn a critical hit on you or an ally within 30 ft into a normal hit. WIS mod uses per long rest.",
+    "desc": [
+      "At 6th level, you gain the ability to impede death's progress. As a reaction when you or a creature you can see within 30 feet of you suffers a critical hit, you can turn that hit into a normal hit. Any effects triggered by a critical hit are canceled.",
+      "You can use this feature a number of times equal to your Wisdom modifier (minimum of once). You regain all expended uses when you finish a long rest."
+    ],
+    "bullets": []
+  },
+  {
+    "id": "cleric_destroy_undead_1",
+    "name": "Destroy Undead (CR 1)",
+    "level": 8,
+    "short": "Undead of CR 1 or lower that fail your Turn Undead save are destroyed instantly.",
+    "desc": [
+      "Starting at 8th level, when an undead of CR 1 or lower fails its saving throw against your Turn Undead feature, the creature is instantly destroyed."
+    ],
+    "bullets": []
+  },
+  {
+    "id": "grave_potent_spellcasting",
+    "name": "Potent Spellcasting",
+    "level": 8,
+    "short": "Add your Wisdom modifier to the damage of any cleric cantrip.",
+    "desc": [
+      "Starting at 8th level, you add your Wisdom modifier to the damage you deal with any cleric cantrip."
+    ],
+    "bullets": []
+  },
+  {
+    "id": "cleric_divine_intervention",
+    "name": "Divine Intervention",
+    "level": 10,
+    "short": "Action: roll percentile; equal to or under your cleric level means your deity intervenes.",
+    "desc": [
+      "Beginning at 10th level, you can call on your deity to intervene on your behalf when your need is great.",
+      "Imploring your deity's aid requires you to use your action. Describe the assistance you seek, and roll percentile dice. If you roll a number equal to or lower than your cleric level, your deity intervenes. The DM chooses the nature of the intervention; the effect of any cleric spell or cleric domain spell would be appropriate.",
+      "If your deity intervenes, you can't use this feature again for 7 days. Otherwise, you can use it again after you finish a long rest."
+    ],
+    "bullets": []
+  },
+  {
+    "id": "cleric_destroy_undead_2",
+    "name": "Destroy Undead (CR 2)",
+    "level": 11,
+    "short": "Undead of CR 2 or lower that fail your Turn Undead save are destroyed instantly.",
+    "desc": [
+      "Starting at 11th level, when an undead of CR 2 or lower fails its saving throw against your Turn Undead feature, the creature is instantly destroyed."
+    ],
+    "bullets": []
+  },
+  {
+    "id": "cleric_destroy_undead_3",
+    "name": "Destroy Undead (CR 3)",
+    "level": 14,
+    "short": "Undead of CR 3 or lower that fail your Turn Undead save are destroyed instantly.",
+    "desc": [
+      "Starting at 14th level, when an undead of CR 3 or lower fails its saving throw against your Turn Undead feature, the creature is instantly destroyed."
+    ],
+    "bullets": []
+  },
+  {
+    "id": "cleric_destroy_undead_4",
+    "name": "Destroy Undead (CR 4)",
+    "level": 17,
+    "short": "Undead of CR 4 or lower that fail your Turn Undead save are destroyed instantly.",
+    "desc": [
+      "Starting at 17th level, when an undead of CR 4 or lower fails its saving throw against your Turn Undead feature, the creature is instantly destroyed."
+    ],
+    "bullets": []
+  },
+  {
+    "id": "grave_keeper_of_souls",
+    "name": "Keeper of Souls",
+    "level": 17,
+    "short": "When an enemy dies within 60 ft, you or an ally within 60 ft regains HP equal to its Hit Dice.",
+    "desc": [
+      "Starting at 17th level, you can seize a trace of vitality from a parting soul and use it to heal the living. When an enemy you can see dies within 60 feet of you, you or one creature of your choice that is within 60 feet of you regains hit points equal to the enemy's number of Hit Dice.",
+      "You can use this feature only if you aren't incapacitated. Once you use it, you can't do so again until the start of your next turn."
+    ],
+    "bullets": []
+  },
+  {
+    "id": "cleric_channel_divinity_3",
+    "name": "Channel Divinity (3 uses)",
+    "level": 18,
+    "short": "You can use Channel Divinity three times between rests.",
+    "desc": [
+      "Beginning at 18th level, you can use your Channel Divinity three times between rests."
+    ],
+    "bullets": []
+  },
+  {
+    "id": "cleric_improved_divine_intervention",
+    "name": "Improved Divine Intervention",
+    "level": 20,
+    "short": "Your call for intervention succeeds automatically, no roll required.",
+    "desc": [
+      "At 20th level, your call for intervention succeeds automatically, no roll required."
+    ],
+    "bullets": []
+  }
+]
