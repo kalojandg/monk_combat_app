@@ -118,6 +118,7 @@ const defaultState = {
   quests: [],
   npcNames: [],
   campaignNpcs: [],   // Campaign NPCs таб: { name, faction, description, location }
+  campaignSavedAt: null, // ISO дата на кампанията (NPCs + записки); импортът я мести само напред
 
   acMagic: 0,
   baseSpeed: 30,
@@ -211,7 +212,9 @@ window.Campaign = {
   },
   setNpcs(arr) { window.st.campaignNpcs = arr; },
   getNotes() { return window.st.sessionNotes; },
-  setNotes(str) { window.st.sessionNotes = str; }
+  setNotes(str) { window.st.sessionNotes = str; },
+  getSavedAt() { return window.st.campaignSavedAt || null; },
+  setSavedAt(iso) { window.st.campaignSavedAt = iso || null; }
 };
 
 
@@ -729,25 +732,39 @@ el("rangedMagicInput") && el("rangedMagicInput").addEventListener("input", () =>
   save();
 });
 
-// ---- Bundle sheet + aliases (backward-compatible) ----
-function sanitizeStateForExport(src) {
-  // дълбоко копие на st, без временни/външни ключове
-  const s = JSON.parse(JSON.stringify(src || {}));
-  delete s.aliases;     // ако по някаква причина е попаднал вътре
-  // ...ако имаш други временни ключове – махни ги тук
-  return s;
-}
+// ---- Bundle v3: файлът на Export бутона ----
+// Самодостатъчен: активният герой + пълно копие на кампанията с дата В ДАННИТЕ.
+// buildBundle() (v2) остава за cloud sync и за съвместимост.
+const CAMPAIGN_STATE_KEYS = ["campaignNpcs", "sessionNotes", "campaignSavedAt"];
 
 function getBundle() {
+  const state = JSON.parse(JSON.stringify(buildBundle().state));
+  CAMPAIGN_STATE_KEYS.forEach(k => delete state[k]);
   return {
-    schema: "monkSheetBundle/v1",
-    state: sanitizeStateForExport(st), // inventory си остава вътре – ОК е
-    aliases: Array.isArray(st.aliases) ? st.aliases : []  // само тук, извън state
+    version: 3,
+    character: activeProfile().id,
+    state,
+    campaign: {
+      npcs: JSON.parse(JSON.stringify(Campaign.getNpcs())),
+      sessionNotes: Campaign.getNotes() || "",
+      savedAt: new Date().toISOString()
+    }
   };
+}
+
+// true, ако fileIso е валидна дата и е по-нова от currentIso (липсваща текуща = най-стара)
+function isNewerCampaign(fileIso, currentIso) {
+  const f = Date.parse(fileIso);
+  if (typeof fileIso !== "string" || Number.isNaN(f)) return false;
+  const c = Date.parse(currentIso);
+  return Number.isNaN(c) || f > c;
 }
 
 function readBundleOrState(x) {
   const obj = typeof x === "string" ? JSON.parse(x) : x;
+  if (obj && typeof obj === "object" && obj.version === 3 && obj.state) {
+    return { ...obj.state };  // кампанията е в obj.campaign — applyBundle я решава отделно
+  }
   if (obj && typeof obj === "object" && obj.version === 2 && obj.state) {
     // For v2, return state but also preserve root-level aliases/familiars/sessionNotes if they exist
     const state = { ...obj.state };
@@ -761,6 +778,17 @@ function readBundleOrState(x) {
 }
 
 function applyBundle(data) {
+  if (typeof data === "string") data = JSON.parse(data);
+
+  // 1) Маркер за герой: файл без character = монк (всичко отпреди v3 е монк)
+  const fileChar = (data && typeof data === "object" && data.character) || "monk";
+  const active = activeProfile();
+  if (fileChar !== active.id) {
+    const fileLabel = window.CLASS_PROFILES[fileChar]?.label || fileChar;
+    alert(`Този файл е на ${fileLabel}, а активният герой е ${active.label}. Импортът не е приложен.`);
+    return false;
+  }
+
   const incoming = readBundleOrState(data);
 
   // За legacy файлове, където aliases/familiars бяха top-level:
@@ -774,7 +802,32 @@ function applyBundle(data) {
     if (data.sessionNotes !== undefined && incoming.sessionNotes === undefined) incoming.sessionNotes = data.sessionNotes;
   }
 
+  // 2) Героят: кампанийните полета не идват от state на файла — текущите остават
+  const legacyNpcs = incoming.campaignNpcs;
+  const legacyNotes = incoming.sessionNotes;
+  CAMPAIGN_STATE_KEYS.forEach(k => delete incoming[k]);
+  const cur = { npcs: Campaign.getNpcs(), notes: Campaign.getNotes(), savedAt: Campaign.getSavedAt() };
+
   st = { ...defaultState, ...incoming };
+  window.st = st;
+  Campaign.setNpcs(cur.npcs);
+  Campaign.setNotes(cur.notes);
+  Campaign.setSavedAt(cur.savedAt);
+
+  // 3) Кампанията върви само напред
+  if (data && data.version === 3) {
+    const c = data.campaign;
+    if (c && isNewerCampaign(c.savedAt, cur.savedAt)) {
+      Campaign.setNpcs(Array.isArray(c.npcs) ? JSON.parse(JSON.stringify(c.npcs)) : []);
+      Campaign.setNotes(typeof c.sessionNotes === "string" ? c.sessionNotes : "");
+      Campaign.setSavedAt(c.savedAt);
+    }
+  } else if (!cur.savedAt) {
+    // v2 / legacy нямат дата: пипат кампанията само докато тя никога не е била датирана
+    // (поведението отпреди v3); веднъж датирана, недатиран файл не може да я презапише.
+    if (Array.isArray(legacyNpcs)) Campaign.setNpcs(legacyNpcs);
+    if (legacyNotes !== undefined) Campaign.setNotes(legacyNotes);
+  }
   
   // Ensure arrays exist
   if (!Array.isArray(st.aliases)) st.aliases = [];
@@ -832,7 +885,10 @@ function applyBundle(data) {
 // Export / Import / Reset
 // Export (bundle)
 el("btnExport")?.addEventListener("click", () => {
-  const bundle = buildBundle();
+  const bundle = getBundle();
+  // кампанията вече е поне толкова нова, колкото изнесения файл
+  Campaign.setSavedAt(bundle.campaign.savedAt);
+  save();
   const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" });
 
   // timestamp: YYYYMMDD_HHMMSS
