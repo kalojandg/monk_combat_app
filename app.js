@@ -5,6 +5,7 @@ async function loadTabs() {
     'stats': 'tabs/stats.html',
     'pcchar': 'tabs/pcchar.html',
     'resurrection': 'tabs/resurrection.html',
+    'spellcasting': 'tabs/spellcasting.html',
     'inventory': 'tabs/inventory.html',
     'flavor': 'tabs/flavor.html',
     'namegen': 'tabs/namegen.html',
@@ -56,6 +57,7 @@ async function ensureDirRW(dirHandle) {
 //  показване на Skills → Personal (виж showSubTab), което е и по-коректно при
 //  level-up. Двата fetch-а са зад __feat_cache / __cleric_feat_cache, тоест
 //  повторният рендер не удря мрежата.)
+let __featuresProfile = null;  // профилът на последния рендер на акордеона (смяна на герой → пререндер в renderAll)
 
 // XP thresholds 1..20 (RAW без 0-праг)
 const XP_THRESH = [300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000, 85000, 100000, 120000, 140000, 165000, 195000, 225000, 265000, 305000, 355000];
@@ -507,7 +509,34 @@ function renderAll() {
   window.renderGold?.();
   if (typeof window.renderNpcTable === 'function') window.renderNpcTable();
   applyHiddenFields(d);
+  applyProfileTabs();
+  if (__featuresProfile && __featuresProfile !== activeProfile().id) renderFeaturesAccordion();
   // renderFeaturesAccordion(d.level);
+}
+
+// Табовете на активния профил, в реда на показване. Профил без `tabs` → наборът на монка.
+function profileTabs() {
+  return activeProfile().tabs || window.CLASS_PROFILES.monk.tabs;
+}
+
+// Видимост и ред на главния tab-nav по профил: бутоните/панелите извън profileTabs()
+// се скриват, видимите се подреждат по профила. Изчезнал активен таб → първият таб.
+function applyProfileTabs() {
+  const nav = document.querySelector('#app > .tab-nav');
+  if (!nav) return;
+  const keys = profileTabs();
+  const btns = Array.from(nav.querySelectorAll('.tab-btn[data-tab]'));
+  btns.forEach(b => {
+    const shown = keys.includes(b.dataset.tab);
+    b.style.display = shown ? '' : 'none';
+    if (!shown) el(`tab-${b.dataset.tab}`)?.classList.add('hidden');
+  });
+  const ordered = keys.map(k => btns.find(b => b.dataset.tab === k)).filter(Boolean);
+  const current = btns.filter(b => keys.includes(b.dataset.tab));
+  if (ordered.some((b, i) => b !== current[i])) ordered.forEach(b => nav.appendChild(b));
+
+  const active = nav.querySelector('.tab-btn.active[data-tab]');
+  if (active && !keys.includes(active.dataset.tab)) window.showTab?.(keys[0]);
 }
 
 // Combat лентата (index.html) няма .field: pill/контролите там се скриват, когато
@@ -1416,6 +1445,23 @@ async function loadClericFeatures() {
   return __cleric_feat_cache;
 }
 
+// Етикет + ниво за файловете на монка (multiclass). Файл извън таблицата (напр.
+// grave-features.json на клерика) носи етикета на профила и се филтрира по st.level.
+const FEATURE_FILE_META = {
+  [FEAT_URL]: { label: 'Monk', level: s => s.monkLevel || 1, load: loadFeatures },
+  [CLERIC_FEAT_URL]: { label: 'Cleric', level: s => s.clericLevel || 0, load: loadClericFeatures }
+};
+const __feat_file_cache = {};
+
+async function loadFeatureFile(url) {
+  if (FEATURE_FILE_META[url]) return FEATURE_FILE_META[url].load();
+  if (__feat_file_cache[url]) return __feat_file_cache[url];
+  const res = await fetch(url, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`Cannot load ${url} (${res.status})`);
+  __feat_file_cache[url] = await res.json();
+  return __feat_file_cache[url];
+}
+
 function enhanceFeatureAccordions(root) {
   // CSS handles max-height animation via details.feat[open] .feature-card { max-height: 2000px }
   // No JS inline style needed — it was overriding CSS on mobile, preventing accordions from opening
@@ -1437,33 +1483,33 @@ function _buildFeatureHTML(it, className) {
     </details>`;
 }
 
-async function renderFeaturesAccordion(monkLevel, clericLevel) {
+// Файловете идват от activeProfile().featureFiles (профил без тях → тези на монка).
+async function renderFeaturesAccordion() {
   const host = document.getElementById('featuresAccordion');
   if (!host) return;
 
   host.innerHTML = '<small>Чете features…</small>';
 
   try {
-    const [monkData, clericData] = await Promise.all([
-      loadFeatures(),
-      loadClericFeatures()
-    ]);
+    const profile = activeProfile();
+    __featuresProfile = profile.id;
+    const files = profile.featureFiles || window.CLASS_PROFILES.monk.featureFiles;
+    const datas = await Promise.all(files.map(loadFeatureFile));
 
-    const monkItems = (Array.isArray(monkData) ? monkData :
-      Array.isArray(monkData.features) ? monkData.features : [])
-      .filter(it => (Number(it.level) || 1) <= Number(monkLevel || 1))
-      .map(it => ({ ...it, _class: 'Monk' }));
+    const fileItems = datas.map((data, i) => {
+      const meta = FEATURE_FILE_META[files[i]] || { label: profile.label, level: s => s.level || 1 };
+      return (Array.isArray(data) ? data :
+        Array.isArray(data.features) ? data.features : [])
+        .filter(it => (Number(it.level) || 1) <= Number(meta.level(st)))
+        .map(it => ({ ...it, _class: meta.label, _file: i }));
+    });
 
-    const clericItems = (Array.isArray(clericData) ? clericData :
-      Array.isArray(clericData.features) ? clericData.features : [])
-      .filter(it => (Number(it.level) || 1) <= Number(clericLevel || 0))
-      .map(it => ({ ...it, _class: 'Cleric' }));
-
-    // Interleave: sort by level, then Monk before Cleric at equal level
-    const allItems = [...monkItems, ...clericItems].sort((a, b) => {
+    // Interleave: sort by level, then the first file (Monk) before the rest at equal level.
+    // Компараторът нарочно е същият несиметричен като преди — пази днешния ред на монка.
+    const allItems = fileItems.flat().sort((a, b) => {
       const lvlDiff = (Number(a.level) || 0) - (Number(b.level) || 0);
       if (lvlDiff !== 0) return lvlDiff;
-      return a._class === 'Monk' ? -1 : 1;
+      return a._file === 0 ? -1 : 1;
     });
 
     host.innerHTML = allItems.map(it => _buildFeatureHTML(it, it._class)).join('');
@@ -1707,7 +1753,9 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
   function showTab(tabKey) {
     // Skip 'combat' - it's not a tab, it's always visible above tabs
     if (tabKey === 'combat') return;
-    
+    // Таб, който активният профил не вижда (напр. запомнен от друг герой) → първият му таб
+    if (!profileTabs().includes(tabKey)) tabKey = profileTabs()[0];
+
     // 1) бутони
     document.querySelectorAll('.tab-nav .tab-btn').forEach(b => {
       b.classList.toggle('active', b.dataset.tab === tabKey);
@@ -1846,7 +1894,7 @@ el("btnInstall") && el("btnInstall").addEventListener("click", async () => {
     }
 
     if (subTabKey === 'personal') {
-      renderFeaturesAccordion(st.monkLevel || 1, st.clericLevel || 0);
+      renderFeaturesAccordion();
       setTimeout(() => attachCollapseBtn(), 100);
     }
 

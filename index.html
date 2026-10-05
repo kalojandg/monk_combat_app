@@ -114,6 +114,8 @@
       <button class="tab-btn" data-tab="stats">Stats</button>
       <button class="tab-btn" data-tab="pcchar">PC Characteristics</button>
       <button class="tab-btn" data-tab="resurrection">Resurrection</button>
+      <!-- Видимостта и редът на табовете идват от activeProfile().tabs (app.js applyProfileTabs) -->
+      <button class="tab-btn" data-tab="spellcasting" style="display:none">Spellcasting</button>
       <button class="tab-btn" data-tab="inventory">Inventory</button>
       <button class="tab-btn" data-tab="flavor">Flavor</button>
       <button class="tab-btn" data-tab="skills">Skills</button>
@@ -127,6 +129,7 @@
     <div id="tab-stats" class="tab hidden"><!-- Loading... --></div>
     <div id="tab-pcchar" class="tab hidden"><!-- Loading... --></div>
     <div id="tab-resurrection" class="tab hidden"><!-- Loading... --></div>
+    <div id="tab-spellcasting" class="tab hidden"><!-- Loading... --></div>
 
     <!-- Inventory tab -->
     <div id="tab-inventory" class="tab hidden"><!-- Loading... --></div>
@@ -182,6 +185,7 @@
   <script src="modules/quick-reference.js"></script>
   <!-- <script src="modules/quests.js"></script> -->
   <script src="modules/cube.js"></script>
+  <script src="modules/spell-library.js"></script>
   <script src="app.js"></script>
 </body>
 

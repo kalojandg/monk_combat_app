@@ -58,6 +58,12 @@
     hiddenFieldIds: [],            // id-та, чийто .field контейнер се скрива (монкът не крие нищо)
     hasClassBadges: true,          // баджовете горе вляво
     hasLevelUpModal: true,         // избор на клас при level-up
-    restoresKi: true               // почивките пълнят ки
+    restoresKi: true,              // почивките пълнят ки
+    // Табовете, които героят вижда, в реда на показване (ключовете от data-tab в index.html)
+    tabs: ['stats', 'pcchar', 'resurrection', 'inventory', 'flavor', 'skills', 'sessionNotes', 'namegen', 'campaignNpc'],
+    // JSON-ите на Skills → Personal: монашките умения + Death Domain дипът
+    featureFiles: ['skills-and-features.json', 'cleric-features.json'],
+    flavorTypes: null,             // id-та на flavor бутоните (null = всички)
+    ttsVoice: null                 // TTS глас (null = конфигурацията по подразбиране в tts.js)
   };
 })();
