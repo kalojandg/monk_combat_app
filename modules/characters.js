@@ -18,6 +18,12 @@
     return profiles()[id] ? id : DEFAULT_ID;
   }
 
+  // Профилът на активния герой по УКАЗАТЕЛЯ (не по st.class): ако state-ът е повреден
+  // или е стар запис без маркер, указателят пак казва вярно кой слот е отворен.
+  function profileOf(id) {
+    return profiles()[id || active()] || profiles()[DEFAULT_ID];
+  }
+
   function list() {
     const cur = active();
     return Object.values(profiles()).map(p => ({
@@ -27,6 +33,14 @@
       hasSave: localStorage.getItem(p.storageKey) !== null,
       active: p.id === cur
     }));
+  }
+
+  // Пресен герой по профила. Дълбоко копие — иначе масивите/обектите в defaultState
+  // стават общи между героите. Маркерът `class` е задължителен: по него app.js избира
+  // профила (activeProfile), тоест без него героят мълчаливо става монк.
+  function fresh(profile) {
+    const base = JSON.parse(JSON.stringify(window.defaultState));
+    return { ...base, ...JSON.parse(JSON.stringify(profile.defaults || {})), class: profile.id };
   }
 
   // Записът на героя от неговия ключ, или нов от defaultState + profile.defaults.
@@ -39,9 +53,7 @@
         return obj;
       } catch { }
     }
-    // Дълбоко копие — иначе масивите/обектите в defaultState стават общи между героите
-    const fresh = JSON.parse(JSON.stringify(window.defaultState));
-    return { ...fresh, ...JSON.parse(JSON.stringify(profile.defaults || {})), class: profile.id };
+    return fresh(profile);
   }
 
   // Пререндер по пътя на applyBundle (app.js) след подмяна на state.
@@ -133,7 +145,7 @@
     render();
   }
 
-  window.Characters = { list, active, switchTo, render };
+  window.Characters = { list, active, switchTo, render, fresh, profile: profileOf };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', attach);
