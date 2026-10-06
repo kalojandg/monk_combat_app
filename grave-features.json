@@ -94,6 +94,33 @@
     "bullets": []
   },
   {
+    "id": "cleric_harness_divine_power",
+    "name": "Channel Divinity: Harness Divine Power",
+    "level": 2,
+    "short": "Bonus action: spend a Channel Divinity use to regain one spell slot (max level = half prof bonus, rounded up).",
+    "desc": [
+      "You can expend a use of your Channel Divinity to fuel your spells. As a bonus action, you touch your holy symbol, utter a prayer, and regain one expended spell slot, the level of which can be no higher than half your proficiency bonus (rounded up).",
+      "The number of times you can use this feature is based on the level you've reached in this class: 2nd level, once; 6th level, twice; and 18th level, thrice. You regain all expended uses when you finish a long rest."
+    ],
+    "bullets": [
+      "Tasha's optional feature",
+      "Prof +2 or +3 → 1st-level slot · +4 or +5 → 2nd-level slot · +6 → 3rd-level slot"
+    ]
+  },
+  {
+    "id": "cleric_cantrip_versatility",
+    "name": "Cantrip Versatility",
+    "level": 4,
+    "short": "On every Ability Score Improvement level you may swap one cleric cantrip for another.",
+    "desc": [
+      "Whenever you reach a level in this class that grants the Ability Score Improvement feature, you can replace one cantrip you learned from this class's Spellcasting feature with another cantrip from the cleric spell list."
+    ],
+    "bullets": [
+      "Tasha's optional feature",
+      "ASI levels: 4, 8, 12, 16, 19"
+    ]
+  },
+  {
     "id": "cleric_destroy_undead_half",
     "name": "Destroy Undead (CR 1/2)",
     "level": 5,
