@@ -263,6 +263,32 @@ test.describe('Spell library', () => {
   });
 });
 
+test.describe('Spell library — preparation limit (RAW)', () => {
+
+  test('the limit is cleric level + WIS mod, but never below one', async ({ page }) => {
+    await mockApi(page);
+    await seedCleric(page, { level: 1, wis: 8 });   // 1 + (−1) = 0 → RAW минимумът е 1
+    await openSpellcasting(page);
+    await expect(counter(page)).toContainText('0/1');
+  });
+
+  test('preparation stops at the limit', async ({ page }) => {
+    await mockApi(page);
+    await seedCleric(page, { level: 1, wis: 12 });  // 1 + 1 = 2
+    await openSpellcasting(page);
+    await expect(counter(page)).toContainText('0/2');
+
+    await prepBtn(page, 'bless').click();
+    await prepBtn(page, 'cure-wounds').click();
+    await expect(counter(page)).toContainText('2/2');
+
+    // третото е отказано — бутонът е изключен
+    await expect(prepBtn(page, 'guiding-bolt')).toBeDisabled();
+    await prepBtn(page, 'guiding-bolt').click({ force: true });
+    await expect(counter(page)).toContainText('2/2');
+  });
+});
+
 test.describe('Spell library — only what the character can cast', () => {
 
   test('spells above the available slot level are not listed at all', async ({ page }) => {
