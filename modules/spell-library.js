@@ -27,6 +27,7 @@
   let _query = '';
   let _level = '';              // '' = всички нива
   let _expandedPrepared = null;
+  let _expandedLibrary = null;   // точно едно отворено заклинание в библиотеката
 
   const $ = id => document.getElementById(id);
 
@@ -185,7 +186,17 @@
     $('spellLibLevel').addEventListener('change', e => { _level = e.target.value; renderLibrary(); });
     body.addEventListener('click', e => {
       const btn = e.target.closest('.btn-spell-prep');
-      if (btn && !btn.disabled) togglePrepared(btn.dataset.prep);
+      if (btn) { if (!btn.disabled) togglePrepared(btn.dataset.prep); return; }
+      // Клик върху самото заклинание разгъва детайлите. Бутонът „Prepare" излиза по-горе,
+      // за да не отваря акордеона покрай приготвянето.
+      const item = e.target.closest('.spell-lib-item');
+      if (!item) return;
+      const index = item.dataset.index;
+      _expandedLibrary = _expandedLibrary === index ? null : index;
+      renderLibrary();
+      if (_expandedLibrary === index && !readCache()[index]) {
+        cacheDetails(index).then(ok => { if (ok && _expandedLibrary === index) renderLibrary(); });
+      }
     });
     return body;
   }
@@ -316,8 +327,11 @@
       return;
     }
 
+    const detailCache = readCache();
     body.innerHTML = shown.map(sp => {
       const isPrepared = prepared.includes(sp.index);
+      const expanded = _expandedLibrary === sp.index;
+      const detail = detailCache[sp.index];
       let action;
       if (domainSet.has(sp.index)) {
         action = '<span class="mark-spell-note">Domain · always prepared</span>';
@@ -330,12 +344,13 @@
         action = `<button class="btn-mark-prep btn-spell-prep${isPrepared ? ' active' : ''}" data-prep="${esc(sp.index)}"${disabled ? ' disabled' : ''} title="${title}">${isPrepared ? 'Prepared' : 'Prepare'}</button>`;
       }
       return `
-        <div class="mark-spell-item spell-lib-item${isPrepared ? ' mark-prepared' : ''}" data-index="${esc(sp.index)}">
+        <div class="mark-spell-item spell-lib-item${isPrepared ? ' mark-prepared' : ''}${expanded ? ' expanded' : ''}" data-index="${esc(sp.index)}">
           <div class="mark-spell-header">
             <span class="mark-spell-name">${esc(sp.name)}</span>
             <span class="mark-spell-level-badge">${sp.level === 0 ? 'C' : sp.level === null ? '?' : `L${sp.level}`}</span>
             ${action}
           </div>
+          ${expanded ? `<div class="mark-spell-details">${detail ? _renderSpellDetail(detail) : '<div class="small muted">Loading…</div>'}</div>` : ''}
         </div>`;
     }).join('');
   }

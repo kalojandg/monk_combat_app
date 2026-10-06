@@ -260,3 +260,63 @@ test.describe('Spell library', () => {
     expect(await page.evaluate(() => window.__xss)).toBeUndefined();
   });
 });
+
+test.describe('Spell library — details accordion', () => {
+
+  test('clicking a spell in the library opens its details', async ({ page }) => {
+    await mockApi(page);
+    await seedCleric(page, { level: 3, wis: 16 });
+    await openSpellcasting(page);
+
+    const item = libItem(page, 'bless');
+    await expect(item).toBeVisible();
+    await expect(item.locator('.mark-spell-details')).toHaveCount(0);
+
+    await item.locator('.mark-spell-name').click();
+    await expect(item.locator('.mark-spell-details')).toHaveCount(1);
+    await expect(item).toHaveClass(/\bexpanded\b/);
+  });
+
+  test('clicking it again closes the details, and only one stays open', async ({ page }) => {
+    await mockApi(page);
+    await seedCleric(page, { level: 3, wis: 16 });
+    await openSpellcasting(page);
+
+    const bless = libItem(page, 'bless');
+    const other = libItem(page, 'cure-wounds');
+
+    await bless.locator('.mark-spell-name').click();
+    await expect(bless.locator('.mark-spell-details')).toHaveCount(1);
+
+    // друго заклинание — първото се затваря
+    await other.locator('.mark-spell-name').click();
+    await expect(other.locator('.mark-spell-details')).toHaveCount(1);
+    await expect(bless.locator('.mark-spell-details')).toHaveCount(0);
+
+    // повторно цъкане затваря
+    await other.locator('.mark-spell-name').click();
+    await expect(other.locator('.mark-spell-details')).toHaveCount(0);
+  });
+
+  test('the Prepare button still only prepares, it does not open details', async ({ page }) => {
+    await mockApi(page);
+    await seedCleric(page, { level: 3, wis: 16 });
+    await openSpellcasting(page);
+
+    const item = libItem(page, 'bless');
+    await prepBtn(page, 'bless').click();
+    await expect(prepBtn(page, 'bless')).toHaveText('Prepared');
+    await expect(item.locator('.mark-spell-details')).toHaveCount(0);
+  });
+
+  test('a local (non-API) spell opens its details too', async ({ page }) => {
+    await mockApi(page);
+    await seedCleric(page, { level: 3, wis: 16 });
+    await openSpellcasting(page);
+
+    const item = libItem(page, 'toll-the-dead');
+    await expect(item).toBeVisible();
+    await item.locator('.mark-spell-name').click();
+    await expect(item.locator('.mark-spell-details')).toContainText('dolorous bell');
+  });
+});
