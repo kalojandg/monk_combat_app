@@ -74,8 +74,13 @@ test.describe('Flavor - Speak button (MonkTTS)', () => {
     await expect(speakBtn(page)).not.toHaveClass(/\bflavor-btn\b/);
   });
 
-  test('(б) все още точно 19 .flavor-btn', async ({ page }) => {
-    await expect(page.locator('#tab-flavor .flavor-btn')).toHaveCount(19);
+  test('(б) бутонът „Произнеси" не е сред flavor бутоните', async ({ page }) => {
+    // 21 в DOM-а: 19 на монка + 2 клерикски (insult-grave, cancel-crit), скрити за него.
+    // Същината на теста е, че Speak бутонът НЕ се брои за flavor бутон.
+    await expect(page.locator('#tab-flavor .flavor-btn')).toHaveCount(21);
+    const visible = await page.evaluate(() => Array.from(
+      document.querySelectorAll('#tab-flavor .flavor-btn')).filter(b => b.offsetParent !== null).length);
+    expect(visible).toBe(19);
   });
 
   test('(в) празен output -> клик не прави TTS заявка', async ({ page }) => {

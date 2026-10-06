@@ -96,7 +96,11 @@
     // Като монка, но Spellcasting стои на мястото на Resurrection
     tabs: ['stats', 'pcchar', 'spellcasting', 'inventory', 'flavor', 'skills', 'sessionNotes', 'namegen', 'campaignNpc'],
     featureFiles: ['grave-features.json'],
-    flavorTypes: ['insult', 'spare-dying', 'heal-zero'],
-    ttsVoice: null                 // засега гласът по подразбиране
+    // Клерикът има СВОИ обиди (insult-grave заменя монашеския insult) + отмяна на
+    // критикъл (Sentinel at Death's Door). Портиерът е общ за двамата герои.
+    flavorTypes: ['insult-grave', 'cancel-crit', 'spare-dying', 'heal-zero'],
+    // Само името на гласа — езикът се взима от текста, така че звучи еднакво
+    // и на български, и на английски (Chirp3-HD имената са общи за двата).
+    ttsVoice: 'Algieba'
   };
 })();

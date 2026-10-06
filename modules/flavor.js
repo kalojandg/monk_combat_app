@@ -28,7 +28,12 @@
     { id: 'tasha',           label: "Tasha's Joke",     group: 'Insults & Jokes', url: 'tasha-jokes.json', key: null },
     // --- Портиерът на смъртта (doorman.json) — Death Cleric на вратата ---
     { id: 'spare-dying',     label: 'Spare the Dying',  group: 'Портиерът на смъртта', url: 'doorman.json', key: 'spare_the_dying' },
-    { id: 'heal-zero',       label: 'Heal from 0',      group: 'Портиерът на смъртта', url: 'doorman.json', key: 'heal_from_zero' }
+    { id: 'heal-zero',       label: 'Heal from 0',      group: 'Портиерът на смъртта', url: 'doorman.json', key: 'heal_from_zero' },
+    // --- Grave Cleric (grave-cleric-flavor.json) ---
+    // Обидите му ЗАМЕСТВАТ монашеските: отделен id, а профилът избира кой да се вижда.
+    { id: 'insult-grave',    label: 'Insult',           group: 'Insults & Jokes',      url: 'grave-cleric-flavor.json', key: 'insults' },
+    // Sentinel at Death's Door — отменя критичен удар
+    { id: 'cancel-crit',     label: 'Cancel Critical',  group: 'Портиерът на смъртта', url: 'grave-cleric-flavor.json', key: 'cancel_critical' }
   ];
 
   // Lazy cache per URL — трите one-liner/excuses типа си делят по един fetch.

@@ -65,7 +65,10 @@
     const override = p && p.ttsVoice;
     if (override) {
       const m = /^([a-z]{2,3}-[A-Za-z0-9]+)-/.exec(override);
-      return { languageCode: m ? m[1] : lang, name: override, ssmlGender: 'MALE' };
+      if (m) return { languageCode: m[1], name: override, ssmlGender: 'MALE' };
+      // САМО име на глас (напр. 'Algieba'): езикът идва от текста, затова един и същ
+      // глас звучи и на български, и на английски. Chirp3-HD имената са общи за двата.
+      return { languageCode: lang, name: lang + '-Chirp3-HD-' + override, ssmlGender: 'MALE' };
     }
     return { languageCode: lang, name: TTS_CONFIG.voices[lang], ssmlGender: 'MALE' };
   }

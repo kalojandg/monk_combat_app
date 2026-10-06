@@ -47,7 +47,11 @@ test.describe('Flavor - UI Interaction', () => {
     for (const t of TYPES) {
       await expect(btn(page, t.id), `${t.label} button`).toBeVisible();
     }
-    await expect(page.locator('#tab-flavor .flavor-btn')).toHaveCount(TYPES.length);
+    // В DOM-а стоят и клерикските бутони (insult-grave, cancel-crit) — те са скрити за
+    // монка, затова се броят ВИДИМИТЕ, а не всички.
+    const visible = await page.evaluate(() => Array.from(
+      document.querySelectorAll('#tab-flavor .flavor-btn')).filter(b => b.offsetParent !== null).length);
+    expect(visible).toBe(TYPES.length);
   });
 
   for (const t of TYPES) {

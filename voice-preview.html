@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Избор на глас</title>
+<style>
+  :root { color-scheme: dark; }
+  body { background:#0b0d16; color:#e6e6ef; font-family:system-ui,Segoe UI,sans-serif;
+         margin:0; padding:20px; line-height:1.5; }
+  h1 { font-size:1.3rem; margin:0 0 4px; }
+  p.hint { color:#9aa3c0; margin:0 0 18px; font-size:.9rem; }
+  .row { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px;
+         background:#151a2e; border:1px solid #262b3a; margin-bottom:8px; }
+  .row.current { border-color:#5a78c8; }
+  .name { flex:1 1 auto; font-weight:600; }
+  .tag { font-size:.75rem; color:#9aa3c0; font-weight:400; margin-left:6px; }
+  button { background:#1e2438; color:#e6e6ef; border:1px solid #39415c; border-radius:9px;
+           padding:10px 14px; font-size:.95rem; cursor:pointer; min-width:64px; }
+  button:hover { background:#262e49; }
+  button:disabled { opacity:.5; cursor:default; }
+  #status { margin:14px 0; min-height:1.4em; color:#9aa3c0; }
+  .pick { margin-top:22px; padding:14px; background:#151a2e; border:1px solid #262b3a; border-radius:10px; }
+  code { background:#0b0d16; padding:2px 6px; border-radius:5px; }
+</style>
+</head>
+<body>
+<h1>Избор на глас за героя</h1>
+<p class="hint">Едно и също семейство (Chirp3-HD) съществува и на български, и на английски,
+затова избраният глас звучи еднакво и на двата езика. Пусни няколко и виж кой пасва.</p>
+
+<div id="status">Зарежда гласовете…</div>
+<div id="list"></div>
+
+<div class="pick">
+  Като избереш, кажи ми името (напр. <code>Fenrir</code>) и го слагам в профила на героя.
+  Този файл е само помощен — не е част от приложението.
+</div>
+
+<script>
+const SAMPLE = {
+  'bg-BG': 'Не е твоят ред! Освободи вратата! Смъртта не е оправдание да се излежаваш.',
+  'en-US': 'Not your turn. Clear the door — death is no excuse to lie about.',
+};
+const CURRENT = 'Sadaltager';
+let KEY = null;
+let audio = new Audio();
+
+const status = m => document.getElementById('status').textContent = m;
+
+async function loadKey() {
+  // Ключът се чете от modules/tts.js, за да няма второ копие в репото.
+  const src = await fetch('modules/tts.js').then(r => r.text());
+  const m = /apiKey:\s*'([^']+)'/.exec(src);
+  if (!m) throw new Error('не намерих ключа в modules/tts.js');
+  return m[1];
+}
+
+async function listVoices() {
+  const res = await fetch('https://texttospeech.googleapis.com/v1/voices?languageCode=bg-BG&key=' + KEY);
+  if (!res.ok) throw new Error('API ' + res.status + ' — отвори страницата от разрешен адрес (localhost:45278)');
+  const d = await res.json();
+  return (d.voices || [])
+    .filter(v => v.ssmlGender === 'MALE' && /Chirp3-HD/.test(v.name))
+    .map(v => v.name.split('Chirp3-HD-')[1])
+    .sort();
+}
+
+async function speak(voiceShort, lang, btn) {
+  const all = document.querySelectorAll('button');
+  all.forEach(b => b.disabled = true);
+  btn.textContent = '…';
+  try {
+    const res = await fetch('https://texttospeech.googleapis.com/v1/text:synthesize?key=' + KEY, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        input: { text: SAMPLE[lang] },
+        voice: { languageCode: lang, name: lang + '-Chirp3-HD-' + voiceShort, ssmlGender: 'MALE' },
+        audioConfig: { audioEncoding: 'MP3', speakingRate: 0.78 },
+      }),
+    });
+    if (!res.ok) throw new Error('API ' + res.status);
+    const { audioContent } = await res.json();
+    audio.pause();
+    audio = new Audio('data:audio/mp3;base64,' + audioContent);
+    await audio.play();
+    status(voiceShort + ' — ' + (lang === 'bg-BG' ? 'български' : 'английски'));
+  } catch (e) {
+    status('Грешка: ' + e.message);
+  } finally {
+    all.forEach(b => b.disabled = false);
+    btn.textContent = btn.dataset.label;
+  }
+}
+
+(async () => {
+  try {
+    KEY = await loadKey();
+    const voices = await listVoices();
+    status(voices.length + ' мъжки гласа. Сегашният е ' + CURRENT + '.');
+    const list = document.getElementById('list');
+    list.innerHTML = '';
+    for (const v of voices) {
+      const row = document.createElement('div');
+      row.className = 'row' + (v === CURRENT ? ' current' : '');
+      row.innerHTML = '<span class="name">' + v +
+        (v === CURRENT ? '<span class="tag">сегашният</span>' : '') + '</span>';
+      for (const [lang, label] of [['bg-BG', 'БГ'], ['en-US', 'EN']]) {
+        const btn = document.createElement('button');
+        btn.textContent = label;
+        btn.dataset.label = label;
+        btn.addEventListener('click', () => speak(v, lang, btn));
+        row.appendChild(btn);
+      }
+      list.appendChild(row);
+    }
+  } catch (e) {
+    status('Грешка: ' + e.message);
+  }
+})();
+</script>
+</body>
+</html>

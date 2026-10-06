@@ -65,14 +65,24 @@ test.describe('Profile surface: tabs and feature files', () => {
     expect(r.monk).toEqual({
       tabs: MONK_TABS,
       featureFiles: ['skills-and-features.json', 'cleric-features.json'],
-      flavorTypes: null,
+      // Изричен списък, не null: клерикът вече има СВОИ flavor бутони (insult-grave,
+      // cancel-crit), затова „всички" спря да значи „неговите". Съдържанието е същото.
+      flavorTypes: [
+        'crit-miss', 'miss-attack', 'crit-attack', 'suffer-crit', 'combat-tease',
+        'magic', 'qa', 'social', 'magic-cocktails',
+        'life-wisdom', 'game-cheating', 'excuses', 'storytime', 'slipaway',
+        'insult', 'dark-joke', 'tasha',
+        'spare-dying', 'heal-zero',
+      ],
       ttsVoice: null
     });
     expect(r.cleric).toEqual({
       tabs: CLERIC_TABS,
       featureFiles: ['grave-features.json'],
-      flavorTypes: ['insult', 'spare-dying', 'heal-zero'],
-      ttsVoice: null
+      // свои обиди + отмяна на критикъл; портиерът е общ за двамата
+      flavorTypes: ['insult-grave', 'cancel-crit', 'spare-dying', 'heal-zero'],
+      // само името на гласа — езикът идва от текста, за да важи и за БГ, и за EN
+      ttsVoice: 'Algieba'
     });
   });
 

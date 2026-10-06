@@ -65,7 +65,16 @@
     tabs: ['stats', 'pcchar', 'resurrection', 'inventory', 'flavor', 'skills', 'sessionNotes', 'namegen', 'campaignNpc'],
     // JSON-ите на Skills → Personal: монашките умения + Death Domain дипът
     featureFiles: ['skills-and-features.json', 'cleric-features.json'],
-    flavorTypes: null,             // id-та на flavor бутоните (null = всички)
+    // Изричен списък, а не null: откакто клерикът си има СВОИ flavor бутони
+    // (insult-grave, cancel-crit), „всички" вече не значи „неговите". Съдържанието е
+    // непроменено — това са същите 19 бутона, които монкът вижда и досега.
+    flavorTypes: [
+      'crit-miss', 'miss-attack', 'crit-attack', 'suffer-crit', 'combat-tease',
+      'magic', 'qa', 'social', 'magic-cocktails',
+      'life-wisdom', 'game-cheating', 'excuses', 'storytime', 'slipaway',
+      'insult', 'dark-joke', 'tasha',
+      'spare-dying', 'heal-zero',
+    ],
     ttsVoice: null                 // TTS глас (null = конфигурацията по подразбиране в tts.js)
   };
 })();
