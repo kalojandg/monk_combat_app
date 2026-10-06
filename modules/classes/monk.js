@@ -27,7 +27,9 @@
     // Monk level drives: Ki, Martial Arts die, Unarmored Movement
     const monkLevel = st.monkLevel || 1;
     const ma = maDie(monkLevel);
-    const kiMax = monkLevel;
+    // Над 20-то ниво кампанията дава нива по милион опит, но класовата прогресия спира —
+    // расте само кръвта. maDie и umBonus се изравняват сами (17+/18+), ки — не, затова тук.
+    const kiMax = Math.min(monkLevel, 20);
 
     const ac = 10 + mods.dex + mods.wis + Number(st.acMagic || 0);
     const um = umBonus(monkLevel);

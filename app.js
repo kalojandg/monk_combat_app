@@ -234,14 +234,36 @@ window.Campaign = window.Campaign || {
 
 
 // ===== Derived =====
+// Отвъд таблицата кампанията дава по едно ниво на всеки милион опит (решение на ДМ).
+// Нарочно е формула, а не още редове в XP_THRESH — таблицата свършва на 20 и толкова.
+const XP_PER_LEVEL_ABOVE_TABLE = 1000000;
+const XP_TABLE_TOP_LEVEL = 20;                       // последното ниво в XP_THRESH
+const XP_TABLE_TOP = XP_THRESH[XP_THRESH.length - 1]; // опитът за него (355000)
+
+// Прагът за дадено ниво: от таблицата до 20, после по милион на ниво.
+function xpForLevel(level) {
+  if (level <= 1) return 0;
+  if (level <= XP_TABLE_TOP_LEVEL) return XP_THRESH[level - 2];
+  return XP_TABLE_TOP + (level - XP_TABLE_TOP_LEVEL) * XP_PER_LEVEL_ABOVE_TABLE;
+}
+
+// изложени за спековете (по прецедента на window.save / window.npcMatches)
+window.xpForLevel = xpForLevel;
+
 function levelFromXP(xp) {
+  const x = Number(xp) || 0;
+  if (x >= XP_TABLE_TOP) {
+    return XP_TABLE_TOP_LEVEL + Math.floor((x - XP_TABLE_TOP) / XP_PER_LEVEL_ABOVE_TABLE);
+  }
   let lvl = 1;
-  for (let i = 20; i >= 2; i--) {
-    if (xp >= XP_THRESH[i - 2]) { lvl = i; break; }
+  for (let i = XP_TABLE_TOP_LEVEL; i >= 2; i--) {
+    if (x >= XP_THRESH[i - 2]) { lvl = i; break; }
   }
   return lvl;
 }
 // Диспечер: неутралната част се смята тук, класовата идва от activeProfile().derive().
+window.levelFromXP = levelFromXP;
+
 function derived() {
   // Character level drives: prof bonus, HP, HD
   const level = st.level || 1;
@@ -428,6 +450,13 @@ function renderAll() {
   // Basics (Stats)
   el("charName") && (el("charName").value = st.name || "");
   el("xpDisplay") && (el("xpDisplay").textContent = st.xp);
+  // Колко XP остават до следващия праг. Нарочно се смята от самия XP, а не от st.level:
+  // нивото се вдига чак на дълга почивка, тоест може да изостава от натрупания опит.
+  // Над таблицата прагът идва от формулата, затова таван няма.
+  if (el("xpToNextSpan")) {
+    const xp = Number(st.xp) || 0;
+    el("xpToNextSpan").textContent = String(xpForLevel(levelFromXP(xp) + 1) - xp);
+  }
   el("levelSpan") && (el("levelSpan").textContent = d.level);
   el("monkLevelSpan") && (el("monkLevelSpan").textContent = st.monkLevel || 0);
   el("clericLevelSpan") && (el("clericLevelSpan").textContent = st.clericLevel || 0);

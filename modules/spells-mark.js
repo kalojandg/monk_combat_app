@@ -265,7 +265,9 @@ function initMarkSpells() {
     return;
   }
 
-  const slotTable = CLERIC_SPELL_SLOTS[clericLevel] || {};
+  // Таблицата свършва на 20; над това кампанията дава нива по милион опит, но слотовете
+  // остават тези на 20-то — затова се ограничава, иначе героят би останал без нито един.
+  const slotTable = CLERIC_SPELL_SLOTS[Math.min(clericLevel, 20)] || {};
   const existing = window.st.markSlots || {};
   const merged = {};
   for (const [lvl, max] of Object.entries(slotTable)) {
@@ -345,7 +347,7 @@ function renderClericPrepSpells() {
   }
 
   const wisMod = Math.floor(((window.st.wis || 10) - 10) / 2);
-  const maxPrepared = Math.max(1, clericLevel + wisMod);
+  const maxPrepared = Math.max(1, Math.min(clericLevel, 20) + wisMod); // класовата прогресия спира на 20
   const prepared = window.st.preparedClericSpells || [];
   const maxSlotLevel = Math.max(0, ...Object.keys(window.st.markSlots || {}).map(Number));
 
@@ -399,7 +401,7 @@ async function _loadClericLevelBody(slotLevel) {
   const prepared = window.st.preparedClericSpells || [];
   const clericLevel = window.st.clericLevel || 0;
   const wisMod = Math.floor(((window.st.wis || 10) - 10) / 2);
-  const maxPrepared = Math.max(1, clericLevel + wisMod);
+  const maxPrepared = Math.max(1, Math.min(clericLevel, 20) + wisMod); // класовата прогресия спира на 20
   const atMax = prepared.length >= maxPrepared;
 
   try {
@@ -426,7 +428,7 @@ async function _loadClericLevelBody(slotLevel) {
         e.stopPropagation();
         const idx = prepBtn.dataset.prep;
         const preps = window.st.preparedClericSpells || [];
-        const freshMax = Math.max(1, (window.st.clericLevel || 0) + Math.floor(((window.st.wis || 10) - 10) / 2));
+        const freshMax = Math.max(1, Math.min(window.st.clericLevel || 0, 20) + Math.floor(((window.st.wis || 10) - 10) / 2));
         const pos = preps.indexOf(idx);
         if (pos >= 0) preps.splice(pos, 1);
         else if (preps.length < freshMax) preps.push(idx);

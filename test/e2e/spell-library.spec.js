@@ -72,7 +72,9 @@ test.describe('Spell library', () => {
 
   test('(a) library lists both API and local-spells.json spells', async ({ page }) => {
     await mockApi(page);
-    await seedCleric(page);
+    // ниво 5 → слотове до 3-то, за да е достъпно и Spirit Shroud: библиотеката вече
+    // показва само нива, за които героят има слотове
+    await seedCleric(page, { level: 5, wis: 16 });
     await openSpellcasting(page);
     await expect(libItem(page, 'bless')).toBeVisible();
     await expect(libItem(page, 'spiritual-weapon')).toBeVisible();
@@ -261,6 +263,35 @@ test.describe('Spell library', () => {
   });
 });
 
+test.describe('Spell library — only what the character can cast', () => {
+
+  test('spells above the available slot level are not listed at all', async ({ page }) => {
+    await mockApi(page);
+    await seedCleric(page, { level: 3, wis: 16 });   // клерик 3 → слотове до 2-ро
+    await openSpellcasting(page);
+
+    // кантрипи и нива до 2 се виждат
+    await expect(libItem(page, 'sacred-flame')).toBeVisible();
+    await expect(libItem(page, 'bless')).toBeVisible();
+    await expect(libItem(page, 'spiritual-weapon')).toBeVisible();
+
+    // 3-то ниво и нагоре изобщо ги няма
+    await expect(libItem(page, 'spirit-shroud')).toHaveCount(0);
+    await expect(page.locator('#spellLibraryRoot details[data-liblvl="3"]')).toHaveCount(0);
+    await expect(page.locator('#spellLibraryRoot details[data-liblvl="4"]')).toHaveCount(0);
+  });
+
+  test('a higher level character sees the newly unlocked levels', async ({ page }) => {
+    await mockApi(page);
+    await seedCleric(page, { level: 5, wis: 16 });   // клерик 5 → слотове до 3-то
+    await openSpellcasting(page);
+
+    await expect(page.locator('#spellLibraryRoot details[data-liblvl="3"]')).toHaveCount(1);
+    await expect(libItem(page, 'spirit-shroud')).toBeVisible();
+    await expect(page.locator('#spellLibraryRoot details[data-liblvl="4"]')).toHaveCount(0);
+  });
+});
+
 test.describe('Spell library — details accordion', () => {
 
   test('clicking a spell in the library opens its details', async ({ page }) => {
@@ -305,7 +336,11 @@ test.describe('Spell library — details accordion', () => {
 
     const item = libItem(page, 'bless');
     await prepBtn(page, 'bless').click();
-    await expect(prepBtn(page, 'bless')).toHaveText('Prepared');
+    // Бутонът носи само „P"; състоянието личи от класа и tooltip-а, не от надпис,
+    // защото пълният текст преливаше извън екрана на телефон.
+    await expect(prepBtn(page, 'bless')).toHaveText('P');
+    await expect(prepBtn(page, 'bless')).toHaveClass(/\bactive\b/);
+    await expect(prepBtn(page, 'bless')).toHaveAttribute('title', 'Un-prepare');
     await expect(item.locator('.mark-spell-details')).toHaveCount(0);
   });
 

@@ -120,4 +120,41 @@ test.describe('XP - Add UI', () => {
     await expect(page.locator('#subtab-basicinfo #xpDisplay')).toHaveText('1500');
   });
 
+  test('XP remaining to the next level is shown and updates immediately', async ({ page }) => {
+    const left = page.locator('#subtab-basicinfo #xpToNextSpan');
+    await expect(left).toHaveText('300');          // от 0 до 2-ро ниво
+
+    await page.locator('#subtab-basicinfo #xpAddInput').fill('100');
+    await page.locator('#subtab-basicinfo #btnAddXp').click();
+    await expect(left).toHaveText('200');          // веднага, без презареждане
+
+    // прагът се прескача → брои се към следващия (900 за 3-то ниво)
+    await page.locator('#subtab-basicinfo #xpAddInput').fill('250');
+    await page.locator('#subtab-basicinfo #btnAddXp').click();
+    await expect(page.locator('#subtab-basicinfo #xpDisplay')).toHaveText('350');
+    await expect(left).toHaveText('550');
+
+    // над таблицата кампанията дава по ниво на всеки милион — таван няма
+    await page.evaluate(() => { window.st.xp = 400000; window.save(); });   // 20-то ниво
+    await expect(left).toHaveText('955000');                               // 1 355 000 − 400 000
+  });
+
+  test('levels continue past 20, one per million XP', async ({ page }) => {
+    const lvl = async xp => page.evaluate(x => {
+      window.st.xp = x; window.save();
+      return window.levelFromXP ? window.levelFromXP(x) : null;
+    }, xp);
+
+    // прагът на 20-то е 355 000; оттам нататък по милион
+    expect(await page.evaluate(() => window.levelFromXP(355000))).toBe(20);
+    expect(await page.evaluate(() => window.levelFromXP(1354999))).toBe(20);
+    expect(await page.evaluate(() => window.levelFromXP(1355000))).toBe(21);
+    expect(await page.evaluate(() => window.levelFromXP(2355000))).toBe(22);
+    expect(await page.evaluate(() => window.levelFromXP(10355000))).toBe(30);
+
+    // и остатъкът продължава да се смята
+    await lvl(1355000);
+    await expect(page.locator('#subtab-basicinfo #xpToNextSpan')).toHaveText('1000000');
+  });
+
 });

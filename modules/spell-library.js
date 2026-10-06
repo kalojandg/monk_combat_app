@@ -28,6 +28,7 @@
   let _level = '';              // '' = всички нива
   let _expandedPrepared = null;
   let _expandedLibrary = null;   // точно едно отворено заклинание в библиотеката
+  const _collapsedLevels = new Set();  // кои нива са СВИТИ (по подразбиране всички са отворени)
 
   const $ = id => document.getElementById(id);
 
@@ -61,12 +62,16 @@
     return Math.floor(((window.st.wis || 10) - 10) / 2);
   }
 
+  // Над 20-то ниво класовата прогресия спира (расте само кръвта), затова нивото се
+  // ограничава навсякъде, където храни класова сметка.
+  const castingLevel = () => Math.min(clericLevel(), 20);
+
   function maxPrepared() {
-    return Math.max(1, clericLevel() + wisMod());
+    return Math.max(1, castingLevel() + wisMod());
   }
 
   function maxSlotLevel() {
-    const table = (typeof CLERIC_SPELL_SLOTS !== 'undefined' && CLERIC_SPELL_SLOTS[clericLevel()]) || {};
+    const table = (typeof CLERIC_SPELL_SLOTS !== 'undefined' && CLERIC_SPELL_SLOTS[castingLevel()]) || {};
     return Math.max(0, ...Object.keys(table).map(Number));
   }
 
@@ -320,7 +325,20 @@
     const prepared = preparedList();
     const atMax = preparedCount(domainSet) >= maxPrepared();
     const slotCap = maxSlotLevel();
-    const shown = _library.filter(sp => (_level === '' || sp.level === Number(_level)) && spellMatches(sp, _query));
+    // Показваме САМО каквото героят може да каства: кантрипи + нива, за които има слотове.
+    // По-високите не се крият „за красота" — те просто не са му достъпни и само шумят.
+    const castable = sp => sp.level === 0 || (typeof sp.level === 'number' && sp.level <= slotCap);
+    const shown = _library.filter(sp => castable(sp) && (_level === '' || sp.level === Number(_level)) && spellMatches(sp, _query));
+
+    // Падащото меню също показва само достъпните нива
+    const sel = $('spellLibLevel');
+    if (sel) {
+      [...sel.options].forEach(o => {
+        const v = o.value;
+        o.hidden = v !== '' && Number(v) > slotCap;
+      });
+      if (_level !== '' && Number(_level) > slotCap) { _level = ''; sel.value = ''; }
+    }
 
     if (!shown.length) {
       body.innerHTML = '<div class="small muted">No spells match.</div>';
@@ -328,7 +346,7 @@
     }
 
     const detailCache = readCache();
-    body.innerHTML = shown.map(sp => {
+    const rowHtml = sp => {
       const isPrepared = prepared.includes(sp.index);
       const expanded = _expandedLibrary === sp.index;
       const detail = detailCache[sp.index];
@@ -341,7 +359,9 @@
         const tooHigh = sp.level > slotCap;
         const disabled = !isPrepared && (atMax || tooHigh);
         const title = isPrepared ? 'Un-prepare' : tooHigh ? 'No spell slots of this level yet' : atMax ? 'Preparation limit reached' : 'Prepare';
-        action = `<button class="btn-mark-prep btn-spell-prep${isPrepared ? ' active' : ''}" data-prep="${esc(sp.index)}"${disabled ? ' disabled' : ''} title="${title}">${isPrepared ? 'Prepared' : 'Prepare'}</button>`;
+        // Само „P" + tooltip, както е в монк частта: пълният текст преливаше извън екрана
+        // на телефон, а иконата и бездруго се разпознава.
+        action = `<button class="btn-mark-prep btn-spell-prep${isPrepared ? ' active' : ''}" data-prep="${esc(sp.index)}"${disabled ? ' disabled' : ''} title="${title}" aria-label="${title}">P</button>`;
       }
       return `
         <div class="mark-spell-item spell-lib-item${isPrepared ? ' mark-prepared' : ''}${expanded ? ' expanded' : ''}" data-index="${esc(sp.index)}">
@@ -352,7 +372,33 @@
           </div>
           ${expanded ? `<div class="mark-spell-details">${detail ? _renderSpellDetail(detail) : '<div class="small muted">Loading…</div>'}</div>` : ''}
         </div>`;
-    }).join('');
+    };
+
+    // Групиране по ниво във вложени акордеони — по модела на Cleric Spells (Prepared)
+    // в Resurrection таба: ниво се отваря, а всеки ред вътре си разгъва описанието.
+    const groups = new Map();
+    shown.forEach(sp => {
+      const lvl = typeof sp.level === 'number' ? sp.level : -1;
+      if (!groups.has(lvl)) groups.set(lvl, []);
+      groups.get(lvl).push(sp);
+    });
+    const levels = [...groups.keys()].sort((a, b) => a - b);
+    const levelTitle = l => (l < 0 ? 'Unknown level' : l === 0 ? 'Cantrips' : `Level ${l} Spells`);
+
+    body.innerHTML = levels.map(l => `
+      <details class="prep-level-acc"${_collapsedLevels.has(l) ? '' : ' open'} data-liblvl="${l}">
+        <summary class="prep-level-summary">${levelTitle(l)} <span class="small muted">(${groups.get(l).length})</span></summary>
+        <div class="prep-level-body">${groups.get(l).map(rowHtml).join('')}</div>
+      </details>`).join('');
+
+    // <details> не bubble-ва 'toggle', затова се закача на всеки — елементите са нови
+    // при всеки рендер, значи listener-ите не се натрупват.
+    body.querySelectorAll('details.prep-level-acc').forEach(d => {
+      d.addEventListener('toggle', () => {
+        const lvl = Number(d.dataset.liblvl);
+        if (d.open) _collapsedLevels.delete(lvl); else _collapsedLevels.add(lvl);
+      });
+    });
   }
 
   // ── Оркестрация ──
